@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CSV Viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px;}
+  h1{font-size:1.1rem;margin:0 0 12px;}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  input[type="text"], input[type="url"]{padding:8px;border:1px solid #ccc;border-radius:8px;min-width:260px}
+  button{padding:8px 12px;border:1px solid #ccc;border-radius:8px;background:#f6f6f6;cursor:pointer}
+  button:hover{background:#eee}
+  .table-wrap{max-width:100%;overflow:auto;border:1px solid #e5e5e5;border-radius:10px}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  thead th{position:sticky;top:0;background:#fafafa;border-bottom:1px solid #ddd;cursor:pointer;white-space:nowrap}
+  th,td{padding:8px 10px;border-bottom:1px solid #eee}
+  tr:nth-child(even){background:#fcfcfc}
+  .muted{color:#666;font-size:12px;margin-top:8px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+  <h1>CSV Viewer</h1>
+  <div class="bar">
+    <input id="search" type="text" placeholder="Filter rows (case-insensitive)..." />
+    <input id="url" type="url" placeholder="Paste CSV URL (supports comma/semicolon/tab)"/>
+    <button id="loadUrl">Load URL</button>
+    <input id="file" type="file" accept=".csv,text/csv" />
+  </div>
+  <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  <div id="info" class="muted hidden"></div>
+
+<script>
+/* --- CSV parsing (quotes + , ; \t) --- */
+function detectDelimiter(text){
+  const sample = text.split(/\r?\n/).slice(0,20).join("\n");
+  const counts = {",":0,";":0,"\t":0};
+  for (const d of Object.keys(counts)){
+    counts[d] = sample.split("\n")
+      .map(line => (line.match(new RegExp(d === "\t" ? "\\t" : d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),"g"))||[]).length)
+      .reduce((a,b)=>a+b,0);
+  }
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0] || ",";
+}
+
+function parseCSV(text, delimiter){
+  delimiter = delimiter || detectDelimiter(text);
+  const rows = [];
+  let i=0, field="", inQuotes=false, row=[];
+  while(i < text.length){
+    const c = text[i], next = text[i+1];
+    if (inQuotes){
+      if (c === '"' && next === '"'){ field += '"'; i+=2; continue; }
+      if (c === '"'){ inQuotes=false; i++; continue; }
+      field += c; i++; continue;
+    } else {
+      if (c === '"'){ inQuotes=true; i++; continue; }
+      if (c === delimiter){ row.push(field); field=""; i++; continue; }
+      if (c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; i++; continue; }
+      if (c === '\r'){ i++; continue; }
+      field += c; i++; continue;
+    }
+  }
+  row.push(field); rows.push(row);
+  if (rows.length && rows[rows.length-1].length===1 && rows[rows.length-1][0]==="") rows.pop();
+  return rows;
+}
+
+/* --- State & DOM refs --- */
+const tbl = document.getElementById('tbl');
+const thead = tbl.querySelector('thead');
+const tbody = tbl.querySelector('tbody');
+const searchBox = document.getElementById('search');
+const info = document.getElementById('info');
+
+let data = [];     // array of objects
+let columns = [];  // header names
+let sortState = { key:null, dir:1 };
+
+/* --- Convert rows to objects --- */
+function rowsToObjects(rows){
+  if (!rows.length) return {columns:[], data:[]};
+  let cols = rows[0].map((h,i)=> (h && h.trim()) ? h.trim() : `col_${i+1}`);
+  const seen = {};
+  cols = cols.map(h => {
+    const base = h || 'column';
+    if (!seen[base]) { seen[base]=1; return base; }
+    return `${base}_${++seen[base]}`;
+  });
+  const out = rows.slice(1).map(r=>{
+    const obj={};
+    cols.forEach((h,i)=> obj[h] = (r[i] ?? ''));
+    return obj;
+  });
+  return {columns: cols, data: out};
+}
+
+/* --- Link helpers --- */
+const rxPdbCore = /^[0-9][A-Za-z0-9]{3}$/;  // 3Q4U, 2PML
+const rxEmail   = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const rxDoi     = /^10\.\d{4,9}\/\S+$/i;
+
+function extractPdbAndChain(raw){
+  if (!raw) return null;
+  const v = String(raw).trim();
+  const cleaned = v.replace(/\.pdb$/i, "").replace(/^pdb[:/]/i, "").trim();
+  const parts = cleaned.split(/[:._-]/).filter(Boolean);
+  const pdbId = parts[0]?.toUpperCase();
+  if (!pdbId || !rxPdbCore.test(pdbId)) return null;
+  const chain = parts[1] && /^[A-Za-z0-9]{1,3}$/.test(parts[1]) ? parts[1] : null;
+  return { pdbId, chain };
+}
+
+function makeLinkedNode(header, value){
+  const td = document.createElement('td');
+  const v = (value ?? "").toString().trim();
+  const h = (header ?? "").toString().toLowerCase();
+
+  if (!v){ td.textContent = ""; return td; }
+
+  // 0) direct URL
+  if (v.startsWith("http://") || v.startsWith("https://")){
+    const a = document.createElement('a');
+    a.href = v; a.textContent = v; a.target = "_blank"; a.rel="noopener noreferrer";
+    td.appendChild(a); return td;
+  }
+
+  // 1) PubChem CID
+  if (h.includes("pubchem") || (h.includes("cid") && !h.includes("acid"))){
+    const a = document.createElement('a');
+    a.href = `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(v)}`;
+    a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
+    td.appendChild(a); return td;
+  }
+
+  // 2) RCSB PDB for target/malaria (or any PDB-looking value)
+  if (h === "target" || h === "malaria"){
+    const pdb = extractPdbAndChain(v);
+    if (pdb){
+      const a = document.createElement('a');
+      const chainParam = pdb.chain ? `?chainId=${encodeURIComponent(pdb.chain)}` : "";
+      a.href = `https://www.rcsb.org/structure/${pdb.pdbId}${chainParam}`;
+      a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
+      td.appendChild(a); return td;
+    }
+  }
+
+  // 3) File name → NGL viewer
+  if (h.includes("file name")){
+    const a = document.createElement('a');
+    const viewerUrl = "./ngl/viewer.html";   // your NGL viewer page
+    const pdbPath   = "/MDpdb/" + v;         // absolute path from server root
+    const ext = v.toLowerCase().split('.').pop();
+    const fmt = (ext === 'cif' || ext === 'mmcif') ? 'mmcif'
+              : (ext === 'bcif') ? 'bcif'
+              : (ext === 'sdf') ? 'sdf'
+              : (ext === 'mol2') ? 'mol2'
+              : 'pdb';
+    a.href = `${viewerUrl}?load=${encodeURIComponent(pdbPath)}&format=${encodeURIComponent(fmt)}`;
+    a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
+    td.appendChild(a); return td;
+  }
+
+  // 4) DOI
+  if (rxDoi.test(v)){
+    const a = document.createElement('a');
+    a.href = `https://doi.org/${v}`; a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
+    td.appendChild(a); return td;
+  }
+
+  // 5) Email
+  if (rxEmail.test(v)){
+    const a = document.createElement('a');
+    a.href = `mailto:${v}`; a.textContent = v;
+    td.appendChild(a); return td;
+  }
+
+  // 6) plain text
+  td.textContent = v; return td;
+}
+
+/* --- Render --- */
+function renderTable(cols, rows){
+  // header
+  thead.innerHTML = "";
+  const tr = document.createElement('tr');
+  cols.forEach(c=>{
+    const th = document.createElement('th');
+    th.textContent = c;
+    th.title = "Click to sort";
+    th.addEventListener('click', ()=> sortBy(c));
+    tr.appendChild(th);
+  });
+  thead.appendChild(tr);
+
+  // body
+  tbody.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    cols.forEach(c=>{
+      tr.appendChild(makeLinkedNode(c, r[c]));
+    });
+    frag.appendChild(tr);
+  });
+  tbody.appendChild(frag);
+
+  info.classList.remove('hidden');
+  info.textContent = `${rows.length.toLocaleString()} rows  •  ${cols.length} columns`;
+}
+
+/* --- Sort & Filter --- */
+function sortBy(key){
+  if (sortState.key === key){ sortState.dir *= -1; } else { sortState.key = key; sortState.dir = 1; }
+  const dir = sortState.dir;
+  const isNum = data.every(row => row[key] === "" || !isNaN(Number(row[key])));
+  const sorted = [...filteredRows()].sort((a,b)=>{
+    const va = a[key], vb = b[key];
+    if (isNum){ return (Number(va||0) - Number(vb||0)) * dir; }
+    return String(va).localeCompare(String(vb)) * dir;
+  });
+  renderTable(columns, sorted);
+}
+
+function filteredRows(){
+  const q = searchBox.value.trim().toLowerCase();
+  if (!q) return data;
+  return data.filter(row => columns.some(c => String(row[c]).toLowerCase().includes(q)));
+}
+
+/* --- Loaders --- */
+async function loadFromText(text){
+  const rows = parseCSV(text);
+  const {columns: cols, data: rowsObj} = rowsToObjects(rows);
+  columns = cols; data = rowsObj;
+  renderTable(columns, filteredRows());
+}
+
+async function loadFromURL(url){
+  const res = await fetch(url, {cache:'no-store'});
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const txt = await res.text();
+  await loadFromText(txt);
+}
+
+document.getElementById('loadUrl').addEventListener('click', async ()=>{
+  const url = document.getElementById('url').value.trim();
+  if (!url) return alert("Please paste a CSV URL.");
+  try { await loadFromURL(url); }
+  catch (e){ alert("Failed to load URL: " + e.message); }
+});
+
+document.getElementById('file').addEventListener('change', async (e)=>{
+  const f = e.target.files[0];
+  if (!f) return;
+  const txt = await f.text();
+  await loadFromText(txt);
+});
+
+searchBox.addEventListener('input', ()=>{
+  renderTable(columns, filteredRows());
+});
+</script>
+</body>
+</html>

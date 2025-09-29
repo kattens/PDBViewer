@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NGL Viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html,body{height:100%;margin:0}
+  #stage{position:fixed;inset:0}
+  .bar{position:fixed;top:10px;left:10px;display:flex;gap:8px;align-items:center;background:#fff8;border:1px solid #ddd;border-radius:10px;padding:6px 8px;font-family:system-ui}
+  .error{position:fixed;bottom:10px;left:10px;background:#fee;border:1px solid #fbb;border-radius:8px;padding:8px 10px;font-family:system-ui;display:none}
+  select,button{padding:4px 8px}
+  label{display:flex;align-items:center;gap:4px}
+</style>
+<script src="https://unpkg.com/ngl@latest/dist/ngl.js"></script>
+</head>
+<body>
+<div id="stage"></div>
+
+<div class="bar">
+  <span id="label">NGL Viewer</span>
+  <label>Assembly:
+    <select id="assemblySelect">
+      <option value="auto">Auto</option>
+      <option value="AU">AU (asymmetric)</option>
+      <!-- BU options will be filled dynamically if available -->
+    </select>
+  </label>
+  <label><input type="checkbox" id="ligandToggle"> Ligands</label>
+  <button id="resetBtn">Reset</button>
+</div>
+
+<div id="err" class="error"></div>
+
+<script>
+(async function(){
+  const params = new URLSearchParams(location.search);
+  // Support multiple ?load= params
+  const loads = params.getAll("load");
+  const explicitAssembly = params.get("assembly"); // e.g., BU1 or AU
+  const stage = new NGL.Stage("stage", { backgroundColor: "white" });
+
+  function showError(msg){
+    const e = document.getElementById("err");
+    e.textContent = msg;
+    e.style.display = "block";
+  }
+
+  if (loads.length === 0){
+    showError("Missing ?load=. Example: viewer.html?load=/MDpdb/3Q4U.pdb or multiple ?load=…");
+    return;
+  }
+
+  window.addEventListener("resize", () => stage.handleResize(), false);
+  document.getElementById("resetBtn").addEventListener("click", () => stage.autoView());
+
+  const assemblySelect = document.getElementById("assemblySelect");
+  const ligandToggle   = document.getElementById("ligandToggle");
+
+  // Keep track of components & representations to re-apply on assembly change
+  const components = []; // { comp, cartoonReps:[], ligandRep: null, availableAssemblies:[] }
+
+  async function loadOne(url){
+    // Guess ext if not provided via &format=
+    let ext = params.get("format");
+    if (!ext){
+      const lower = url.toLowerCase();
+      if (lower.endsWith(".pdb") || lower.endsWith(".ent")) ext = "pdb";
+      else if (lower.endsWith(".cif") || lower.endsWith(".mmcif")) ext = "mmcif";
+      else if (lower.endsWith(".bcif")) ext = "bcif";
+      else if (lower.endsWith(".sdf")) ext = "sdf";
+      else if (lower.endsWith(".mol2")) ext = "mol2";
+      else ext = "pdb";
+    }
+
+    const comp = await stage.loadFile(url, { ext });
+    // Get available biological assemblies from structure metadata (if any)
+    const biomols = (comp.structure && comp.structure.biomolDict) ? Object.keys(comp.structure.biomolDict) : [];
+    return { comp, biomols };
+  }
+
+  // Load all files
+  try {
+    for (const url of loads){
+      const { comp, biomols } = await loadOne(url);
+      components.push({ comp, cartoonReps: [], ligandRep: null, availableAssemblies: biomols });
+    }
+  } catch(err){
+    console.error(err);
+    showError("Failed to load one or more files: " + (err?.message || err));
+    return;
+  }
+
+  // Populate assembly dropdown if any file has biomolecular assemblies
+  const buSet = new Set();
+  for (const { availableAssemblies } of components){
+    for (const bu of availableAssemblies) buSet.add(bu);
+  }
+  if (buSet.size){
+    for (const bu of buSet){
+      const opt = document.createElement("option");
+      opt.value = bu;
+      opt.textContent = bu;
+      assemblySelect.appendChild(opt);
+    }
+  }
+
+  // Decide initial assembly
+  function initialAssembly(){
+    if (explicitAssembly) return explicitAssembly;      // query override
+    if (assemblySelect.value !== "auto") return assemblySelect.value;
+    // Auto: prefer BU1 if present, else AU
+    return buSet.has("BU1") ? "BU1" : "AU";
+  }
+
+  function applyReps(assembly){
+    // Remove old reps first
+    for (const entry of components){
+      entry.comp.removeAllRepresentations();
+      entry.cartoonReps = [];
+      entry.ligandRep = null;
+    }
+    // Add reps per component
+    for (const entry of components){
+      const selePolymer = "polymer"; // protein/nucleic chains
+      entry.cartoonReps.push(
+        entry.comp.addRepresentation("cartoon", {
+          sele: selePolymer,
+          assembly: assembly === "AU" ? undefined : assembly, // undefined means AU
+          colorScheme: "chainid"
+        })
+      );
+      // Ligands rep (hidden until toggled)
+      entry.ligandRep = entry.comp.addRepresentation("ball+stick", {
+        sele: "hetero and not water",
+        assembly: assembly === "AU" ? undefined : assembly,
+        visible: ligandToggle.checked
+      });
+    }
+  }
+
+  applyReps(initialAssembly());
+  await stage.autoView();
+
+  // UI: assembly switching
+  assemblySelect.addEventListener("change", async ()=>{
+    const chosen = assemblySelect.value === "auto"
+      ? (buSet.has("BU1") ? "BU1" : "AU")
+      : assemblySelect.value;
+    applyReps(chosen);
+    await stage.autoView();
+  });
+
+  // UI: ligand toggle
+  ligandToggle.addEventListener("change", ()=>{
+    for (const entry of components){
+      if (entry.ligandRep) entry.ligandRep.setVisibility(ligandToggle.checked);
+    }
+  });
+
+  // HUD label
+  const names = loads.map(u => decodeURIComponent(u.split("/").pop()));
+  document.getElementById("label").textContent = names.join(" + ");
+})();
+</script>
+</body>
+</html>

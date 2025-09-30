@@ -162,12 +162,21 @@ function makeLinkedNode(header, value){
     td.appendChild(a); return td;
   }
 
-  // 4) DOI
-  if (rxDoi.test(v)){
+  // 4) Gene ID → PlasmoDB
+if (h.toLowerCase().includes("gene id")) {
+  if (v) {
     const a = document.createElement('a');
-    a.href = `https://doi.org/${v}`; a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
-    td.appendChild(a); return td;
+    a.href = `https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(v)}`;
+    a.textContent = v;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    td.appendChild(a);
+  } else {
+    td.textContent = ""; // keep cell empty if no gene id
   }
+  return td;
+}
+
 
   // 5) Email
   if (rxEmail.test(v)){

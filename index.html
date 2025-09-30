@@ -7,38 +7,49 @@
 
 
 
-
 <style>
-  /* ========= Design tokens ========= */
+  /* ========= Design tokens (all colors route through here) ========= */
   :root{
-    --bg: #e6f3ff;         /* solid light blue background */
-    --panel: #ffffff;      /* panels pure white */
-    --panel-2: #f9fcff;    /* very light bluish secondary panel */
-    --text: #2c3e50;       /* softer navy text */
-    --muted: #7a8699;      /* lighter muted text */
-    --accent: #4a90e2;     /* lighter medium blue accent */
-    --accent-2: #38b871;   /* soft green accent */
-    --border: #d6e2f0;     /* lighter border */
-    --border-soft: #ecf3fa;/* softer border */
-    --shadow: 0 2px 8px rgba(0,0,0,.05);
-    --radius: 14px;
+    --bg:            #eff7ff;  /* page background: solid light blue */
+    --text:          #2d3954;
+    --muted:         #8a95a6;
+
+    --panel:         #ffffff;  /* cards/panels/table bg */
+    --panel-2:       #fbfdff;  /* ultra-light panel tint */
+
+    --accent:        #6aa9ff;  /* primary accent (buttons/links/active) */
+    --accent-2:      #6ed39a;  /* secondary accent */
+
+    --border:        #e3edf7;  /* card/table border */
+    --border-soft:   #f1f6fb;  /* row dividers */
+
+    /* Table-specific tokens */
+    --thead:         #f4f9ff;  /* header bg */
+    --zebra:         #fbfdff;  /* even row bg */
+    --hover:         #eef6ff;  /* row hover */
+
+    --link:          #3f89e9;
+    --link-hover:    #2e6fd1;
+
+    --shadow:        0 2px 10px rgba(0,0,0,.04);
+    --radius:        14px;
   }
 
   /* ========= Page layout ========= */
   html,body{height:100%}
   body{
     margin:0;
-    font: 14px/1.45 system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font: 14px/1.55 system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     color:var(--text);
-    background: var(--bg);   /* solid light blue */
+    background: var(--bg) !important; /* force solid light blue (no gradient) */
     padding: 28px clamp(16px, 3vw, 32px);
   }
 
   h1{
     margin:0 0 14px;
     font-size: clamp(18px, 2.4vw, 26px);
-    font-weight: 650;
     letter-spacing:.2px;
+    font-weight: 600;
     color: var(--accent);
   }
 
@@ -46,7 +57,7 @@
   .bar{
     display:flex; flex-wrap:wrap; gap:10px 12px; align-items:center;
     margin: 10px 0 16px;
-    background: var(--panel); /* flat white */
+    background: var(--panel);
     border:1px solid var(--border);
     border-radius: calc(var(--radius) + 4px);
     padding: 10px;
@@ -56,37 +67,39 @@
   /* Inputs & buttons */
   .bar input[type="text"], .bar input[type="url"]{
     flex:1 1 280px; min-width: 220px; max-width: 520px;
-    border:1px solid var(--border); background:#ffffff; color:var(--text);
+    border:1px solid var(--border); background:#fff; color:var(--text);
     padding:10px 12px; border-radius:12px; outline: none;
     transition: border-color .15s, box-shadow .15s, background .15s;
   }
-  .bar input[type="text"]::placeholder, .bar input[type="url"]::placeholder{ color:var(--muted) }
-  .bar input[type="text"]:focus, .bar input[type="url"]:focus{
+  .bar input[type="text"]::placeholder,
+  .bar input[type="url"]::placeholder{ color:var(--muted) }
+  .bar input[type="text"]:focus,
+  .bar input[type="url"]:focus{
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(74,144,226,.2);
-    background:#f9fbff;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 30%, transparent);
+    background: color-mix(in oklab, #fff 90%, var(--accent) 10%);
   }
 
   .bar input[type="file"]{
     padding: 10px 12px;
     border:1px dashed var(--border);
     border-radius:12px;
-    background:#ffffff;
+    background:#fff;
     color:var(--muted);
   }
 
   button{
     padding:10px 14px;
-    border:1px solid var(--accent);
+    border:1px solid color-mix(in oklab, var(--accent) 60%, transparent);
     background: var(--accent);
-    color: #ffffff;
+    color:#0f1f3a;
     border-radius:12px;
     cursor:pointer;
-    transition: transform .06s ease, box-shadow .15s ease;
-    box-shadow: 0 3px 8px rgba(0,0,0,.1);
+    transition: transform .06s ease, box-shadow .15s ease, filter .15s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,.06);
   }
-  button:hover{ transform: translateY(-1px); box-shadow: 0 5px 14px rgba(0,0,0,.15) }
-  button:active{ transform: translateY(0); box-shadow: 0 3px 8px rgba(0,0,0,.12) }
+  button:hover{ transform: translateY(-1px); filter: brightness(1.03); box-shadow: 0 6px 18px rgba(0,0,0,.08) }
+  button:active{ transform: translateY(0); box-shadow: 0 3px 10px rgba(0,0,0,.06) }
 
   /* ========= Table shell ========= */
   .table-wrap{
@@ -94,22 +107,30 @@
     overflow:auto;
     border:1px solid var(--border);
     border-radius: var(--radius);
-    background: var(--panel); /* flat white */
+    background: var(--panel);
     box-shadow: var(--shadow);
     position: relative;
   }
+  .table-wrap::before,
+  .table-wrap::after{
+    content:"";
+    position: sticky; top:0; bottom:0; width:24px; pointer-events:none; z-index:1;
+  }
+  .table-wrap::before{ left:0; background: linear-gradient(90deg, var(--panel) 0%, transparent 100%) }
+  .table-wrap::after{ right:0; background: linear-gradient(270deg, var(--panel) 0%, transparent 100%) }
 
   /* ========= Table ========= */
   table{ border-collapse: collapse; width:100%; font-size: 14px; }
 
   thead th{
     position: sticky; top:0; z-index: 2;
-    background: #f0f8ff;  /* soft light blue */
+    background: var(--thead) !important;       /* token-based */
     border-bottom:1px solid var(--border);
     color: var(--text);
     white-space: nowrap;
     padding: 10px 12px;
     text-align: left;
+    letter-spacing:.2px;
     cursor: pointer;
     user-select: none;
   }
@@ -118,11 +139,17 @@
     content:"";
     display:inline-block; margin-left:8px;
     width: 0; height: 0; border-left:5px solid transparent; border-right:5px solid transparent;
-    border-top:6px solid var(--accent); opacity:.5; transform: translateY(-2px);
+    border-top:6px solid var(--accent); opacity:.45; transform: translateY(-2px);
   }
+  thead th:hover{ color: color-mix(in oklab, var(--accent) 80%, var(--text)); }
+  thead th:hover::after{ opacity:.7 }
 
-  tbody tr:nth-child(even){ background: #f9fbff }
-  tbody tr:hover{ background: #e8f3ff }
+  tbody tr{ transition: background .12s ease, box-shadow .12s ease }
+  tbody tr:nth-child(even){ background: var(--zebra) !important; }
+  tbody tr:hover{
+    background: var(--hover) !important;
+    box-shadow: inset 0 1px 0 rgba(0,0,0,.03), inset 0 -1px 0 rgba(0,0,0,.03);
+  }
 
   th, td{
     padding: 10px 12px;
@@ -131,13 +158,22 @@
   }
 
   td a{
-    color: var(--accent);
+    color: var(--link);
     text-decoration: none;
-    border-bottom: 1px dashed rgba(74,144,226,.5);
+    border-bottom: 1px dashed color-mix(in oklab, var(--link) 60%, transparent);
+    padding-bottom:1px;
   }
-  td a:hover{ color:#2563eb; border-bottom-style: solid }
+  td a:hover{
+    color: var(--link-hover);
+    border-bottom-style: solid;
+  }
 
-  .muted{ color: var(--muted); font-size: 12px; margin-top: 10px; padding-left: 2px; }
+  .muted{
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 10px;
+    padding-left: 2px;
+  }
   .hidden{ display:none }
 
   @media (max-width: 700px){
@@ -147,9 +183,6 @@
     table{ font-size: 13px }
   }
 </style>
-
-
-
 
 
 

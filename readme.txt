@@ -1,16 +1,34 @@
+# PDBViewer
 
+A lightweight, browser-based tool for exploring **PDB files** and related molecular data.  
+This project allows you to host protein structures, CSV datasets, and interactive 3D viewers directly on GitHub Pages—no server required.
 
-add the folder path:
+---
 
-cd "Your\Folder\path\PDBviewer"
+## Features
+-  **CSV Viewer** – Upload or auto-load CSV files for structured data exploration.  
+-  **3D Protein Viewer** – View `.pdb`, `.cif`, `.bcif`, `.sdf`, or `.mol2` files interactively using [NGL Viewer](http://nglviewer.org/).  
+-  **Hyperlinks** – Connect data rows (e.g., PDB IDs, gene IDs) to external databases like RCSB PDB and PlasmoDB.  
+-  **GitHub Pages Hosting** – Simple deployment, just push to your repo.  
 
-set this up:
+---
 
-py -3 -m http.server 8000
+## Installation:
+ - You can access the PDBViewer here: https://kattens.github.io/PDBViewer/
 
-run on : http://localhost:8000/
+or
 
-add the "Data.csv" in the PDBviewer as the csv 
+ - Add the folder path:
+  
+ - cd "Your\Folder\path\PDBviewer"
+  
+ - set this up:
+  
+ - py -3 -m http.server 8000
+  
+ - run on : http://localhost:8000/
+  
+  add the "Data.csv" in the PDBviewer as the csv 
 
 click on the "filename" to see the structure
 

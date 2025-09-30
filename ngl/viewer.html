@@ -23,7 +23,6 @@
     <select id="assemblySelect">
       <option value="auto">Auto</option>
       <option value="AU">AU (asymmetric)</option>
-      <!-- BU options will be filled dynamically if available -->
     </select>
   </label>
   <label><input type="checkbox" id="ligandToggle"> Ligands</label>
@@ -35,28 +34,9 @@
 <script>
 (async function(){
   const params = new URLSearchParams(location.search);
-  const rawLoads = params.getAll("load");
-
-  // --- NEW: normalize URLs for GitHub Pages project path ---
-  // If you're at https://kattens.github.io/PDBViewer/, basePath = "/PDBViewer/"
-  const repoBase = location.pathname.split('/').filter(Boolean)[0] || '';
-  const basePath = repoBase ? `/${repoBase}/` : '/';
-
-  function normalize(url) {
-    // absolute http(s): leave as-is (could be cross-origin → beware CORS)
-    if (/^https?:\/\//i.test(url)) return url;
-
-    // leading slash: make it project-relative ("/MDpdb/x" -> "/PDBViewer/MDpdb/x")
-    if (url.startsWith('/')) return basePath + url.replace(/^\/+/, '');
-
-    // already relative: keep it
-    return url;
-  }
-
-  const loads = rawLoads.map(normalize);
-  // ---------------------------------------------------------
-
-  const explicitAssembly = params.get("assembly");
+  // Support multiple ?load= params
+  const loads = params.getAll("load");
+  const explicitAssembly = params.get("assembly"); 
   const stage = new NGL.Stage("stage", { backgroundColor: "white" });
 
   function showError(msg){

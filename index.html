@@ -147,20 +147,26 @@ function makeLinkedNode(header, value){
   }
 
   // 3) File name → NGL viewer
-  if (h.includes("file name")){
+  if (h.includes("file name")) {
     const a = document.createElement('a');
-    const viewerUrl = "./ngl/viewer.html";   // your NGL viewer page
-    const pdbPath   = "/MDpdb/" + v;         // absolute path from server root
+    const viewerUrl = "./ngl/viewer.html";   // viewer page
+    const pdbPath   = "../MDpdb/" + v;       // relative path (not absolute)
+
     const ext = v.toLowerCase().split('.').pop();
     const fmt = (ext === 'cif' || ext === 'mmcif') ? 'mmcif'
               : (ext === 'bcif') ? 'bcif'
-              : (ext === 'sdf') ? 'sdf'
+              : (ext === 'sdf')  ? 'sdf'
               : (ext === 'mol2') ? 'mol2'
               : 'pdb';
+
     a.href = `${viewerUrl}?load=${encodeURIComponent(pdbPath)}&format=${encodeURIComponent(fmt)}`;
-    a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
-    td.appendChild(a); return td;
+    a.textContent = v;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    td.appendChild(a);
+    return td;
   }
+
 
   // 4) Gene ID → PlasmoDB
 if (h.toLowerCase().includes("gene id")) {

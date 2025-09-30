@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#eff7ff">
+
 <title>Drug repurposing Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 
 
 <style>
@@ -185,9 +187,6 @@
 </style>
 
 
-
-
-
 </head>
 <body>
   <h1>Drug repurposing Viewer</h1>
@@ -199,6 +198,25 @@
   </div>
   <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
   <div id="info" class="muted hidden"></div>
+
+
+<script>
+/* Force light appearance even if OS/browser is dark */
+(function () {
+  // Tell the browser we intend light UI colors (affects form controls, scrollbars, UA defaults)
+  document.documentElement.style.colorScheme = 'light';
+
+  // Safety: enforce light backgrounds in case an extension tries to invert
+  const s = document.createElement('style');
+  s.setAttribute('id', 'force-light');
+  s.textContent = `
+    html, body { background:#eff7ff !important; color:#223 !important; }
+    .bar, .table-wrap, table, thead, tbody, tr, th, td { background:#ffffff !important; color:#223 !important; }
+  `;
+  document.head.appendChild(s);
+})();
+</script>
+
 
 <script>
 
@@ -358,35 +376,46 @@ if (h.toLowerCase().includes("gene id")) {
   td.textContent = v; return td;
 }
 
-/* --- Render --- */
 function renderTable(cols, rows){
-  // header
+  // clear header first
   thead.innerHTML = "";
+  thead.style.background = '#f7fbff';   // light tint for header row
+  tbody.style.background = '#ffffff';   // white background for table body
+
+  // build header row
   const tr = document.createElement('tr');
   cols.forEach(c=>{
     const th = document.createElement('th');
     th.textContent = c;
     th.title = "Click to sort";
+    th.style.background = '#f7fbff';    // force light header cell background
+    th.style.color = '#223';            // dark readable text
     th.addEventListener('click', ()=> sortBy(c));
     tr.appendChild(th);
   });
   thead.appendChild(tr);
 
-  // body
+  // build body
   tbody.innerHTML = "";
   const frag = document.createDocumentFragment();
   rows.forEach(r=>{
     const tr = document.createElement('tr');
+    tr.style.background = '#ffffff';   // default white row background
     cols.forEach(c=>{
-      tr.appendChild(makeLinkedNode(c, r[c]));
+      const td = makeLinkedNode(c, r[c]);
+      td.style.background = '#ffffff'; // force white cells
+      td.style.color = '#223';         // readable text
+      tr.appendChild(td);
     });
     frag.appendChild(tr);
   });
   tbody.appendChild(frag);
 
+  // info
   info.classList.remove('hidden');
   info.textContent = `${rows.length.toLocaleString()} rows  •  ${cols.length} columns`;
 }
+
 
 /* --- Sort & Filter --- */
 function sortBy(key){

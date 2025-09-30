@@ -5,19 +5,22 @@
 <title>Drug repurposing Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+
+
+
 <style>
   /* ========= Design tokens ========= */
   :root{
-    --bg: #f5faff;         /* very light blue background */
+    --bg: #e6f3ff;         /* solid light blue background */
     --panel: #ffffff;      /* panels pure white */
-    --panel-2: #f0f7ff;    /* slightly bluish secondary panel */
-    --text: #1e3a5f;       /* dark navy text */
-    --muted: #6b7280;      /* gray muted text */
-    --accent: #2563eb;     /* medium blue accent */
-    --accent-2: #16a34a;   /* green accent */
-    --border: #cbd5e1;     /* light gray-blue border */
-    --border-soft: #e2e8f0;
-    --shadow: 0 4px 12px rgba(0,0,0,.08);
+    --panel-2: #f9fcff;    /* very light bluish secondary panel */
+    --text: #2c3e50;       /* softer navy text */
+    --muted: #7a8699;      /* lighter muted text */
+    --accent: #4a90e2;     /* lighter medium blue accent */
+    --accent-2: #38b871;   /* soft green accent */
+    --border: #d6e2f0;     /* lighter border */
+    --border-soft: #ecf3fa;/* softer border */
+    --shadow: 0 2px 8px rgba(0,0,0,.05);
     --radius: 14px;
   }
 
@@ -27,24 +30,23 @@
     margin:0;
     font: 14px/1.45 system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     color:var(--text);
-    background: radial-gradient(1400px 800px at 10% -10%, #dbeafe 0%, transparent 60%) , var(--bg);
+    background: var(--bg);   /* solid light blue */
     padding: 28px clamp(16px, 3vw, 32px);
   }
 
   h1{
     margin:0 0 14px;
     font-size: clamp(18px, 2.4vw, 26px);
-    letter-spacing:.2px;
     font-weight: 650;
-    background: linear-gradient(180deg, var(--accent), #3b82f6);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
+    letter-spacing:.2px;
+    color: var(--accent);
   }
 
   /* ========= Toolbar ========= */
   .bar{
     display:flex; flex-wrap:wrap; gap:10px 12px; align-items:center;
     margin: 10px 0 16px;
-    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    background: var(--panel); /* flat white */
     border:1px solid var(--border);
     border-radius: calc(var(--radius) + 4px);
     padding: 10px;
@@ -61,12 +63,11 @@
   .bar input[type="text"]::placeholder, .bar input[type="url"]::placeholder{ color:var(--muted) }
   .bar input[type="text"]:focus, .bar input[type="url"]:focus{
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(37,99,235,.15);
-    background:#f9f9ff;
+    box-shadow: 0 0 0 4px rgba(74,144,226,.2);
+    background:#f9fbff;
   }
 
   .bar input[type="file"]{
-    position: relative;
     padding: 10px 12px;
     border:1px dashed var(--border);
     border-radius:12px;
@@ -77,15 +78,15 @@
   button{
     padding:10px 14px;
     border:1px solid var(--accent);
-    background: linear-gradient(180deg, #3b82f6, #2563eb);
+    background: var(--accent);
     color: #ffffff;
     border-radius:12px;
     cursor:pointer;
-    transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,.1);
+    transition: transform .06s ease, box-shadow .15s ease;
+    box-shadow: 0 3px 8px rgba(0,0,0,.1);
   }
-  button:hover{ transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.15) }
-  button:active{ transform: translateY(0); box-shadow: 0 4px 10px rgba(0,0,0,.12) }
+  button:hover{ transform: translateY(-1px); box-shadow: 0 5px 14px rgba(0,0,0,.15) }
+  button:active{ transform: translateY(0); box-shadow: 0 3px 8px rgba(0,0,0,.12) }
 
   /* ========= Table shell ========= */
   .table-wrap{
@@ -93,31 +94,22 @@
     overflow:auto;
     border:1px solid var(--border);
     border-radius: var(--radius);
-    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    background: var(--panel); /* flat white */
     box-shadow: var(--shadow);
     position: relative;
   }
-
-  .table-wrap::before,
-  .table-wrap::after{
-    content:"";
-    position: sticky; top:0; bottom:0; width:24px; pointer-events:none; z-index:1;
-  }
-  .table-wrap::before{ left:0; background: linear-gradient(90deg, var(--panel) 0%, transparent 100%) }
-  .table-wrap::after{ right:0; background: linear-gradient(270deg, var(--panel) 0%, transparent 100%) }
 
   /* ========= Table ========= */
   table{ border-collapse: collapse; width:100%; font-size: 14px; }
 
   thead th{
     position: sticky; top:0; z-index: 2;
-    background: linear-gradient(180deg, #e0f2fe, #dbeafe);
+    background: #f0f8ff;  /* soft light blue */
     border-bottom:1px solid var(--border);
-    color: #1e3a5f;
+    color: var(--text);
     white-space: nowrap;
     padding: 10px 12px;
     text-align: left;
-    letter-spacing:.2px;
     cursor: pointer;
     user-select: none;
   }
@@ -126,17 +118,11 @@
     content:"";
     display:inline-block; margin-left:8px;
     width: 0; height: 0; border-left:5px solid transparent; border-right:5px solid transparent;
-    border-top:6px solid #2563eb; opacity:.5; transform: translateY(-2px);
+    border-top:6px solid var(--accent); opacity:.5; transform: translateY(-2px);
   }
-  thead th:hover{ color:#2563eb }
-  thead th:hover::after{ opacity:.85 }
 
-  tbody tr{ transition: background .12s ease, box-shadow .12s ease }
   tbody tr:nth-child(even){ background: #f9fbff }
-  tbody tr:hover{
-    background: #edf5ff;
-    box-shadow: inset 0 1px 0 rgba(0,0,0,.04), inset 0 -1px 0 rgba(0,0,0,.04);
-  }
+  tbody tr:hover{ background: #e8f3ff }
 
   th, td{
     padding: 10px 12px;
@@ -147,20 +133,11 @@
   td a{
     color: var(--accent);
     text-decoration: none;
-    border-bottom: 1px dashed rgba(37,99,235,.4);
-    padding-bottom:1px;
+    border-bottom: 1px dashed rgba(74,144,226,.5);
   }
-  td a:hover{
-    color: #1d4ed8;
-    border-bottom-style: solid;
-  }
+  td a:hover{ color:#2563eb; border-bottom-style: solid }
 
-  .muted{
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: 10px;
-    padding-left: 2px;
-  }
+  .muted{ color: var(--muted); font-size: 12px; margin-top: 10px; padding-left: 2px; }
   .hidden{ display:none }
 
   @media (max-width: 700px){
@@ -170,6 +147,13 @@
     table{ font-size: 13px }
   }
 </style>
+
+
+
+
+
+
+
 
 </head>
 <body>
@@ -184,6 +168,9 @@
   <div id="info" class="muted hidden"></div>
 
 <script>
+
+
+
 /* --- CSV parsing (quotes + , ; \t) --- */
 function detectDelimiter(text){
   const sample = text.split(/\r?\n/).slice(0,20).join("\n");
@@ -250,8 +237,6 @@ function rowsToObjects(rows){
 
 /* --- Link helpers --- */
 const rxPdbCore = /^[0-9][A-Za-z0-9]{3}$/;  // 3Q4U, 2PML
-const rxEmail   = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const rxDoi     = /^10\.\d{4,9}\/\S+$/i;
 
 function extractPdbAndChain(raw){
   if (!raw) return null;
@@ -335,13 +320,6 @@ if (h.toLowerCase().includes("gene id")) {
   return td;
 }
 
-
-  // 5) Email
-  if (rxEmail.test(v)){
-    const a = document.createElement('a');
-    a.href = `mailto:${v}`; a.textContent = v;
-    td.appendChild(a); return td;
-  }
 
   // 6) plain text
   td.textContent = v; return td;

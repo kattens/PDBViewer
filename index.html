@@ -18,13 +18,14 @@
   tr:nth-child(even){background:#fcfcfc}
   .muted{color:#666;font-size:12px;margin-top:8px}
   .hidden{display:none}
+  .error{color:#b00020}
 </style>
 </head>
 <body>
   <h1>CSV Viewer</h1>
   <div class="bar">
     <input id="search" type="text" placeholder="Filter rows (case-insensitive)..." />
-    <input id="url" type="url" placeholder="Paste CSV URL (supports comma/semicolon/tab)"/>
+    <input id="url" type="url" placeholder="Paste CSV URL (optional)"/>
     <button id="loadUrl">Load URL</button>
     <input id="file" type="file" accept=".csv,text/csv" />
   </div>
@@ -96,10 +97,9 @@ function rowsToObjects(rows){
   return {columns: cols, data: out};
 }
 
-/* --- Link helpers --- */
-const rxPdbCore = /^[0-9][A-Za-z0-9]{3}$/;  // 3Q4U, 2PML
+/* --- Link helpers (kept as-is) --- */
+const rxPdbCore = /^[0-9][A-Za-z0-9]{3}$/;
 const rxEmail   = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const rxDoi     = /^10\.\d{4,9}\/\S+$/i;
 
 function extractPdbAndChain(raw){
   if (!raw) return null;
@@ -116,41 +116,28 @@ function makeLinkedNode(header, value){
   const td = document.createElement('td');
   const v = (value ?? "").toString().trim();
   const h = (header ?? "").toString().toLowerCase();
-
   if (!v){ td.textContent = ""; return td; }
 
-  // 0) direct URL
   if (v.startsWith("http://") || v.startsWith("https://")){
-    const a = document.createElement('a');
-    a.href = v; a.textContent = v; a.target = "_blank"; a.rel="noopener noreferrer";
+    const a = document.createElement('a'); a.href = v; a.textContent = v; a.target = "_blank"; a.rel="noopener noreferrer";
     td.appendChild(a); return td;
   }
-
-  // 1) PubChem CID
   if (h.includes("pubchem") || (h.includes("cid") && !h.includes("acid"))){
-    const a = document.createElement('a');
-    a.href = `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(v)}`;
-    a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
+    const a = document.createElement('a'); a.href = `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(v)}`; a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
     td.appendChild(a); return td;
   }
-
-  // 2) RCSB PDB for target/malaria (or any PDB-looking value)
   if (h === "target" || h === "malaria"){
     const pdb = extractPdbAndChain(v);
     if (pdb){
-      const a = document.createElement('a');
-      const chainParam = pdb.chain ? `?chainId=${encodeURIComponent(pdb.chain)}` : "";
-      a.href = `https://www.rcsb.org/structure/${pdb.pdbId}${chainParam}`;
-      a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
+      const a = document.createElement('a'); const chainParam = pdb.chain ? `?chainId=${encodeURIComponent(pdb.chain)}` : "";
+      a.href = `https://www.rcsb.org/structure/${pdb.pdbId}${chainParam}`; a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
       td.appendChild(a); return td;
     }
   }
-
-  // 3) File name → NGL viewer
   if (h.includes("file name")){
     const a = document.createElement('a');
-    const viewerUrl = "./ngl/viewer.html";   // your NGL viewer page
-    const pdbPath   = "/MDpdb/" + v;         // absolute path from server root
+    const viewerUrl = "./ngl/viewer.html";
+    const pdbPath   = "/MDpdb/" + v;
     const ext = v.toLowerCase().split('.').pop();
     const fmt = (ext === 'cif' || ext === 'mmcif') ? 'mmcif'
               : (ext === 'bcif') ? 'bcif'
@@ -161,49 +148,31 @@ function makeLinkedNode(header, value){
     a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
     td.appendChild(a); return td;
   }
-
-  // 4) Gene ID → PlasmoDB
-if (h.toLowerCase().includes("gene id")) {
-  if (v) {
+  if (h.includes("gene id")){
     const a = document.createElement('a');
     a.href = `https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(v)}`;
-    a.textContent = v;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    td.appendChild(a);
-  } else {
-    td.textContent = ""; // keep cell empty if no gene id
-  }
-  return td;
-}
-
-
-  // 5) Email
-  if (rxEmail.test(v)){
-    const a = document.createElement('a');
-    a.href = `mailto:${v}`; a.textContent = v;
+    a.textContent = v; a.target = "_blank"; a.rel = "noopener noreferrer";
     td.appendChild(a); return td;
   }
-
-  // 6) plain text
+  if (rxEmail.test(v)){
+    const a = document.createElement('a'); a.href = `mailto:${v}`; a.textContent = v;
+    td.appendChild(a); return td;
+  }
   td.textContent = v; return td;
 }
 
 /* --- Render --- */
 function renderTable(cols, rows){
-  // header
   thead.innerHTML = "";
   const tr = document.createElement('tr');
   cols.forEach(c=>{
     const th = document.createElement('th');
-    th.textContent = c;
-    th.title = "Click to sort";
+    th.textContent = c; th.title = "Click to sort";
     th.addEventListener('click', ()=> sortBy(c));
     tr.appendChild(th);
   });
   thead.appendChild(tr);
 
-  // body
   tbody.innerHTML = "";
   const frag = document.createDocumentFragment();
   rows.forEach(r=>{
@@ -216,6 +185,7 @@ function renderTable(cols, rows){
   tbody.appendChild(frag);
 
   info.classList.remove('hidden');
+  info.classList.remove('error');
   info.textContent = `${rows.length.toLocaleString()} rows  •  ${cols.length} columns`;
 }
 
@@ -248,16 +218,44 @@ async function loadFromText(text){
 
 async function loadFromURL(url){
   const res = await fetch(url, {cache:'no-store'});
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   const txt = await res.text();
   await loadFromText(txt);
 }
+
+/* Try common local paths next to index.html */
+async function loadLocalCSV(){
+  if (location.protocol === 'file:'){
+    info.classList.remove('hidden'); info.classList.add('error');
+    info.textContent = 'This page is opened directly from the file system. Browsers block fetch("Data.csv") in file:// context. Please serve via a local server (e.g., VS Code Live Server) or GitHub Pages.';
+    return;
+  }
+  const candidates = [
+    './Data.csv',
+    './data.csv',
+    './data/Data.csv',
+    './data/data.csv'
+  ];
+  const tried = [];
+  for (const c of candidates){
+    try { await loadFromURL(c); return; }
+    catch(e){ tried.push(`${c} → ${e.message}`); }
+  }
+  info.classList.remove('hidden'); info.classList.add('error');
+  info.textContent = `Could not find CSV. Tried:\n${tried.join('\n')}`;
+}
+
+/* --- Events --- */
+window.addEventListener("DOMContentLoaded", loadLocalCSV);
 
 document.getElementById('loadUrl').addEventListener('click', async ()=>{
   const url = document.getElementById('url').value.trim();
   if (!url) return alert("Please paste a CSV URL.");
   try { await loadFromURL(url); }
-  catch (e){ alert("Failed to load URL: " + e.message); }
+  catch (e){
+    info.classList.remove('hidden'); info.classList.add('error');
+    info.textContent = `Failed to load: ${e.message}`;
+  }
 });
 
 document.getElementById('file').addEventListener('change', async (e)=>{

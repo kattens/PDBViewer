@@ -276,6 +276,16 @@ document.getElementById('file').addEventListener('change', async (e)=>{
 searchBox.addEventListener('input', ()=>{
   renderTable(columns, filteredRows());
 });
+
+/* --- Auto load a default CSV file from the same folder as index.html --- */
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await loadFromURL("./Data.csv");   // change "data.csv" to your filename
+  } catch (e) {
+    console.error("Failed to auto-load CSV:", e);
+  }
+});
+
 </script>
 </body>
 </html>

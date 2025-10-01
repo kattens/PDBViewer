@@ -323,7 +323,7 @@ function makeLinkedNode(header, value){
   }
 
   // 2) RCSB PDB for target/malaria (or any PDB-looking value)
-  if (h === "target" || h === "malaria"){
+  if (h === "pdb_target_id" || h === "malaria"){
     const pdb = extractPdbAndChain(v);
     if (pdb){
       const a = document.createElement('a');
@@ -335,17 +335,24 @@ function makeLinkedNode(header, value){
   }
 
   // 3) 3D Interaction → NGL viewer
-  if (h.includes("3D Interaction")) {
+  // note: `h` is already lowercased above
+  if (h === "3d interaction" || h.includes("3d interaction")) {
     const a = document.createElement('a');
-    const viewerUrl = "./ngl/viewer.html";   // viewer page
-    const pdbPath   = "../MDpdb/" + v;       // relative path (not absolute)
 
-    const ext = v.toLowerCase().split('.').pop();
+    // viewer page relative to index.html
+    const viewerUrl = "./ngl/viewer.html";
+
+    // file path relative to index.html (same repo)
+    // ex: if v = "1VRW_A_3AM5_A_TCL.pdb"
+    const pdbPath = `../MDpdb/${encodeURIComponent(v)}`;
+
+    // pick format from extension, default to pdb
+    const ext = (v.split('.').pop() || "").toLowerCase();
     const fmt = (ext === 'cif' || ext === 'mmcif') ? 'mmcif'
-              : (ext === 'bcif') ? 'bcif'
-              : (ext === 'sdf')  ? 'sdf'
-              : (ext === 'mol2') ? 'mol2'
-              : 'pdb';
+            : (ext === 'bcif') ? 'bcif'
+            : (ext === 'sdf')  ? 'sdf'
+            : (ext === 'mol2') ? 'mol2'
+            : 'pdb';
 
     a.href = `${viewerUrl}?load=${encodeURIComponent(pdbPath)}&format=${encodeURIComponent(fmt)}`;
     a.textContent = v;
@@ -356,25 +363,25 @@ function makeLinkedNode(header, value){
   }
 
 
-  // 4) Gene ID → PlasmoDB
-if (h.toLowerCase().includes("gene id")) {
-  if (v) {
-    const a = document.createElement('a');
-    a.href = `https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(v)}`;
-    a.textContent = v;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    td.appendChild(a);
-  } else {
-    td.textContent = ""; // keep cell empty if no gene id
+    // 4) Gene ID → PlasmoDB
+  if (h.toLowerCase().includes("gene id")) {
+    if (v) {
+      const a = document.createElement('a');
+      a.href = `https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(v)}`;
+      a.textContent = v;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      td.appendChild(a);
+    } else {
+      td.textContent = ""; // keep cell empty if no gene id
+    }
+    return td;
   }
-  return td;
-}
 
 
-  // 6) plain text
-  td.textContent = v; return td;
-}
+    // 6) plain text
+    td.textContent = v; return td;
+  }
 
 /* --- Render table --- */
 function renderTable(cols, rows){

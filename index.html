@@ -334,8 +334,8 @@ function makeLinkedNode(header, value){
     }
   }
 
-  // 3) File name → NGL viewer
-  if (h.includes("file name")) {
+  // 3) 3D Interaction → NGL viewer
+  if (h.includes("3D Interaction")) {
     const a = document.createElement('a');
     const viewerUrl = "./ngl/viewer.html";   // viewer page
     const pdbPath   = "../MDpdb/" + v;       // relative path (not absolute)

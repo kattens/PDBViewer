@@ -121,6 +121,20 @@
   .table-wrap::before{ left:0; background: linear-gradient(90deg, var(--panel) 0%, transparent 100%) }
   .table-wrap::after{ right:0; background: linear-gradient(270deg, var(--panel) 0%, transparent 100%) }
 
+
+/* ========= Summary panel ========= */
+  .summary-card{
+  margin-top:12px;
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  white-space: pre-wrap;
+  font-size: 14px;
+  color: var(--text);
+}
+
   /* ========= Table ========= */
   table{ border-collapse: collapse; width:100%; font-size: 14px; }
 
@@ -198,6 +212,10 @@
   </div>
   <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
   <div id="info" class="muted hidden"></div>
+  
+  <div id="summaryPanel" class="summary-card hidden"> 
+  <pre id="summaryText" style="margin:0"></pre>
+  </div>
 
 
 <script>
@@ -335,18 +353,16 @@ function makeLinkedNode(header, value){
   }
 
   // 3) 3D Interaction → NGL viewer
-  // note: `h` is already lowercased above
   if (h === "3d interaction" || h.includes("3d interaction")) {
     const a = document.createElement('a');
 
-    // viewer page relative to index.html
+    // viewer page (relative to index.html)
     const viewerUrl = "./ngl/viewer.html";
 
-    // file path relative to index.html (same repo)
-    // ex: if v = "1VRW_A_3AM5_A_TCL.pdb"
-    const pdbPath = `../MDpdb/${encodeURIComponent(v)}`;
+    // path that the *viewer* will fetch (viewer is in /ngl, MDpdb is one level up)
+    const pdbPathForViewer = `../MDpdb/${encodeURIComponent(v)}`;
 
-    // pick format from extension, default to pdb
+    // detect format
     const ext = (v.split('.').pop() || "").toLowerCase();
     const fmt = (ext === 'cif' || ext === 'mmcif') ? 'mmcif'
             : (ext === 'bcif') ? 'bcif'
@@ -354,13 +370,15 @@ function makeLinkedNode(header, value){
             : (ext === 'mol2') ? 'mol2'
             : 'pdb';
 
-    a.href = `${viewerUrl}?load=${encodeURIComponent(pdbPath)}&format=${encodeURIComponent(fmt)}`;
+    // build link without re-encoding the whole path
+    a.href = `${viewerUrl}?load=${pdbPathForViewer}&format=${encodeURIComponent(fmt)}`;
     a.textContent = v;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     td.appendChild(a);
     return td;
   }
+
 
 
     // 4) Gene ID → PlasmoDB
@@ -422,6 +440,8 @@ function renderTable(cols, rows){
   // info
   info.classList.remove('hidden');
   info.textContent = `${rows.length.toLocaleString()} rows  •  ${cols.length} columns`;
+  updateSummary(rows);
+
 }
 
 
@@ -442,6 +462,63 @@ function filteredRows(){
   const q = searchBox.value.trim().toLowerCase();
   if (!q) return data;
   return data.filter(row => columns.some(c => String(row[c]).toLowerCase().includes(q)));
+}
+
+/** Find the first column whose header matches any of the probes (case-insensitive). */
+function findColumn(probes){
+  const lcCols = columns.map(c => c.toLowerCase());
+  for (const probe of probes){
+    const idx = lcCols.findIndex(h => h === probe || h.includes(probe));
+    if (idx !== -1) return columns[idx];
+  }
+  return null;
+}
+
+/** Build and render the summary for the CURRENT (filtered) rows. */
+function updateSummary(rows){
+  const panel = document.getElementById('summaryPanel');
+  const out   = document.getElementById('summaryText');
+
+  if (!rows || !rows.length){
+    panel.classList.add('hidden');
+    out.textContent = "";
+    return;
+  }
+
+  // Try to resolve likely column names in a flexible way.
+  const interactionCol = findColumn(["3d interaction", "3d_interaction", "interaction", "file"]); // your “3D Interaction” column
+  const drugCol        = findColumn(["ligand_id", "drug", "malaria ligand", "target ligand", "ligand"]);
+  const malariaCol     = findColumn(["malaria", "malaria id", "malaria protein"]);
+  const geneCol        = findColumn(["gene id", "malaria gene", "target gene", "gene"]);
+
+  // Helpers
+  const nonEmpty = v => v !== undefined && v !== null && String(v).trim() !== "";
+  const uniq = arr => Array.from(new Set(arr));
+
+  // Pairs = rows that actually have a 3D interaction file/value
+  const pairCount = interactionCol
+    ? rows.filter(r => nonEmpty(r[interactionCol])).length
+    : rows.length; // fallback: count all visible rows
+
+  const uniqueDrugs = drugCol
+    ? uniq(rows.map(r => r[drugCol]).filter(nonEmpty)).length
+    : 0;
+
+  const uniqueMalaria = malariaCol
+    ? uniq(rows.map(r => r[malariaCol]).filter(nonEmpty)).length
+    : 0;
+
+  const uniqueGenes = geneCol
+    ? uniq(rows.map(r => r[geneCol]).filter(nonEmpty)).length
+    : 0;
+
+  out.textContent =
+`Pairs of malaria and drug (3D Interactions): ${pairCount}
+Unique drugs: ${uniqueDrugs}
+Unique malaria proteins: ${uniqueMalaria}
+Unique gene names: ${uniqueGenes}`;
+
+  panel.classList.remove('hidden');
 }
 
 /* --- Loaders --- */
@@ -475,6 +552,7 @@ document.getElementById('file').addEventListener('change', async (e)=>{
 
 searchBox.addEventListener('input', ()=>{
   renderTable(columns, filteredRows());
+  renderTable(columns, rows); 
 });
 
 /* --- Auto load a default CSV file from the same folder as index.html --- */

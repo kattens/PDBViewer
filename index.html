@@ -340,15 +340,25 @@ function makeLinkedNode(header, value){
     td.appendChild(a); return td;
   }
 
-  // 2) RCSB PDB for target/malaria (or any PDB-looking value)
-  if (h === "pdb_target_id" || h === "malaria"){
+ // 2) RCSB PDB for target/malaria (or any PDB-looking value)
+  if (h === "pdb_target_id" || h === "malaria") {
     const pdb = extractPdbAndChain(v);
-    if (pdb){
+    if (pdb) {
       const a = document.createElement('a');
       const chainParam = pdb.chain ? `?chainId=${encodeURIComponent(pdb.chain)}` : "";
-      a.href = `https://www.rcsb.org/structure/${pdb.pdbId}${chainParam}`;
-      a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
-      td.appendChild(a); return td;
+      
+      // If the name (v) is longer than 4 letters, link to UniProt
+      if (pdb.pdbId.length > 4) {
+        a.href = `https://www.uniprot.org/uniprotkb/${encodeURIComponent(pdb.pdbId)}/entry`;
+      } else {
+        a.href = `https://www.rcsb.org/structure/${pdb.pdbId}${chainParam}`;
+      }
+
+      a.textContent = v;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      td.appendChild(a);
+      return td;
     }
   }
 

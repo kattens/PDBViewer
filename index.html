@@ -551,7 +551,7 @@ searchBox.addEventListener('input', ()=>{
 /* --- Auto load a default CSV file from the same folder as index.html --- */
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    await loadFromURL("./Data.csv");
+    await loadFromURL("./CompData.csv");
   } catch (e) {
     console.error("Failed to auto-load CSV:", e);
   }

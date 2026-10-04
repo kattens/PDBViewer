@@ -66,6 +66,19 @@
   .chip:hover{background:#1d2d1d}
   .chip.sel{background:var(--sel);color:#000;border-color:var(--sel)}
   .seqempty{padding:5px 8px;color:#777}
+  .seqres.str{align-items:center}
+  .seqres.str .r .n{display:none}
+  .seqres.str .r{width:9px}
+  .seqres.str .r .a{width:9px}
+  .gap{color:#666;padding:0 2px;align-self:flex-end}
+  .copy{background:#222;color:#bbb;border:1px solid #444;font:11px system-ui;margin-right:6px;padding:0 5px;cursor:pointer;align-self:center;position:sticky;left:230px;z-index:1}
+  .copy:hover{background:#444;color:#fff}
+  .chip .dim{color:#6a8f6a;font-size:11px}
+  .seqtools{display:flex;gap:4px;align-items:center;padding:2px 6px;position:sticky;left:230px}
+  .seqtools button{background:#222;color:#bbb;border:1px solid #444;font:11px system-ui;padding:1px 7px;cursor:pointer}
+  .seqtools button.on{background:#3a5a8a;color:#fff}
+  .seqinfo{color:#aaa;font:11px system-ui;margin-left:10px}
+  .seqinfo a{color:var(--accent)}
 
   /* right side panel */
   #side{background:#000;border-left:1px solid #222;display:flex;flex-direction:column;min-height:0}
@@ -550,45 +563,116 @@ function chipEl(name, rp, cls) {
   return el;
 }
 
-function seqRow(name, chain, type, typeCls, children, keys) {
+let seqMode = "string";        // "string" = compact one-line sequence, "residues" = numbered
+
+/* ligand name: resname, or the ligand code from file names like 1A29_TFP_P24044 */
+const GENERIC_RES = /^(D|L|UNL|UNK|LIG|DRG|INH|MOL|\w)$/i;
+const FILE_RE_NAME = /^([0-9][A-Za-z0-9]{3})_([A-Za-z0-9]{1,6})_([A-Za-z0-9]+)/;
+function ligandName(objName, resname) {
+  const m = objName.match(FILE_RE_NAME);
+  return (GENERIC_RES.test(resname) && m) ? m[2] : resname;
+}
+function formula(rp) {
+  const c = {};
+  rp.eachAtom(a => { const e = (a.element || "?").replace(/^(.)(.*)$/, (m, x, y) => x.toUpperCase() + y.toLowerCase()); c[e] = (c[e] || 0) + 1; });
+  const order = ["C", "H", ...Object.keys(c).filter(e => e !== "C" && e !== "H").sort()];
+  return order.filter(e => c[e]).map(e => e + (c[e] > 1 ? c[e] : "")).join("");
+}
+
+function copyText(txt, btn) {
+  const done = () => { const t = btn.textContent; btn.textContent = "✓"; setTimeout(() => btn.textContent = t, 900); };
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, () => prompt("Copy:", txt));
+  else prompt("Copy:", txt);
+}
+
+function seqRow(name, chain, type, typeCls, children, keys, copy) {
   const row = document.createElement("div"); row.className = "seqrow";
   const lab = document.createElement("div"); lab.className = "seqlab";
   lab.innerHTML = `<span class="o" title="${name}">${name}</span><span class="c">${chain}</span><span class="t ${typeCls}">${type}</span>`;
   lab.title = "click: select all of this row · dbl-click: zoom";
   lab.onclick = () => { const allOn = keys.every(k => selection[name].has(k)); keys.forEach(k => toggleRes(name, k, !allOn)); updateHighlight(); };
   lab.ondblclick = () => objects[name].comp.autoView(keys.join(" or "), 600);
-  const res = document.createElement("div"); res.className = "seqres";
+  const res = document.createElement("div"); res.className = "seqres" + (seqMode === "string" ? " str" : "");
+  if (copy) {
+    const b = document.createElement("button"); b.className = "copy"; b.textContent = "⧉"; b.title = "copy sequence (FASTA)";
+    b.onclick = e => { e.stopPropagation(); copyText(copy, b); };
+    res.appendChild(b);
+  }
   children.forEach(c => res.appendChild(c));
   row.append(lab, res);
   return row;
+}
+
+function gapEl(n) {
+  const g = document.createElement("span"); g.className = "gap";
+  g.textContent = seqMode === "string" ? "·" : "··"; g.title = `${n} missing residue(s)`;
+  return g;
 }
 
 function renderSequence() {
   seqPanel.innerHTML = "";
   const names = Object.keys(objects);
   if (!names.length) { seqPanel.innerHTML = `<div class="seqempty">No structure loaded.</div>`; return; }
+
   const head = document.createElement("div"); head.className = "seqrow seqhead";
-  head.innerHTML = `<div class="seqlab"><span>Object</span><span class="c">Ch</span><span>Type</span></div>`;
+  head.innerHTML = `<div class="seqlab"><span>Object</span><span class="c">Ch</span><span>Type</span></div>
+    <div class="seqtools">
+      <button data-mode="string" class="${seqMode === "string" ? "on" : ""}">String</button>
+      <button data-mode="residues" class="${seqMode === "residues" ? "on" : ""}">Residues</button>
+      <button id="copyAll" title="copy all chains as FASTA">Copy FASTA</button>
+      <span class="seqinfo"></span>
+    </div>`;
   seqPanel.appendChild(head);
+  head.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { seqMode = b.dataset.mode; renderSequence(); });
+  const fastaAll = [];
+
+  // file-name info  (PDB_LIGAND_UNIPROT)
+  const m = names[0].match(FILE_RE_NAME);
+  if (m) head.querySelector(".seqinfo").innerHTML =
+    `PDB <a href="https://www.rcsb.org/structure/${m[1]}" target="_blank">${m[1]}</a> · ligand <b>${m[2]}</b> · UniProt <a href="https://www.uniprot.org/uniprotkb/${m[3]}/entry" target="_blank">${m[3]}</a>`;
 
   for (const name of names) {
     const o = objects[name];
     const chains = new Map(), ligands = [], waters = [];
     o.comp.structure.eachResidue(rp => {
+      const r = { resno: rp.resno, inscode: rp.inscode, resname: rp.resname, chainname: rp.chainname };
       if (rp.isWater()) waters.push({ key: resKey(rp) });
       else if (rp.isPolymer()) {
         if (!chains.has(rp.chainname)) chains.set(rp.chainname, { type: rp.isNucleic() ? "nucleic" : "protein", list: [] });
-        chains.get(rp.chainname).list.push({ resno: rp.resno, inscode: rp.inscode, resname: rp.resname, chainname: rp.chainname });
-      } else ligands.push({ resno: rp.resno, inscode: rp.inscode, resname: rp.resname, chainname: rp.chainname, ion: rp.atomCount === 1 });
+        chains.get(rp.chainname).list.push(r);
+      } else ligands.push(Object.assign(r, { ion: rp.atomCount === 1, n: rp.atomCount, formula: formula(rp) }));
     }, new NGL.Selection(o.keep));
 
+    // polymer chains
     for (const [ch, { type, list }] of chains) {
-      const els = list.map((rp, i) => residueEl(name, rp, rp.resno % 10 === 0 || i === 0));
-      seqPanel.appendChild(seqRow(name, ch || "–", `${type} ${list.length}`, "", els, list.map(resKey)));
+      const seq = list.map(r => ONE[r.resname] || "X").join("");
+      const fasta = `>${name}|chain ${ch}|${type}|${list[0].resno}-${list[list.length - 1].resno}\n${seq}`;
+      fastaAll.push(fasta);
+      const els = [];
+      list.forEach((r, i) => {
+        if (i && r.resno - list[i - 1].resno > 1) els.push(gapEl(r.resno - list[i - 1].resno - 1));
+        els.push(residueEl(name, r, seqMode === "residues" && (r.resno % 10 === 0 || i === 0)));
+      });
+      const range = `${list[0].resno}–${list[list.length - 1].resno}`;
+      seqPanel.appendChild(seqRow(name, ch || "–", `${type} ${list.length}`, "", els, list.map(resKey), fasta))
+        .querySelector(".seqlab").title = `${type} chain ${ch}, residues ${range}`;
     }
+
+    // ligands / ions
     const ligs = ligands.filter(l => !l.ion), ions = ligands.filter(l => l.ion);
-    if (ligs.length) seqPanel.appendChild(seqRow(name, "", `ligand ${ligs.length}`, "lig", ligs.map(l => chipEl(name, l)), ligs.map(resKey)));
-    if (ions.length) seqPanel.appendChild(seqRow(name, "", `ion ${ions.length}`, "lig", ions.map(l => chipEl(name, l)), ions.map(resKey)));
+    const ligChip = l => {
+      const el = chipEl(name, l);
+      const nm = ligandName(name, l.resname);
+      el.innerHTML = `<b>${nm}</b> ${l.resname !== nm ? `<span class="dim">${l.resname}</span>` : ""}${l.resno}${l.chainname ? ":" + l.chainname : ""} <span class="dim">${l.formula}</span>`;
+      el.title = `${nm} (residue ${l.resname} ${l.resno}, chain ${l.chainname}) – ${l.n} atoms, ${l.formula}`;
+      return el;
+    };
+    const chainsOf = arr => [...new Set(arr.map(l => l.chainname))].join(",");
+    if (ligs.length) {
+      const txt = ligs.map(l => `${ligandName(name, l.resname)} ${l.resname}${l.resno}:${l.chainname} ${l.formula}`).join("\n");
+      seqPanel.appendChild(seqRow(name, chainsOf(ligs), `ligand ${ligs.length}`, "lig", ligs.map(ligChip), ligs.map(resKey), txt));
+    }
+    if (ions.length) seqPanel.appendChild(seqRow(name, chainsOf(ions), `ion ${ions.length}`, "lig", ions.map(l => chipEl(name, l)), ions.map(resKey)));
     if (waters.length) {
       const keys = waters.map(w => w.key);
       const chip = document.createElement("span");
@@ -597,6 +681,7 @@ function renderSequence() {
       seqPanel.appendChild(seqRow(name, "", `water`, "wat", [chip], keys));
     }
   }
+  head.querySelector("#copyAll").onclick = e => copyText(fastaAll.join("\n"), e.target);
 
   // click / drag-select / dbl-click zoom on residues and chips
   seqPanel.querySelectorAll("[data-key]").forEach(el => {

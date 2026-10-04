@@ -5,72 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PyMOL Viewer</title>
 
-<!-- NGL: use your repo copy (ngl/ngl.js) or the CDN below -->
+<!-- NGL 3D engine + CSV parser -->
 <script src="https://cdn.jsdelivr.net/npm/ngl@2.3.1/dist/ngl.js"></script>
-<!-- CSV parser -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <style>
-  :root{
-    --menubar:#e8e8e8; --menutext:#111; --ext:#2b2b2b; --log:#1c1c1c; --logtext:#d8d8d8;
-    --panel:#000; --btn:#3a3a3a; --btnhi:#5a5a8a; --accent:#7fd3ff; --border:#444;
-  }
+  :root{ --menubar:#e8e8e8; --ext:#2b2b2b; --log:#1c1c1c; --logtext:#d8d8d8; --border:#444; --accent:#7fd3ff; --sel:#ff55ff; }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:#000;color:#ddd;font:13px/1.3 "DejaVu Sans Mono",Consolas,Menlo,monospace;overflow:hidden}
-  body{display:grid;grid-template-rows:24px auto 1fr 32vh;height:100vh}
+  body{display:grid;grid-template-rows:24px auto minmax(0,1fr) 30vh;grid-template-columns:minmax(0,1fr);height:100vh}
+  body.viewer-only{grid-template-rows:24px auto minmax(0,1fr)}
+  body.viewer-only #data{display:none}
 
-  /* ---------- top menu bar (File / Display / Setting / Help) ---------- */
-  #menubar{background:var(--menubar);color:var(--menutext);display:flex;align-items:center;font-family:system-ui,sans-serif;font-size:13px;border-bottom:1px solid #aaa}
+  /* menu bar */
+  #menubar{background:var(--menubar);color:#111;display:flex;align-items:center;font:13px system-ui,sans-serif;border-bottom:1px solid #aaa}
   #menubar span{padding:3px 10px;cursor:default}
   #menubar span:hover{background:#cfd8ff}
   #menubar .title{margin-left:auto;opacity:.6;font-size:12px}
 
-  /* ---------- external GUI: log + command line + buttons ---------- */
+  /* external GUI */
   #external{background:var(--ext);display:grid;grid-template-columns:1fr auto;border-bottom:1px solid var(--border)}
-  #log{background:var(--log);color:var(--logtext);height:96px;overflow-y:auto;padding:4px 8px;white-space:pre-wrap;margin:0}
+  #log{background:var(--log);color:var(--logtext);height:84px;overflow-y:auto;padding:4px 8px;white-space:pre-wrap;margin:0}
   .cmdrow{display:flex;align-items:center;background:var(--log);border-top:1px solid #333;padding:2px 6px}
   .cmdrow label{color:#fff;margin-right:6px}
   .cmdrow input{flex:1;background:transparent;border:0;color:#fff;font:inherit;outline:none}
-  #extbtns{display:grid;grid-template-columns:repeat(3,72px);gap:3px;padding:6px;align-content:start}
-  #extbtns button,#playback button{background:#d9d9d9;color:#111;border:1px solid #888;font:12px system-ui,sans-serif;padding:3px 0;cursor:pointer}
-  #extbtns button:hover,#playback button:hover{background:#fff}
+  #extbtns{display:grid;grid-template-columns:repeat(4,70px);gap:3px;padding:6px;align-content:start}
+  .gbtn{background:#d9d9d9;color:#111;border:1px solid #888;font:12px system-ui,sans-serif;padding:3px 0;cursor:pointer}
+  .gbtn:hover{background:#fff}
+  .gbtn.on{background:#9fc6ff}
 
-  /* ---------- main: viewer + object panel ---------- */
-  #main{display:grid;grid-template-columns:1fr 270px;min-height:0}
-  #viewcol{position:relative;display:flex;flex-direction:column;min-height:0}
-  #viewport{flex:1;min-height:0}
-  #viewcol .cmdrow{background:#000;border-top:1px solid #222}
+  /* main */
+  #main{display:grid;grid-template-columns:minmax(0,1fr) 280px;min-height:0;min-width:0}
+  #viewcol{position:relative;display:flex;flex-direction:column;min-height:0;min-width:0}
+  #viewwrap{position:relative;flex:1;min-height:0}
+  #viewport{position:absolute;inset:0}
   #status{position:absolute;left:8px;top:6px;color:#ccc;pointer-events:none;font-size:12px;text-shadow:0 0 3px #000}
+  #zoombox{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px}
+  #zoombox button{width:30px;height:30px;background:rgba(60,60,60,.85);color:#fff;border:1px solid #777;font:bold 16px system-ui;cursor:pointer;border-radius:4px}
+  #zoombox button:hover{background:#666}
+  #viewcol > .cmdrow{background:#000;border-top:1px solid #222}
 
-  #side{background:var(--panel);border-left:1px solid #222;display:flex;flex-direction:column;min-height:0}
-  #objects{flex:1;overflow-y:auto;padding:4px}
+  /* sequence panel */
+  #seqpanel{background:#0b0b0b;border-bottom:1px solid #333;overflow:auto;max-height:42%;min-height:28px;resize:vertical;font-size:12px}
+  #seqpanel.hidden{display:none}
+  .seqrow{display:flex;align-items:flex-end;white-space:nowrap;min-width:max-content;border-bottom:1px solid #1b1b1b}
+  .seqlab{position:sticky;left:0;z-index:2;display:grid;grid-template-columns:96px 40px 88px;background:#161616;border-right:1px solid #333;align-self:stretch;align-items:center;cursor:pointer}
+  .seqlab span{padding:2px 4px;overflow:hidden;text-overflow:ellipsis}
+  .seqlab .o{color:#fff}.seqlab .c{color:#ffd166;text-align:center}.seqlab .t{color:#8ab4f8}
+  .seqlab .t.lig{color:#7ee787}.seqlab .t.wat{color:#79c0ff}
+  .seqlab:hover{background:#25253a}
+  .seqhead .seqlab{cursor:default;color:#888}
+  .seqres{display:flex;padding:1px 6px}
+  .r{display:inline-flex;flex-direction:column;align-items:center;width:11px;cursor:pointer;user-select:none;position:relative}
+  .r .n{font-size:9px;color:#777;height:11px;position:relative;left:3px}
+  .r .a{color:#ddd;width:11px;text-align:center}
+  .r:hover .a{background:#334}
+  .r.sel .a{background:var(--sel);color:#000}
+  .chip{display:inline-block;margin:2px 3px;padding:0 5px;border:1px solid #2f5f2f;border-radius:3px;color:#7ee787;cursor:pointer;user-select:none}
+  .chip.wat{border-color:#24476b;color:#79c0ff}
+  .chip:hover{background:#1d2d1d}
+  .chip.sel{background:var(--sel);color:#000;border-color:var(--sel)}
+  .seqempty{padding:5px 8px;color:#777}
+
+  /* right side panel */
+  #side{background:#000;border-left:1px solid #222;display:flex;flex-direction:column;min-height:0}
+  #objects{flex:1;overflow-y:auto;padding:4px;min-height:60px}
   .obj{display:flex;align-items:center;gap:2px;margin-bottom:2px}
   .obj .name{flex:1;padding:2px 6px;cursor:pointer;color:#fff;background:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .obj .name.off{color:#666}
+  .obj .name.sele{color:var(--sel)}
   .obj .name:hover{background:#2a2a3a}
   .obj button{width:22px;height:20px;padding:0;border:0;font:bold 12px inherit;cursor:pointer;color:#fff}
   .b-A{background:#5d5d7a}.b-S{background:#4b6e4b}.b-H{background:#7a4b4b}.b-L{background:#6e6a3c}
   .b-C{background:linear-gradient(90deg,#c33,#cc3,#3c3,#3cc,#33c,#c3c)}
   .obj button:hover{filter:brightness(1.35)}
 
-  #playback{display:flex;gap:2px;padding:4px;border-top:1px solid #222}
-  #playback button{flex:1}
-  #mouse{font-size:11px;color:#9a9a9a;padding:4px 6px 6px;border-top:1px solid #222}
-  #mouse b{color:#fff}
-  #mouse table{border-collapse:collapse;width:100%}
-  #mouse td{padding:0 3px}
-  #mouse .r{color:#f88}#mouse .g{color:#8f8}#mouse .c{color:#8cf}
+  /* style panel */
+  #style{border-top:1px solid #333;padding:6px;font:12px system-ui,sans-serif;color:#ccc}
+  #style h4{margin:0 0 5px;font-size:12px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+  #style select{background:#111;color:#ddd;border:1px solid #555;font:12px system-ui;max-width:150px}
+  .reps{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin:5px 0}
+  .reps button{background:#2c2c2c;color:#eee;border:1px solid #555;font:11px system-ui;padding:3px 0;cursor:pointer}
+  .reps button:hover{background:#4a4a6a}
+  .srow{display:flex;align-items:center;gap:6px;margin:4px 0}
+  .srow label{width:78px;flex:none}
+  .srow input[type=range]{flex:1}
+  .srow input[type=color]{width:34px;height:22px;border:0;padding:0;background:none}
+  .hint{color:#888;font-size:11px;margin-top:4px}
 
-  /* ---------- dropdown menus ---------- */
-  .menu{position:fixed;z-index:50;background:#f2f2f2;color:#111;border:1px solid #777;box-shadow:2px 3px 8px rgba(0,0,0,.5);font:13px system-ui,sans-serif;min-width:150px;padding:2px 0}
+  #mouse{font-size:11px;color:#9a9a9a;padding:4px 6px 6px;border-top:1px solid #222}
+
+  /* menus */
+  .menu{position:fixed;z-index:50;background:#f2f2f2;color:#111;border:1px solid #777;box-shadow:2px 3px 8px rgba(0,0,0,.5);font:13px system-ui,sans-serif;min-width:150px;padding:2px 0;max-height:80vh;overflow-y:auto}
   .menu div{padding:3px 14px;cursor:default;display:flex;align-items:center;gap:8px}
   .menu div:hover{background:#3a6fd8;color:#fff}
-  .menu .hdr{font-weight:600;background:#ddd;cursor:default}
+  .menu .hdr{font-weight:600;background:#ddd}
   .menu .hdr:hover{background:#ddd;color:#111}
   .menu hr{border:0;border-top:1px solid #bbb;margin:2px 0}
   .menu .sw{width:12px;height:12px;border:1px solid #555}
 
-  /* ---------- data table (your CSV viewer) ---------- */
+  /* CSV data table (only when opened without ?load=) */
   #data{background:#111;border-top:2px solid var(--border);display:flex;flex-direction:column;min-height:0}
   #datatools{display:flex;gap:8px;align-items:center;padding:4px 8px;background:#1d1d1d;flex-wrap:wrap}
   #datatools select,#datatools input[type=text]{background:#000;color:#ddd;border:1px solid #555;font:inherit;padding:2px 4px}
@@ -83,73 +117,96 @@
   table.data a{color:var(--accent)}
 
   @media (max-width:760px){
-    body{grid-template-rows:24px auto 1fr 35vh}
     #external{grid-template-columns:1fr}
-    #extbtns{grid-template-columns:repeat(6,1fr)}
-    #main{grid-template-columns:1fr}
+    #extbtns{grid-template-columns:repeat(4,1fr)}
+    #main{grid-template-columns:minmax(0,1fr)}
     #side{display:none}
   }
 </style>
 </head>
 <body>
 
-<!-- ================= MENU BAR ================= -->
 <div id="menubar">
   <span data-menu="file">File</span>
   <span data-menu="display">Display</span>
   <span data-menu="setting">Setting</span>
   <span data-menu="help">Help</span>
-  <span class="title">PDBViewer · PyMOL-style</span>
+  <span class="title">PyMOL-style viewer</span>
 </div>
 
-<!-- ================= EXTERNAL GUI ================= -->
 <div id="external">
   <div>
     <pre id="log"></pre>
     <div class="cmdrow"><label>PyMOL&gt;</label><input id="cmd1" autocomplete="off" spellcheck="false"></div>
   </div>
   <div id="extbtns">
-    <button data-cmd="reset">Reset</button>
-    <button data-cmd="zoom">Zoom</button>
-    <button data-cmd="orient">Orient</button>
-    <button data-cmd="png">Draw/PNG</button>
-    <button data-cmd="ray">Ray</button>
-    <button data-cmd="rock">Rock</button>
+    <button class="gbtn" data-cmd="reset">Reset</button>
+    <button class="gbtn" data-cmd="zoom">Zoom</button>
+    <button class="gbtn" data-cmd="png">Draw/PNG</button>
+    <button class="gbtn" data-cmd="ray">Ray</button>
+    <button class="gbtn" data-cmd="rock">Rock</button>
+    <button class="gbtn" data-cmd="stop">Stop</button>
+    <button class="gbtn" data-cmd="deselect">Deselect</button>
+    <button class="gbtn on" id="seqbtn">Sequence</button>
   </div>
 </div>
 
-<!-- ================= MAIN ================= -->
 <div id="main">
   <div id="viewcol">
-    <div id="viewport"></div>
-    <div id="status"></div>
+    <div id="seqpanel"></div>
+    <div id="viewwrap">
+      <div id="viewport"></div>
+      <div id="status"></div>
+      <div id="zoombox">
+        <button id="zin" title="Zoom in">+</button>
+        <button id="zout" title="Zoom out">−</button>
+        <button id="zfit" title="Fit all" style="font-size:12px">⤢</button>
+      </div>
+    </div>
     <div class="cmdrow"><label>PyMOL&gt;</label><input id="cmd2" autocomplete="off" spellcheck="false"></div>
   </div>
+
   <div id="side">
     <div id="objects"></div>
-    <div id="playback">
-      <button title="Spin" data-cmd="spin">⟳</button>
-      <button title="Stop" data-cmd="stop">■</button>
-      <button title="Clear all" data-cmd="delete all">✕</button>
+
+    <div id="style">
+      <h4>Style <select id="styleTarget"></select></h4>
+      <div class="reps">
+        <button data-as="cartoon">Cartoon</button>
+        <button data-as="sticks">Sticks</button>
+        <button data-as="lines">Lines</button>
+        <button data-as="spheres">Spheres</button>
+        <button data-as="balls">Ball+Stick</button>
+        <button data-as="surface">Surface</button>
+        <button data-as="ribbon">Ribbon</button>
+        <button data-as="hide">Hide</button>
+      </div>
+      <div class="srow"><label>Color</label>
+        <select id="scheme">
+          <option value="">— scheme —</option>
+          <option value="chain">by chain</option><option value="ss">by secondary str.</option>
+          <option value="element">by element</option><option value="spectrum">rainbow</option>
+          <option value="b">b-factor</option><option value="hydro">hydrophobicity</option>
+        </select>
+        <input type="color" id="pick" value="#33cc33" title="pick a color">
+      </div>
+      <div class="srow"><label>Stick size</label><input type="range" id="stickSize" min="0.3" max="3" step="0.1" value="1"></div>
+      <div class="srow"><label>Sphere size</label><input type="range" id="sphereSize" min="0.2" max="1.5" step="0.05" value="1"></div>
+      <div class="srow"><label>Opacity</label><input type="range" id="opacity" min="0.1" max="1" step="0.05" value="1"></div>
+      <div class="hint">Click residues in the sequence or atoms in 3D to make a <span style="color:var(--sel)">(sele)</span>, then style just that part.</div>
     </div>
+
     <div id="mouse">
-      <b>Mouse Mode</b> 3-Button Viewing
-      <table>
-        <tr><td></td><td class="r">L</td><td class="g">M</td><td class="c">R</td><td>Wheel</td></tr>
-        <tr><td>&amp;</td><td>Rota</td><td>Move</td><td>Zoom</td><td>Clip</td></tr>
-      </table>
-      Click atom = identify
+      <b style="color:#fff">Mouse</b> L-drag rotate · R-drag move · wheel / +− zoom · click = select residue · dbl-click residue in sequence = zoom to it
     </div>
   </div>
 </div>
 
-<!-- ================= DATA TABLE ================= -->
 <div id="data">
   <div id="datatools">
     <label>Dataset <select id="dataset"></select></label>
     <label>Upload CSV <input type="file" id="csvfile" accept=".csv"></label>
     <input type="text" id="filter" placeholder="filter rows…">
-    <label><input type="checkbox" id="ligand" checked> show ligands</label>
     <label><input type="checkbox" id="replace" checked> replace on click</label>
     <span id="rowcount" style="opacity:.6"></span>
   </div>
@@ -160,42 +217,110 @@
 
 <script>
 /* ================================================================
-   CONFIG – edit these to match your repo
+   CONFIG (paths are relative to this file, which lives in ngl/)
    ================================================================ */
 const CONFIG = {
-  // CSV files in your repo and the folder holding their structure files
   datasets: [
     { file: "../CompData.csv", folder: "../MDpdb/"  },
     { file: "../ExpData.csv",  folder: "../TMDpdb/" },
   ],
-  // Column holding the structure file name or PDB ID.
-  // Leave null to auto-detect (first cell that looks like a file name or PDB ID).
-  structureColumn: null,
+  structureColumn: null,     // e.g. "3D Interaction"; null = auto-detect
 };
 
 /* ================================================================
-   NGL stage + object registry
+   Stage & state
    ================================================================ */
 const stage = new NGL.Stage("viewport", { backgroundColor: "black" });
-window.addEventListener("resize", () => stage.handleResize());
+new ResizeObserver(() => stage.handleResize()).observe(document.getElementById("viewwrap"));
 
-const objects = {};          // name -> { comp, reps:{}, color }
-const REP = {                // PyMOL name -> NGL representation
-  lines: "line", sticks: "licorice", spheres: "spacefill", cartoon: "cartoon",
-  ribbon: "ribbon", surface: "surface", labels: "label", ligand: "ball+stick",
-  nb_spheres: "point",
-};
-const COLOR_ALIAS = {
-  chain: "chainid", chainid: "chainid", ss: "sstruc", sstruc: "sstruc",
-  element: "element", atomic: "element", spectrum: "residueindex", rainbow: "residueindex",
-  b: "bfactor", bfactor: "bfactor", hydrophobicity: "hydrophobicity", hydro: "hydrophobicity",
-};
+/*  objects[name] = {
+      comp,                NGL component
+      reps:{rep:repr},     one NGL representation per style
+      vis:{rep:sele},      which atoms each style is shown on (PyMOL semantics)
+      color, rules:[[color, sele]...]   base color + per-selection overrides
+      keep,                atoms not removed
+      params:{rep:{}},     size / opacity settings
+      labelType
+    }                                                                   */
+const objects = {};
+const selection = {};          // objName -> Set of residue keys ("12:A")
+
+const REP = { lines:"line", sticks:"licorice", spheres:"spacefill", balls:"ball+stick",
+              cartoon:"cartoon", ribbon:"ribbon", surface:"surface", labels:"label" };
+const REP_ALIAS = { stick:"sticks", line:"lines", sphere:"spheres", ballstick:"balls", "ball+stick":"balls",
+                    label:"labels", cartoons:"cartoon", surf:"surface" };
+const BASE = { cartoon:"polymer", ribbon:"polymer", surface:"polymer" };
+const COLOR_ALIAS = { chain:"chainid", chainid:"chainid", ss:"sstruc", sstruc:"sstruc", element:"element",
+  atomic:"element", spectrum:"residueindex", rainbow:"residueindex", b:"bfactor", bfactor:"bfactor",
+  hydro:"hydrophobicity", hydrophobicity:"hydrophobicity" };
 
 /* ---------- log ---------- */
 const logEl = document.getElementById("log");
-function log(msg, cls) {
-  logEl.textContent += msg + "\n";
-  logEl.scrollTop = logEl.scrollHeight;
+function log(msg) { logEl.textContent += msg + "\n"; logEl.scrollTop = logEl.scrollHeight; }
+
+/* ---------- PyMOL selection words -> NGL selection language ---------- */
+function toNGL(s) {
+  return s
+    .replace(/\bchain\s+(\w+)/gi, ":$1")
+    .replace(/\bresi\s+([\d\-+]+)/gi, (m, r) => "(" + r.split("+").join(" or ") + ")")
+    .replace(/\bresn\s+(\w+)/gi, "$1")
+    .replace(/\bname\s+(\w+)/gi, ".$1")
+    .replace(/\belem\s+(\w+)/gi, "_$1")
+    .replace(/\borganic\b/gi, "ligand").replace(/\bsolvent\b/gi, "water")
+    .replace(/\bhydro(gens?)?\b/gi, "hydrogen")
+    .replace(/&/g, " and ").replace(/\|/g, " or ").replace(/!/g, " not ");
+}
+
+/* target -> [{name, sele}]   sele=null means the whole object */
+function resolve(target) {
+  target = (target || "").trim();
+  if (!target || target === "all" || target === "*") return Object.keys(objects).map(n => ({ name: n, sele: null }));
+  if (objects[target]) return [{ name: target, sele: null }];
+  if (target === "sele" || target === "(sele)") {
+    const out = Object.keys(selection).filter(n => objects[n] && selection[n].size).map(n => ({ name: n, sele: seleString(n) }));
+    if (!out.length) log(" (sele) is empty – click residues first.");
+    return out;
+  }
+  const s = toNGL(target);
+  return Object.keys(objects).map(n => ({ name: n, sele: s }));
+}
+
+/* ---------- representation bookkeeping ---------- */
+function fullSele(o, rep) {
+  const parts = [];
+  if (BASE[rep]) parts.push(BASE[rep]);
+  if (o.vis[rep] && o.vis[rep] !== "*") parts.push(o.vis[rep]);
+  if (o.keep !== "*") parts.push(o.keep);
+  if (rep === "labels") parts.push(o.labelType === "atomname" ? "not hydrogen" : ".CA");
+  return parts.length ? parts.map(p => `(${p})`).join(" and ") : "*";
+}
+
+function colorFor(o, rep) {
+  if (rep === "labels") return "white";
+  if (!o.rules.length) return o.color;
+  const list = [...o.rules, [o.color, "*"]];
+  return NGL.ColormakerRegistry.addSelectionScheme(list, "custom");
+}
+
+function repParams(o, rep) {
+  const p = Object.assign({}, o.params[rep] || {});
+  if (rep === "labels") Object.assign(p, { labelType: o.labelType || "res", zOffset: 2, fixedSize: true, labelSize: 1.2 });
+  if (rep === "surface" && p.opacity === undefined) p.opacity = 0.85;
+  return p;
+}
+
+function updateRep(o, rep) {
+  const r = o.reps[rep];
+  if (!o.vis[rep]) { if (r) r.setVisibility(false); return; }
+  const sele = fullSele(o, rep);
+  if (!r) {
+    o.reps[rep] = o.comp.addRepresentation(REP[rep], Object.assign(repParams(o, rep), { sele, color: colorFor(o, rep) }));
+  } else { r.setSelection(sele); r.setVisibility(true); }
+}
+
+function refreshColors(o) {
+  const scheme = colorFor(o, "x");
+  for (const [k, r] of Object.entries(o.reps)) if (k !== "labels") r.setColor(scheme);
 }
 
 /* ---------- loading ---------- */
@@ -212,121 +337,123 @@ async function load(source, name, ext) {
   const opts = { defaultRepresentation: false, name };
   if (ext) opts.ext = ext === "mmcif" ? "cif" : ext;
   const comp = await stage.loadFile(source, opts);
-  objects[name] = { comp, reps: {}, color: "chainid", keep: "all" };
+  const o = objects[name] = { comp, reps: {}, vis: {}, color: "chainid", rules: [["element", "ligand"]], keep: "*", params: {}, labelType: "res" };
+  selection[name] = new Set();
   const s = comp.structure;
-  if (s && s.residueStore && s.residueStore.count > 1) show("cartoon", name);
-  else show("sticks", name);                       // small molecules
-  if (document.getElementById("ligand").checked) show("ligand", name);
+  if (s.residueStore.count > 1 && s.getView(new NGL.Selection("polymer")).atomCount) {
+    show("cartoon", name);
+    show("balls", `${name}`, "ligand");
+  } else show("sticks", name);
   comp.autoView(600);
-  renderPanel();
-  log(` ObjectMolecule: "${name}" loaded (${s ? s.atomCount : "?"} atoms)`);
+  renderAll();
+  log(` ObjectMolecule: "${name}" loaded (${s.atomCount} atoms, ${s.chainStore.count} chains)`);
   return name;
 }
 
-/* base selection per representation, AND-ed with the object's kept atoms */
-const BASE_SELE = { ligand: "ligand and not water", surface: "polymer", labels: ".CA",
-                    sticks: "not water", lines: "not water" };
-function combine(o, rep) {
-  const base = rep === "labels" && o.labelSele ? o.labelSele : (BASE_SELE[rep] || "all");
-  return o.keep === "all" ? base : `(${base}) and (${o.keep})`;
-}
+/* ---------- show / hide / as / color ---------- */
+function normRep(rep) { rep = (rep || "lines").toLowerCase(); return REP_ALIAS[rep] || rep; }
 
-/* ---------- target helpers ---------- */
-function targets(name) {
-  if (!name || name === "all" || name === "*") return Object.keys(objects);
-  if (!objects[name]) { log(` Error: object "${name}" not found.`); return []; }
-  return [name];
-}
-
-/* ---------- show / hide / color / label ---------- */
-function show(rep, name) {
+function show(rep, target, extraSele) {
+  rep = normRep(rep);
   if (rep === "everything") rep = "lines";
-  const type = REP[rep];
-  if (!type) return log(` Error: unknown representation "${rep}".`);
-  for (const n of targets(name)) {
-    const o = objects[n];
-    if (o.reps[rep]) { o.reps[rep].setVisibility(true); continue; }
-    const p = { color: o.color };
-    if (rep === "ligand") Object.assign(p, { color: "element" });
-    if (rep === "surface") Object.assign(p, { opacity: 0.85 });
-    if (rep === "labels") Object.assign(p, { labelType: "res", color: "white", zOffset: 2 });
-    p.sele = combine(o, rep);
-    o.reps[rep] = o.comp.addRepresentation(type, p);
+  if (!REP[rep]) return log(` Error: unknown representation "${rep}".`);
+  for (let { name, sele } of resolve(target)) {
+    if (extraSele) sele = sele ? `(${sele}) and (${extraSele})` : extraSele;
+    const o = objects[name];
+    if (!sele) o.vis[rep] = "*";
+    else if (o.vis[rep] !== "*") o.vis[rep] = o.vis[rep] ? `(${o.vis[rep]}) or (${sele})` : sele;
+    updateRep(o, rep);
   }
 }
 
-function hide(rep, name) {
-  for (const n of targets(name)) {
-    const o = objects[n];
-    const keys = (rep === "everything" || !rep) ? Object.keys(o.reps) : [rep];
-    keys.forEach(k => o.reps[k] && o.reps[k].setVisibility(false));
-  }
-}
-
-function as(rep, name) { hide("everything", name); show(rep, name); }
-
-function color(c, name) {
-  const scheme = COLOR_ALIAS[c] || c;
-  for (const n of targets(name)) {
-    const o = objects[n];
-    o.color = scheme;
-    for (const [k, r] of Object.entries(o.reps)) {
-      if (k === "labels" || k === "ligand") continue;
-      r.setColor(scheme);
+function hide(rep, target) {
+  rep = normRep(rep || "everything");
+  for (const { name, sele } of resolve(target)) {
+    const o = objects[name];
+    const reps = rep === "everything" ? Object.keys(o.vis) : [rep];
+    for (const k of reps) {
+      if (!o.vis[k]) continue;
+      if (!sele) delete o.vis[k];
+      else o.vis[k] = `(${o.vis[k]}) and not (${sele})`;
+      updateRep(o, k);
     }
   }
 }
 
-function setLabel(type, name) {          // type: res | chainname | clear
-  for (const n of targets(name)) {
-    const o = objects[n];
-    if (o.reps.labels) { o.comp.removeRepresentation(o.reps.labels); delete o.reps.labels; }
-    if (type !== "clear") {
-      o.labelSele = type === "chainname" ? ".CA and 1" : ".CA";
-      o.reps.labels = o.comp.addRepresentation("label", {
-        sele: combine(o, "labels"), labelType: type, color: "white", zOffset: 2,
-      });
+function as(rep, target) { hide("everything", target); show(rep, target); }
+
+function color(c, target) {
+  const scheme = COLOR_ALIAS[(c || "").toLowerCase()] || c;
+  for (const { name, sele } of resolve(target)) {
+    const o = objects[name];
+    if (!sele) { o.color = scheme; o.rules = scheme === "element" ? [] : [["element", "ligand and not _C"]]; }
+    else o.rules.unshift([scheme, sele]);
+    refreshColors(o);
+  }
+}
+
+function label(type, target) {
+  type = { chain: "chainname", chains: "chainname", res: "res", residues: "res", resi: "res",
+           atom: "atomname", atoms: "atomname", name: "atomname", clear: "clear", none: "clear" }[type || "res"] || "res";
+  if (type === "clear") return hide("labels", target);
+  for (const { name } of resolve(target)) {
+    const o = objects[name];
+    if (o.labelType !== type && o.reps.labels) { o.comp.removeRepresentation(o.reps.labels); delete o.reps.labels; }
+    o.labelType = type;
+  }
+  show("labels", target);
+}
+
+/* size / opacity for target objects */
+function setParam(reps, key, val, target) {
+  for (const { name } of resolve(target)) {
+    const o = objects[name];
+    for (const rep of reps) {
+      o.params[rep] = Object.assign(o.params[rep] || {}, { [key]: val });
+      if (o.reps[rep]) o.reps[rep].setParameters({ [key]: val });
     }
   }
 }
 
-function zoom(name) {
-  if (!name || name === "all") return stage.autoView(600);
-  targets(name).forEach(n => objects[n].comp.autoView(600));
+/* ---------- view ---------- */
+function zoomTo(target) {
+  const t = resolve(target);
+  if (!t.length || (!target || target === "all")) return stage.autoView(600);
+  const { name, sele } = t[0];
+  objects[name].comp.autoView(sele || undefined, 600);
+}
+function zoomStep(dir) {                  // dir: +1 in, -1 out
+  stage.viewerControls.zoom(dir > 0 ? 0.2 : -0.25);
 }
 
-function del(name) {
-  for (const n of targets(name)) { stage.removeComponent(objects[n].comp); delete objects[n]; }
-  renderPanel();
-}
-
-function toggle(name) {
-  for (const n of targets(name)) objects[n].comp.setVisibility(!objects[n].comp.visible);
-  renderPanel();
-}
-
-/* save the (possibly edited) structure as a PDB file */
-function save(name) {
-  const list = targets(name || Object.keys(objects)[0]);
-  for (const n of list) {
-    const o = objects[n], s = o.comp.structure;
-    if (!s) continue;
-    const out = o.keep === "all" ? s : s.getView(new NGL.Selection(o.keep));
-    new NGL.PdbWriter(out).download(n);
-    log(` Saved "${n}.pdb".`);
+/* ---------- delete / remove / save ---------- */
+function del(target) {
+  for (const { name, sele } of resolve(target)) {
+    if (sele) { removeAtoms(target); return; }
+    stage.removeComponent(objects[name].comp);
+    delete objects[name]; delete selection[name];
   }
+  renderAll();
 }
 
-/* remove atoms, e.g.  remove water   |   remove hydrogen, 1crn   |   remove resname HOH */
-const SELE_ALIAS = { water: "water", hydrogen: "hydrogen", h: "hydrogen", solvent: "water or ion", ligand: "ligand" };
-function removeAtoms(sele, name) {
-  sele = SELE_ALIAS[sele] || sele;
-  for (const n of targets(name)) {
-    const o = objects[n];
-    o.keep = `(${o.keep}) and not (${sele})`;
-    for (const [k, r] of Object.entries(o.reps)) r.setSelection(combine(o, k));
+function removeAtoms(target) {
+  for (const { name, sele } of resolve(target)) {
+    if (!sele) { del(name); continue; }
+    const o = objects[name];
+    o.keep = o.keep === "*" ? `not (${sele})` : `(${o.keep}) and not (${sele})`;
+    Object.keys(o.vis).forEach(k => updateRep(o, k));
     const left = o.comp.structure.getView(new NGL.Selection(o.keep)).atomCount;
-    log(` "${n}": removed ${sele} (${left} atoms left). Use 'save' to export.`);
+    log(` "${name}": removed atoms (${left} left). Use 'save' to export.`);
+  }
+  if (target === "sele") clearSelection(); else renderAll();
+}
+
+function save(target) {
+  const list = resolve(target || Object.keys(objects)[0]).filter((v, i, a) => a.findIndex(x => x.name === v.name) === i);
+  for (const { name } of list) {
+    const o = objects[name], s = o.comp.structure;
+    new NGL.PdbWriter(o.keep === "*" ? s : s.getView(new NGL.Selection(o.keep))).download(name);
+    log(` Saved "${name}.pdb".`);
   }
 }
 
@@ -337,143 +464,264 @@ async function png(scale = 1) {
 }
 
 /* ================================================================
-   Command line (PyMOL syntax: cmd arg1, arg2)
+   Selection (sele) – residues picked in sequence or 3D
    ================================================================ */
-const COMMANDS = {
-  load:   a => load(a[0], a[1]).catch(e => log(" Error: " + e)),
-  fetch:  a => load("rcsb://" + a[0], a[1] || a[0]).catch(e => log(" Error: " + e)),
-  show:   a => show(a[0] || "lines", a[1]),
-  hide:   a => hide(a[0] || "everything", a[1]),
-  as:     a => as(a[0], a[1]),
-  color:  a => color(a[0], a[1]),
-  label:  a => setLabel(a[0] === "chain" ? "chainname" : (a[0] || "res"), a[1]),
-  bg_color: a => stage.setParameters({ backgroundColor: a[0] || "black" }),
-  zoom:   a => zoom(a[0]),
-  orient: a => zoom(a[0]),
-  reset:  () => stage.autoView(600),
-  delete: a => del(a[0] || "all"),
-  enable: a => targets(a[0]).forEach(n => objects[n].comp.setVisibility(true)) || renderPanel(),
-  disable:a => targets(a[0]).forEach(n => objects[n].comp.setVisibility(false)) || renderPanel(),
-  spin:   () => stage.setSpin(true),
-  rock:   () => stage.setRock(true),
-  stop:   () => { stage.setSpin(false); stage.setRock(false); },
-  save:   a => save(a[0]),
-  remove: a => removeAtoms(a[0] || "water", a[1]),
-  png:    () => png(1),
-  ray:    () => png(3),
-  reinitialize: () => del("all"),
-  help:   () => log(" Commands: load, fetch, show, hide, as, color, label, bg_color, zoom, orient,\n" +
-                    "           reset, delete, enable, disable, spin, rock, stop, png, ray, reinitialize,\n" +
-                    "           remove <water|hydrogen|ligand|NGL selection>[, obj], save [obj]\n" +
-                    " Reps: lines sticks spheres cartoon ribbon surface labels ligand everything\n" +
-                    " Colors: any CSS color, or chain ss element spectrum b hydro\n" +
-                    " Example:  fetch 1crn   |   color ss   |   show sticks, 1crn"),
-};
-COMMANDS.bg = COMMANDS.bg_color;
+function resKey(rp) { return `${rp.resno}${rp.inscode ? "^" + rp.inscode : ""}${rp.chainname ? ":" + rp.chainname : ""}`; }
 
-function run(line) {
-  line = line.trim();
-  if (!line) return;
-  log("PyMOL>" + line);
-  const sp = line.search(/\s/);
-  const cmd = (sp < 0 ? line : line.slice(0, sp)).toLowerCase();
-  const args = sp < 0 ? [] : line.slice(sp + 1).split(",").map(s => s.trim()).filter(Boolean);
-  const fn = COMMANDS[cmd];
-  if (!fn) return log(` Error: unknown command "${cmd}". Type help.`);
-  try { fn(args); } catch (e) { log(" Error: " + e.message); }
+function seleString(name) {
+  const set = selection[name];
+  if (!set || !set.size) return "none";
+  return [...set].join(" or ");
 }
 
-const history = []; let hIdx = 0;
-for (const id of ["cmd1", "cmd2"]) {
-  const el = document.getElementById(id);
-  el.addEventListener("keydown", e => {
-    if (e.key === "Enter") { history.push(el.value); hIdx = history.length; run(el.value); el.value = ""; }
-    else if (e.key === "ArrowUp" && hIdx > 0) { el.value = history[--hIdx]; e.preventDefault(); }
-    else if (e.key === "ArrowDown") { hIdx = Math.min(history.length, hIdx + 1); el.value = history[hIdx] || ""; }
+function toggleRes(name, key, force) {
+  const set = selection[name];
+  const on = force === undefined ? !set.has(key) : force;
+  on ? set.add(key) : set.delete(key);
+  return on;
+}
+
+function updateHighlight() {
+  for (const [name, o] of Object.entries(objects)) {
+    const set = selection[name];
+    if (!set.size) { if (o.hl) o.hl.setVisibility(false); continue; }
+    const sele = `(${seleString(name)})` + (o.keep === "*" ? "" : ` and (${o.keep})`) + " and not hydrogen";
+    if (!o.hl) o.hl = o.comp.addRepresentation("spacefill", { sele, color: "#ff55ff", radiusType: "size", radiusSize: 0.28, opacity: 0.9 });
+    else { o.hl.setSelection(sele); o.hl.setVisibility(true); }
+  }
+  document.querySelectorAll("#seqpanel [data-key]").forEach(el => {
+    el.classList.toggle("sel", !!selection[el.dataset.obj]?.has(el.dataset.key));
   });
+  renderPanel();
 }
-document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => run(b.dataset.cmd));
 
-/* ---------- atom picking -> status line ---------- */
+function clearSelection() { Object.values(selection).forEach(s => s.clear()); updateHighlight(); renderAll(); }
+
+function selectExpr(expr) {
+  const s = toNGL(expr);
+  for (const [name, o] of Object.entries(objects)) {
+    selection[name].clear();
+    o.comp.structure.eachResidue(rp => selection[name].add(resKey(rp)), new NGL.Selection(`(${s}) and (${o.keep})`));
+  }
+  updateHighlight();
+  const n = Object.values(selection).reduce((a, s) => a + s.size, 0);
+  log(` Selector: selection "sele" defined with ${n} residues.`);
+}
+
+/* click atom in 3D -> toggle its residue */
 const statusEl = document.getElementById("status");
 stage.signals.clicked.add(pp => {
   if (!pp || !pp.atom) return;
-  const a = pp.atom, obj = pp.component ? pp.component.name : "";
-  const msg = ` You clicked /${obj}//${a.chainname}/${a.resname}\`${a.resno}/${a.atomname}`;
+  const a = pp.atom, name = pp.component ? pp.component.name : "";
+  if (!objects[name]) return;
+  const key = resKey(a);
+  const on = toggleRes(name, key);
+  const msg = ` You clicked /${name}//${a.chainname}/${a.resname}\`${a.resno}/${a.atomname}` + (on ? "  (+sele)" : "  (−sele)");
   statusEl.textContent = msg; log(msg);
+  updateHighlight();
+});
+stage.signals.hovered.add(pp => {
+  if (pp && pp.atom) { const a = pp.atom; statusEl.textContent = `${pp.component?.name || ""}  ${a.chainname}:${a.resname}${a.resno}  ${a.atomname}`; }
 });
 
 /* ================================================================
-   Object panel with A S H L C buttons
+   Sequence panel: Object | Chain | Type | residues
+   ================================================================ */
+const seqPanel = document.getElementById("seqpanel");
+const ONE = { ALA:"A",ARG:"R",ASN:"N",ASP:"D",CYS:"C",GLN:"Q",GLU:"E",GLY:"G",HIS:"H",ILE:"I",LEU:"L",LYS:"K",
+              MET:"M",PHE:"F",PRO:"P",SER:"S",THR:"T",TRP:"W",TYR:"Y",VAL:"V",MSE:"M",SEC:"U",PYL:"O",
+              DA:"A",DC:"C",DG:"G",DT:"T",A:"A",C:"C",G:"G",U:"U" };
+
+let drag = null;   // {mode:true/false}
+document.addEventListener("mouseup", () => { if (drag) { drag = null; updateHighlight(); } });
+
+function residueEl(name, rp, showNum) {
+  const el = document.createElement("span");
+  el.className = "r"; el.dataset.obj = name; el.dataset.key = resKey(rp);
+  el.title = `${rp.resname} ${rp.resno}${rp.inscode || ""} : ${rp.chainname}`;
+  el.innerHTML = `<span class="n">${showNum ? rp.resno : ""}</span><span class="a">${ONE[rp.resname] || "X"}</span>`;
+  return el;
+}
+
+function chipEl(name, rp, cls) {
+  const el = document.createElement("span");
+  el.className = "chip " + (cls || ""); el.dataset.obj = name; el.dataset.key = resKey(rp);
+  el.textContent = `${rp.resname} ${rp.resno}${rp.chainname ? ":" + rp.chainname : ""}`;
+  return el;
+}
+
+function seqRow(name, chain, type, typeCls, children, keys) {
+  const row = document.createElement("div"); row.className = "seqrow";
+  const lab = document.createElement("div"); lab.className = "seqlab";
+  lab.innerHTML = `<span class="o" title="${name}">${name}</span><span class="c">${chain}</span><span class="t ${typeCls}">${type}</span>`;
+  lab.title = "click: select all of this row · dbl-click: zoom";
+  lab.onclick = () => { const allOn = keys.every(k => selection[name].has(k)); keys.forEach(k => toggleRes(name, k, !allOn)); updateHighlight(); };
+  lab.ondblclick = () => objects[name].comp.autoView(keys.join(" or "), 600);
+  const res = document.createElement("div"); res.className = "seqres";
+  children.forEach(c => res.appendChild(c));
+  row.append(lab, res);
+  return row;
+}
+
+function renderSequence() {
+  seqPanel.innerHTML = "";
+  const names = Object.keys(objects);
+  if (!names.length) { seqPanel.innerHTML = `<div class="seqempty">No structure loaded.</div>`; return; }
+  const head = document.createElement("div"); head.className = "seqrow seqhead";
+  head.innerHTML = `<div class="seqlab"><span>Object</span><span class="c">Ch</span><span>Type</span></div>`;
+  seqPanel.appendChild(head);
+
+  for (const name of names) {
+    const o = objects[name];
+    const chains = new Map(), ligands = [], waters = [];
+    o.comp.structure.eachResidue(rp => {
+      if (rp.isWater()) waters.push({ key: resKey(rp) });
+      else if (rp.isPolymer()) {
+        if (!chains.has(rp.chainname)) chains.set(rp.chainname, { type: rp.isNucleic() ? "nucleic" : "protein", list: [] });
+        chains.get(rp.chainname).list.push({ resno: rp.resno, inscode: rp.inscode, resname: rp.resname, chainname: rp.chainname });
+      } else ligands.push({ resno: rp.resno, inscode: rp.inscode, resname: rp.resname, chainname: rp.chainname, ion: rp.atomCount === 1 });
+    }, new NGL.Selection(o.keep));
+
+    for (const [ch, { type, list }] of chains) {
+      const els = list.map((rp, i) => residueEl(name, rp, rp.resno % 10 === 0 || i === 0));
+      seqPanel.appendChild(seqRow(name, ch || "–", `${type} ${list.length}`, "", els, list.map(resKey)));
+    }
+    const ligs = ligands.filter(l => !l.ion), ions = ligands.filter(l => l.ion);
+    if (ligs.length) seqPanel.appendChild(seqRow(name, "", `ligand ${ligs.length}`, "lig", ligs.map(l => chipEl(name, l)), ligs.map(resKey)));
+    if (ions.length) seqPanel.appendChild(seqRow(name, "", `ion ${ions.length}`, "lig", ions.map(l => chipEl(name, l)), ions.map(resKey)));
+    if (waters.length) {
+      const keys = waters.map(w => w.key);
+      const chip = document.createElement("span");
+      chip.className = "chip wat"; chip.textContent = `HOH × ${waters.length}  (click to select all)`;
+      chip.onclick = () => { const allOn = keys.every(k => selection[name].has(k)); keys.forEach(k => toggleRes(name, k, !allOn)); updateHighlight(); };
+      seqPanel.appendChild(seqRow(name, "", `water`, "wat", [chip], keys));
+    }
+  }
+
+  // click / drag-select / dbl-click zoom on residues and chips
+  seqPanel.querySelectorAll("[data-key]").forEach(el => {
+    el.onmousedown = e => { e.preventDefault(); drag = { mode: toggleRes(el.dataset.obj, el.dataset.key) }; el.classList.toggle("sel", drag.mode); };
+    el.onmouseenter = () => { if (drag) { toggleRes(el.dataset.obj, el.dataset.key, drag.mode); el.classList.toggle("sel", drag.mode); } };
+    el.ondblclick = () => objects[el.dataset.obj].comp.autoView(el.dataset.key, 600);
+  });
+  updateHighlight();
+}
+
+document.getElementById("seqbtn").onclick = e => {
+  seqPanel.classList.toggle("hidden");
+  e.target.classList.toggle("on", !seqPanel.classList.contains("hidden"));
+};
+
+/* ================================================================
+   Object panel (A S H L C) + Style panel
    ================================================================ */
 const SWATCHES = ["red","green","blue","yellow","magenta","cyan","orange","salmon","purple","white","grey","black"];
-const REP_ITEMS = ["lines","sticks","ribbon","cartoon","labels","spheres","surface","ligand"];
+const REP_ITEMS = ["lines","sticks","balls","spheres","cartoon","ribbon","surface","labels"];
 
-function menuFor(kind, name) {
-  const onAll = name === "all";
+function menuFor(kind, target) {
+  const isAll = target === "all", isSele = target === "sele";
   switch (kind) {
     case "A": return [
       { hdr: "Action" },
-      { label: "zoom", fn: () => zoom(name) },
-      { label: "orient", fn: () => zoom(name) },
-      { label: "enable / disable", fn: () => toggle(name) },
+      { label: "zoom", fn: () => zoomTo(target) },
+      ...(isSele ? [{ label: "deselect", fn: clearSelection }] : [{ label: "enable / disable", fn: () => toggle(target) }]),
       { sep: 1 },
-      { label: "remove waters", fn: () => removeAtoms("water", name) },
-      { label: "remove hydrogens", fn: () => removeAtoms("hydrogen", name) },
-      ...(onAll ? [] : [{ label: "save as PDB", fn: () => save(name) }]),
-      { sep: 1 },
-      ...(onAll ? [{ label: "reset view", fn: () => stage.autoView(600) }] : []),
-      { label: "delete", fn: () => del(name) },
+      { label: "remove waters", fn: () => removeAtoms(isAll ? "water" : isSele ? "sele" : `water`) },
+      { label: "remove hydrogens", fn: () => removeAtoms("hydrogen") },
+      ...(isSele ? [{ label: "remove selected atoms", fn: () => removeAtoms("sele") }] : []),
+      ...(!isAll && !isSele ? [{ label: "save as PDB", fn: () => save(target) }] : []),
+      ...(!isSele ? [{ sep: 1 }, { label: "delete object", fn: () => del(target) }] : []),
     ];
-    case "S": return [{ hdr: "Show" }, ...REP_ITEMS.map(r => ({ label: r, fn: () => show(r, name) })),
-                      { sep: 1 }, { hdr: "As" }, ...["lines","sticks","cartoon","spheres","surface"].map(r => ({ label: r, fn: () => as(r, name) }))];
-    case "H": return [{ hdr: "Hide" }, { label: "everything", fn: () => hide("everything", name) },
-                      ...REP_ITEMS.map(r => ({ label: r, fn: () => hide(r, name) }))];
-    case "L": return [{ hdr: "Label" }, { label: "residues", fn: () => setLabel("res", name) },
-                      { label: "chains", fn: () => setLabel("chainname", name) },
-                      { label: "atom names", fn: () => setLabel("atomname", name) },
-                      { sep: 1 }, { label: "clear", fn: () => setLabel("clear", name) }];
+    case "S": return [{ hdr: "Show" }, ...REP_ITEMS.map(r => ({ label: r === "balls" ? "ball+stick" : r, fn: () => show(r, target) })),
+                      { sep: 1 }, { hdr: "As" }, ...["lines","sticks","balls","spheres","cartoon","surface"].map(r => ({ label: r === "balls" ? "ball+stick" : r, fn: () => as(r, target) }))];
+    case "H": return [{ hdr: "Hide" }, { label: "everything", fn: () => hide("everything", target) },
+                      ...REP_ITEMS.map(r => ({ label: r === "balls" ? "ball+stick" : r, fn: () => hide(r, target) }))];
+    case "L": return [{ hdr: "Label" }, { label: "residues", fn: () => label("res", target) },
+                      { label: "chains", fn: () => label("chain", target) },
+                      { label: "atom names", fn: () => label("atom", target) },
+                      { sep: 1 }, { label: "clear", fn: () => label("clear", target) }];
     case "C": return [{ hdr: "Color" },
-                      { label: "by chain", fn: () => color("chain", name) },
-                      { label: "by ss", fn: () => color("ss", name) },
-                      { label: "by element", fn: () => color("element", name) },
-                      { label: "spectrum", fn: () => color("spectrum", name) },
-                      { label: "b-factors", fn: () => color("b", name) },
-                      { label: "hydrophobicity", fn: () => color("hydro", name) },
-                      { sep: 1 },
-                      ...SWATCHES.map(c => ({ label: c, swatch: c, fn: () => color(c, name) }))];
+                      { label: "by chain", fn: () => color("chain", target) },
+                      { label: "by ss", fn: () => color("ss", target) },
+                      { label: "by element", fn: () => color("element", target) },
+                      { label: "spectrum", fn: () => color("spectrum", target) },
+                      { label: "b-factors", fn: () => color("b", target) },
+                      { label: "hydrophobicity", fn: () => color("hydro", target) },
+                      { sep: 1 }, ...SWATCHES.map(c => ({ label: c, swatch: c, fn: () => color(c, target) }))];
   }
+}
+
+function toggle(name) {
+  for (const { name: n } of resolve(name)) objects[n].comp.setVisibility(!objects[n].comp.visible);
+  renderPanel();
+}
+
+function panelRow(box, name, cls, title) {
+  const row = document.createElement("div"); row.className = "obj";
+  const nm = document.createElement("div");
+  nm.className = "name " + (cls || ""); nm.textContent = title || name;
+  nm.onclick = () => name === "sele" ? zoomTo("sele") : toggle(name);
+  row.appendChild(nm);
+  for (const k of "ASHLC") {
+    const b = document.createElement("button");
+    b.className = "b-" + k; b.textContent = k;
+    b.onclick = e => { e.stopPropagation(); openMenu(b, menuFor(k, name)); };
+    row.appendChild(b);
+  }
+  box.appendChild(row);
 }
 
 function renderPanel() {
   const box = document.getElementById("objects");
   box.innerHTML = "";
-  for (const name of ["all", ...Object.keys(objects)]) {
-    const row = document.createElement("div");
-    row.className = "obj";
-    const nm = document.createElement("div");
-    nm.className = "name" + (name !== "all" && !objects[name].comp.visible ? " off" : "");
-    nm.textContent = name;
-    nm.title = name === "all" ? "all objects" : "click to enable/disable";
-    nm.onclick = () => toggle(name);
-    row.appendChild(nm);
-    for (const k of "ASHLC") {
-      const b = document.createElement("button");
-      b.className = "b-" + k; b.textContent = k;
-      b.onclick = e => { e.stopPropagation(); openMenu(b, menuFor(k, name)); };
-      row.appendChild(b);
-    }
-    box.appendChild(row);
-  }
+  panelRow(box, "all");
+  for (const n of Object.keys(objects)) panelRow(box, n, objects[n].comp.visible ? "" : "off");
+  const nsel = Object.values(selection).reduce((a, s) => a + s.size, 0);
+  if (nsel) panelRow(box, "sele", "sele", `(sele)  ${nsel} res`);
+  // style target dropdown
+  const st = document.getElementById("styleTarget"), cur = st.value;
+  st.innerHTML = "";
+  if (nsel) st.add(new Option("(sele)", "sele"));
+  st.add(new Option("all", "all"));
+  Object.keys(objects).forEach(n => st.add(new Option(n, n)));
+  const valid = [...st.options].some(o => o.value === cur);
+  st.value = (nsel && !lastSel) ? "sele" : valid ? cur : (nsel ? "sele" : "all");
+  lastSel = nsel;
 }
+let lastSel = 0;
 
-/* ---------- generic dropdown ---------- */
+function renderAll() { renderSequence(); renderPanel(); }
+
+/* style panel wiring */
+const tgt = () => document.getElementById("styleTarget").value || "all";
+document.querySelectorAll("[data-as]").forEach(b => b.onclick = () => {
+  const r = b.dataset.as;
+  r === "hide" ? run(`hide everything, ${tgt()}`) : run(`as ${r}, ${tgt()}`);
+});
+document.getElementById("scheme").onchange = e => { if (e.target.value) run(`color ${e.target.value}, ${tgt()}`); e.target.value = ""; };
+document.getElementById("pick").oninput = e => color(e.target.value, tgt());
+document.getElementById("pick").onchange = e => log(`PyMOL>color ${e.target.value}, ${tgt()}`);
+document.getElementById("stickSize").oninput = e => setParam(["sticks", "balls"], "radiusScale", +e.target.value, tgt() === "sele" ? "all" : tgt());
+document.getElementById("sphereSize").oninput = e => setParam(["spheres"], "radiusScale", +e.target.value, tgt() === "sele" ? "all" : tgt());
+document.getElementById("opacity").oninput = e => setParam(["cartoon","ribbon","surface","sticks","balls","lines","spheres"], "opacity", +e.target.value, tgt() === "sele" ? "all" : tgt());
+
+/* zoom buttons + keyboard */
+document.getElementById("zin").onclick = () => zoomStep(1);
+document.getElementById("zout").onclick = () => zoomStep(-1);
+document.getElementById("zfit").onclick = () => stage.autoView(600);
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "+" || e.key === "=") zoomStep(1);
+  if (e.key === "-" || e.key === "_") zoomStep(-1);
+  if (e.key === "Escape") clearSelection();
+});
+
+/* ---------- dropdown menus ---------- */
 let openEl = null;
 function closeMenu() { if (openEl) { openEl.remove(); openEl = null; } }
 function openMenu(anchor, items) {
   closeMenu();
-  const m = document.createElement("div");
-  m.className = "menu";
+  const m = document.createElement("div"); m.className = "menu";
   for (const it of items) {
     if (it.sep) { m.appendChild(document.createElement("hr")); continue; }
     const d = document.createElement("div");
@@ -488,20 +736,18 @@ function openMenu(anchor, items) {
   document.body.appendChild(m);
   const r = anchor.getBoundingClientRect();
   let x = r.left, y = r.bottom;
-  const mw = m.offsetWidth, mh = m.offsetHeight;
-  if (x + mw > innerWidth) x = innerWidth - mw - 4;
-  if (y + mh > innerHeight) y = Math.max(4, r.top - mh);
+  if (x + m.offsetWidth > innerWidth) x = innerWidth - m.offsetWidth - 4;
+  if (y + m.offsetHeight > innerHeight) y = Math.max(4, r.top - m.offsetHeight);
   m.style.left = x + "px"; m.style.top = y + "px";
   openEl = m;
 }
 document.addEventListener("click", closeMenu);
 
-/* ---------- top menu bar ---------- */
 const TOPMENUS = {
   file: [
     { label: "Open structure…", fn: () => document.getElementById("structfile").click() },
     { label: "Fetch PDB ID…", fn: () => { const id = prompt("PDB ID:"); if (id) run("fetch " + id); } },
-    { label: "Load CSV…", fn: () => document.getElementById("csvfile").click() },
+    { label: "Load CSV…", fn: () => { document.body.classList.remove("viewer-only"); document.getElementById("csvfile").click(); } },
     { sep: 1 },
     { label: "Save structure (PDB)", fn: () => run("save") },
     { label: "Export PNG", fn: () => run("png") },
@@ -510,7 +756,9 @@ const TOPMENUS = {
     { label: "Reinitialize", fn: () => run("reinitialize") },
   ],
   display: [
-    { hdr: "Background" },
+    { label: "Sequence on/off", fn: () => document.getElementById("seqbtn").click() },
+    { label: "Data table on/off", fn: () => document.body.classList.toggle("viewer-only") },
+    { sep: 1 }, { hdr: "Background" },
     ...["black","white","grey"].map(c => ({ label: c, swatch: c, fn: () => run("bg_color " + c) })),
     { sep: 1 },
     { label: "Orthoscopic view", fn: () => stage.setParameters({ cameraType: "orthographic" }) },
@@ -518,14 +766,15 @@ const TOPMENUS = {
     { label: "Fullscreen", fn: () => stage.toggleFullscreen() },
   ],
   setting: [
-    { label: "Toggle ligands", fn: () => { const c = document.getElementById("ligand"); c.click(); } },
-    { label: "Spin on", fn: () => run("spin") },
-    { label: "Rock on", fn: () => run("rock") },
-    { label: "Stop motion", fn: () => run("stop") },
+    { label: "Show ligands (ball+stick)", fn: () => run("show balls, ligand") },
+    { label: "Hide waters", fn: () => run("hide everything, water") },
+    { label: "Remove waters", fn: () => run("remove water") },
+    { label: "Remove hydrogens", fn: () => run("remove hydrogen") },
+    { sep: 1 },
+    { label: "Spin", fn: () => run("spin") }, { label: "Rock", fn: () => run("rock") }, { label: "Stop", fn: () => run("stop") },
   ],
   help: [
     { label: "Command list", fn: () => run("help") },
-    { label: "About", fn: () => log(" PDBViewer – PyMOL-style interface on NGL Viewer.") },
   ],
 };
 document.querySelectorAll("#menubar [data-menu]").forEach(s =>
@@ -535,12 +784,78 @@ document.getElementById("structfile").onchange = e => {
   [...e.target.files].forEach(f => load(f).catch(err => log(" Error: " + err)));
   e.target.value = "";
 };
-document.getElementById("ligand").onchange = e => {
-  Object.keys(objects).forEach(n => e.target.checked ? show("ligand", n) : hide("ligand", n));
-};
 
 /* ================================================================
-   CSV data table (row click -> load structure)
+   Command line
+   ================================================================ */
+const COMMANDS = {
+  load:   a => load(a[0], a[1]).catch(e => log(" Error: " + e)),
+  fetch:  a => load("rcsb://" + a[0], a[1] || a[0]).catch(e => log(" Error: " + e)),
+  show:   a => show(a[0], a[1]),
+  hide:   a => hide(a[0] || "everything", a[1]),
+  as:     a => as(a[0], a[1]),
+  color:  a => color(a[0], a[1]),
+  label:  a => label(a[0], a[1]),
+  select: a => selectExpr(a.length > 1 ? a[1] : a[0]),
+  deselect: () => clearSelection(),
+  bg_color: a => stage.setParameters({ backgroundColor: a[0] || "black" }),
+  zoom:   a => a[0] === "in" ? zoomStep(1) : a[0] === "out" ? zoomStep(-1) : zoomTo(a[0]),
+  orient: a => zoomTo(a[0]),
+  center: a => zoomTo(a[0]),
+  reset:  () => stage.autoView(600),
+  delete: a => del(a[0] || "all"),
+  remove: a => removeAtoms(a[0] || "water"),
+  save:   a => save(a[0]),
+  set:    a => { const [k, v, t] = a; const n = parseFloat(v);
+                 if (/stick/.test(k)) setParam(["sticks","balls"], "radiusScale", n, t);
+                 else if (/sphere/.test(k)) setParam(["spheres"], "radiusScale", n, t);
+                 else if (/transp/.test(k)) setParam(Object.keys(REP).filter(r => r !== "labels"), "opacity", 1 - n, t);
+                 else log(" set: stick_radius | sphere_scale | transparency"); },
+  enable: a => { resolve(a[0]).forEach(({ name }) => objects[name].comp.setVisibility(true)); renderPanel(); },
+  disable:a => { resolve(a[0]).forEach(({ name }) => objects[name].comp.setVisibility(false)); renderPanel(); },
+  spin:   () => stage.setSpin(true),
+  rock:   () => stage.setRock(true),
+  stop:   () => { stage.setSpin(false); stage.setRock(false); },
+  png:    () => png(1),
+  ray:    () => png(3),
+  reinitialize: () => del("all"),
+  help:   () => log(
+" Commands (PyMOL syntax: command arg, target):\n" +
+"  show/hide/as <rep>[, target]   reps: cartoon sticks lines spheres balls surface ribbon labels everything\n" +
+"  color <color|chain|ss|element|spectrum|b|hydro>[, target]     label <res|chain|atom|clear>[, target]\n" +
+"  select <expr>   deselect   zoom [target|in|out]   reset   bg_color <color>\n" +
+"  remove <expr>   save [obj]   delete <obj>   load <path>   fetch <pdbid>   png   ray   spin   rock   stop\n" +
+"  set stick_radius|sphere_scale|transparency, <value>[, target]\n" +
+" Targets: all, object name, sele, or expressions like  chain A,  resi 10-20,  resn HEM,  ligand,  water,  name CA\n" +
+" Example:  select chain A and resi 50-80  →  as sticks, sele  →  color orange, sele"),
+};
+COMMANDS.bg = COMMANDS.bg_color;
+
+function run(line) {
+  line = line.trim();
+  if (!line) return;
+  log("PyMOL>" + line);
+  const sp = line.search(/\s/);
+  const cmd = (sp < 0 ? line : line.slice(0, sp)).toLowerCase();
+  const args = sp < 0 ? [] : line.slice(sp + 1).split(",").map(s => s.trim()).filter(Boolean);
+  const fn = COMMANDS[cmd];
+  if (!fn) return log(` Error: unknown command "${cmd}". Type help.`);
+  try { fn(args); } catch (e) { log(" Error: " + e.message); console.error(e); }
+}
+
+const history = []; let hIdx = 0;
+for (const id of ["cmd1", "cmd2"]) {
+  const el = document.getElementById(id);
+  el.addEventListener("keydown", e => {
+    if (e.key === "Enter") { history.push(el.value); hIdx = history.length; run(el.value); el.value = ""; }
+    else if (e.key === "ArrowUp" && hIdx > 0) { el.value = history[--hIdx]; e.preventDefault(); }
+    else if (e.key === "ArrowDown") { hIdx = Math.min(history.length, hIdx + 1); el.value = history[hIdx] || ""; }
+  });
+}
+document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => run(b.dataset.cmd));
+
+/* ================================================================
+   CSV data table (when opened without ?load=)
    ================================================================ */
 let rows = [], currentFolder = "";
 const FILE_RE = /\.(pdb|cif|bcif|sdf|mol2|ent)(\.gz)?$/i;
@@ -566,11 +881,7 @@ function renderTable() {
   shown.forEach(r => {
     const tr = document.createElement("tr");
     tr.innerHTML = cols.map(c => `<td>${cellHTML(r[c])}</td>`).join("");
-    tr.onclick = () => {
-      t.querySelectorAll("tr.sel").forEach(x => x.classList.remove("sel"));
-      tr.classList.add("sel");
-      loadRow(r);
-    };
+    tr.onclick = () => { t.querySelectorAll("tr.sel").forEach(x => x.classList.remove("sel")); tr.classList.add("sel"); loadRow(r); };
     tr.querySelectorAll("a").forEach(a => a.onclick = e => e.stopPropagation());
     tb.appendChild(tr);
   });
@@ -590,14 +901,8 @@ async function loadRow(r) {
   if (document.getElementById("replace").checked) del("all");
   const tries = [];
   if (FILE_RE.test(v)) tries.push(/^(https?:|\/)/.test(v) || v.includes("/") ? v : currentFolder + v);
-  else {                                     // PDB ID: try local folder first, then RCSB
-    if (currentFolder) tries.push(`${currentFolder}${v}.pdb`, `${currentFolder}${v}.cif`);
-    tries.push("rcsb://" + v);
-  }
-  for (const src of tries) {
-    try { log("PyMOL>load " + src); await load(src, v); return; }
-    catch (e) { /* try next */ }
-  }
+  else { if (currentFolder) tries.push(`${currentFolder}${v}.pdb`, `${currentFolder}${v}.cif`); tries.push("rcsb://" + v); }
+  for (const src of tries) { try { log("PyMOL>load " + src); await load(src, v); return; } catch (e) {} }
   log(` Error: could not load ${v}`);
 }
 
@@ -609,31 +914,24 @@ function loadCSV(src, folder) {
     error: err => log(" CSV error: " + err),
   });
 }
-
 const dsSel = document.getElementById("dataset");
-CONFIG.datasets.forEach((d, i) => dsSel.add(new Option(d.file, i)));
+CONFIG.datasets.forEach((d, i) => dsSel.add(new Option(d.file.replace("../", ""), i)));
 dsSel.onchange = () => { const d = CONFIG.datasets[dsSel.value]; loadCSV(d.file, d.folder); };
 document.getElementById("csvfile").onchange = e => { if (e.target.files[0]) loadCSV(e.target.files[0], ""); };
 document.getElementById("filter").oninput = renderTable;
 
-/* ---------- start ---------- */
-log(" PyMOL-style viewer ready. Type 'help' for commands, or click a table row.");
-renderPanel();
-
-// Opened from index.html:  pymol.html?load=MDpdb/file.pdb&format=pdb
+/* ================================================================
+   Start:  viewer.html?load=../MDpdb/file.pdb&format=pdb   (from index.html)
+   ================================================================ */
+log(" PyMOL-style viewer ready. Type 'help' for commands.");
+renderAll();
 const params = new URLSearchParams(location.search);
 if (params.get("load")) {
+  document.body.classList.add("viewer-only");
   const src = params.get("load");
   log("PyMOL>load " + src);
-  load(src, null, params.get("format")).catch(e => log(" Error: " + e));
-  if (params.get("table") !== "1") {           // viewer-only mode
-    document.getElementById("data").style.display = "none";
-    document.body.style.gridTemplateRows = "24px auto 1fr";
-    setTimeout(() => stage.handleResize(), 50);
-  }
-} else if (CONFIG.datasets.length) {
-  dsSel.onchange();
-}
+  load(src, null, params.get("format")).catch(e => log(" Error loading " + src + ": " + e));
+} else if (CONFIG.datasets.length) dsSel.onchange();
 </script>
 </body>
 </html>

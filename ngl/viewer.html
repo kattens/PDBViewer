@@ -1,166 +1,639 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>NGL Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PyMOL Viewer</title>
+
+<!-- NGL: use your repo copy (ngl/ngl.js) or the CDN below -->
+<script src="https://cdn.jsdelivr.net/npm/ngl@2.3.1/dist/ngl.js"></script>
+<!-- CSV parser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
 <style>
-  html,body{height:100%;margin:0}
-  #stage{position:fixed;inset:0}
-  .bar{position:fixed;top:10px;left:10px;display:flex;gap:8px;align-items:center;background:#fff8;border:1px solid #ddd;border-radius:10px;padding:6px 8px;font-family:system-ui}
-  .error{position:fixed;bottom:10px;left:10px;background:#fee;border:1px solid #fbb;border-radius:8px;padding:8px 10px;font-family:system-ui;display:none}
-  select,button{padding:4px 8px}
-  label{display:flex;align-items:center;gap:4px}
+  :root{
+    --menubar:#e8e8e8; --menutext:#111; --ext:#2b2b2b; --log:#1c1c1c; --logtext:#d8d8d8;
+    --panel:#000; --btn:#3a3a3a; --btnhi:#5a5a8a; --accent:#7fd3ff; --border:#444;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#000;color:#ddd;font:13px/1.3 "DejaVu Sans Mono",Consolas,Menlo,monospace;overflow:hidden}
+  body{display:grid;grid-template-rows:24px auto 1fr 32vh;height:100vh}
+
+  /* ---------- top menu bar (File / Display / Setting / Help) ---------- */
+  #menubar{background:var(--menubar);color:var(--menutext);display:flex;align-items:center;font-family:system-ui,sans-serif;font-size:13px;border-bottom:1px solid #aaa}
+  #menubar span{padding:3px 10px;cursor:default}
+  #menubar span:hover{background:#cfd8ff}
+  #menubar .title{margin-left:auto;opacity:.6;font-size:12px}
+
+  /* ---------- external GUI: log + command line + buttons ---------- */
+  #external{background:var(--ext);display:grid;grid-template-columns:1fr auto;border-bottom:1px solid var(--border)}
+  #log{background:var(--log);color:var(--logtext);height:96px;overflow-y:auto;padding:4px 8px;white-space:pre-wrap;margin:0}
+  .cmdrow{display:flex;align-items:center;background:var(--log);border-top:1px solid #333;padding:2px 6px}
+  .cmdrow label{color:#fff;margin-right:6px}
+  .cmdrow input{flex:1;background:transparent;border:0;color:#fff;font:inherit;outline:none}
+  #extbtns{display:grid;grid-template-columns:repeat(3,72px);gap:3px;padding:6px;align-content:start}
+  #extbtns button,#playback button{background:#d9d9d9;color:#111;border:1px solid #888;font:12px system-ui,sans-serif;padding:3px 0;cursor:pointer}
+  #extbtns button:hover,#playback button:hover{background:#fff}
+
+  /* ---------- main: viewer + object panel ---------- */
+  #main{display:grid;grid-template-columns:1fr 270px;min-height:0}
+  #viewcol{position:relative;display:flex;flex-direction:column;min-height:0}
+  #viewport{flex:1;min-height:0}
+  #viewcol .cmdrow{background:#000;border-top:1px solid #222}
+  #status{position:absolute;left:8px;top:6px;color:#ccc;pointer-events:none;font-size:12px;text-shadow:0 0 3px #000}
+
+  #side{background:var(--panel);border-left:1px solid #222;display:flex;flex-direction:column;min-height:0}
+  #objects{flex:1;overflow-y:auto;padding:4px}
+  .obj{display:flex;align-items:center;gap:2px;margin-bottom:2px}
+  .obj .name{flex:1;padding:2px 6px;cursor:pointer;color:#fff;background:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .obj .name.off{color:#666}
+  .obj .name:hover{background:#2a2a3a}
+  .obj button{width:22px;height:20px;padding:0;border:0;font:bold 12px inherit;cursor:pointer;color:#fff}
+  .b-A{background:#5d5d7a}.b-S{background:#4b6e4b}.b-H{background:#7a4b4b}.b-L{background:#6e6a3c}
+  .b-C{background:linear-gradient(90deg,#c33,#cc3,#3c3,#3cc,#33c,#c3c)}
+  .obj button:hover{filter:brightness(1.35)}
+
+  #playback{display:flex;gap:2px;padding:4px;border-top:1px solid #222}
+  #playback button{flex:1}
+  #mouse{font-size:11px;color:#9a9a9a;padding:4px 6px 6px;border-top:1px solid #222}
+  #mouse b{color:#fff}
+  #mouse table{border-collapse:collapse;width:100%}
+  #mouse td{padding:0 3px}
+  #mouse .r{color:#f88}#mouse .g{color:#8f8}#mouse .c{color:#8cf}
+
+  /* ---------- dropdown menus ---------- */
+  .menu{position:fixed;z-index:50;background:#f2f2f2;color:#111;border:1px solid #777;box-shadow:2px 3px 8px rgba(0,0,0,.5);font:13px system-ui,sans-serif;min-width:150px;padding:2px 0}
+  .menu div{padding:3px 14px;cursor:default;display:flex;align-items:center;gap:8px}
+  .menu div:hover{background:#3a6fd8;color:#fff}
+  .menu .hdr{font-weight:600;background:#ddd;cursor:default}
+  .menu .hdr:hover{background:#ddd;color:#111}
+  .menu hr{border:0;border-top:1px solid #bbb;margin:2px 0}
+  .menu .sw{width:12px;height:12px;border:1px solid #555}
+
+  /* ---------- data table (your CSV viewer) ---------- */
+  #data{background:#111;border-top:2px solid var(--border);display:flex;flex-direction:column;min-height:0}
+  #datatools{display:flex;gap:8px;align-items:center;padding:4px 8px;background:#1d1d1d;flex-wrap:wrap}
+  #datatools select,#datatools input[type=text]{background:#000;color:#ddd;border:1px solid #555;font:inherit;padding:2px 4px}
+  #tablewrap{flex:1;overflow:auto}
+  table.data{border-collapse:collapse;width:100%;font-size:12px}
+  table.data th{position:sticky;top:0;background:#2a2a2a;color:#fff;text-align:left;padding:3px 6px;border-bottom:1px solid #555;white-space:nowrap}
+  table.data td{padding:2px 6px;border-bottom:1px solid #222;white-space:nowrap}
+  table.data tr:hover td{background:#1e2a3a;cursor:pointer}
+  table.data tr.sel td{background:#2c4a6e}
+  table.data a{color:var(--accent)}
+
+  @media (max-width:760px){
+    body{grid-template-rows:24px auto 1fr 35vh}
+    #external{grid-template-columns:1fr}
+    #extbtns{grid-template-columns:repeat(6,1fr)}
+    #main{grid-template-columns:1fr}
+    #side{display:none}
+  }
 </style>
-<script src="https://unpkg.com/ngl@latest/dist/ngl.js"></script>
 </head>
 <body>
-<div id="stage"></div>
 
-<div class="bar">
-  <span id="label">NGL Viewer</span>
-  <label>Assembly:
-    <select id="assemblySelect">
-      <option value="auto">Auto</option>
-      <option value="AU">AU (asymmetric)</option>
-    </select>
-  </label>
-  <label><input type="checkbox" id="ligandToggle"> Ligands</label>
-  <button id="resetBtn">Reset</button>
+<!-- ================= MENU BAR ================= -->
+<div id="menubar">
+  <span data-menu="file">File</span>
+  <span data-menu="display">Display</span>
+  <span data-menu="setting">Setting</span>
+  <span data-menu="help">Help</span>
+  <span class="title">PDBViewer · PyMOL-style</span>
 </div>
 
-<div id="err" class="error"></div>
+<!-- ================= EXTERNAL GUI ================= -->
+<div id="external">
+  <div>
+    <pre id="log"></pre>
+    <div class="cmdrow"><label>PyMOL&gt;</label><input id="cmd1" autocomplete="off" spellcheck="false"></div>
+  </div>
+  <div id="extbtns">
+    <button data-cmd="reset">Reset</button>
+    <button data-cmd="zoom">Zoom</button>
+    <button data-cmd="orient">Orient</button>
+    <button data-cmd="png">Draw/PNG</button>
+    <button data-cmd="ray">Ray</button>
+    <button data-cmd="rock">Rock</button>
+  </div>
+</div>
+
+<!-- ================= MAIN ================= -->
+<div id="main">
+  <div id="viewcol">
+    <div id="viewport"></div>
+    <div id="status"></div>
+    <div class="cmdrow"><label>PyMOL&gt;</label><input id="cmd2" autocomplete="off" spellcheck="false"></div>
+  </div>
+  <div id="side">
+    <div id="objects"></div>
+    <div id="playback">
+      <button title="Spin" data-cmd="spin">⟳</button>
+      <button title="Stop" data-cmd="stop">■</button>
+      <button title="Clear all" data-cmd="delete all">✕</button>
+    </div>
+    <div id="mouse">
+      <b>Mouse Mode</b> 3-Button Viewing
+      <table>
+        <tr><td></td><td class="r">L</td><td class="g">M</td><td class="c">R</td><td>Wheel</td></tr>
+        <tr><td>&amp;</td><td>Rota</td><td>Move</td><td>Zoom</td><td>Clip</td></tr>
+      </table>
+      Click atom = identify
+    </div>
+  </div>
+</div>
+
+<!-- ================= DATA TABLE ================= -->
+<div id="data">
+  <div id="datatools">
+    <label>Dataset <select id="dataset"></select></label>
+    <label>Upload CSV <input type="file" id="csvfile" accept=".csv"></label>
+    <input type="text" id="filter" placeholder="filter rows…">
+    <label><input type="checkbox" id="ligand" checked> show ligands</label>
+    <label><input type="checkbox" id="replace" checked> replace on click</label>
+    <span id="rowcount" style="opacity:.6"></span>
+  </div>
+  <div id="tablewrap"><table class="data" id="table"></table></div>
+</div>
+
+<input type="file" id="structfile" accept=".pdb,.cif,.bcif,.sdf,.mol2,.ent,.gz" multiple hidden>
 
 <script>
-(async function(){
-  const params = new URLSearchParams(location.search);
-  // Support multiple ?load= params
-  const loads = params.getAll("load");
-  const explicitAssembly = params.get("assembly"); 
-  const stage = new NGL.Stage("stage", { backgroundColor: "white" });
+/* ================================================================
+   CONFIG – edit these to match your repo
+   ================================================================ */
+const CONFIG = {
+  // CSV files in your repo and the folder holding their structure files
+  datasets: [
+    { file: "../CompData.csv", folder: "../MDpdb/"  },
+    { file: "../ExpData.csv",  folder: "../TMDpdb/" },
+  ],
+  // Column holding the structure file name or PDB ID.
+  // Leave null to auto-detect (first cell that looks like a file name or PDB ID).
+  structureColumn: null,
+};
 
-  function showError(msg){
-    const e = document.getElementById("err");
-    e.textContent = msg;
-    e.style.display = "block";
+/* ================================================================
+   NGL stage + object registry
+   ================================================================ */
+const stage = new NGL.Stage("viewport", { backgroundColor: "black" });
+window.addEventListener("resize", () => stage.handleResize());
+
+const objects = {};          // name -> { comp, reps:{}, color }
+const REP = {                // PyMOL name -> NGL representation
+  lines: "line", sticks: "licorice", spheres: "spacefill", cartoon: "cartoon",
+  ribbon: "ribbon", surface: "surface", labels: "label", ligand: "ball+stick",
+  nb_spheres: "point",
+};
+const COLOR_ALIAS = {
+  chain: "chainid", chainid: "chainid", ss: "sstruc", sstruc: "sstruc",
+  element: "element", atomic: "element", spectrum: "residueindex", rainbow: "residueindex",
+  b: "bfactor", bfactor: "bfactor", hydrophobicity: "hydrophobicity", hydro: "hydrophobicity",
+};
+
+/* ---------- log ---------- */
+const logEl = document.getElementById("log");
+function log(msg, cls) {
+  logEl.textContent += msg + "\n";
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+/* ---------- loading ---------- */
+function uniqueName(base) {
+  base = base.replace(/\.(pdb|cif|bcif|sdf|mol2|ent)(\.gz)?$/i, "").replace(/[^\w.-]/g, "_") || "obj";
+  let n = base, i = 1;
+  while (objects[n]) n = `${base}_${++i}`;
+  return n;
+}
+
+async function load(source, name, ext) {
+  const label = typeof source === "string" ? source : source.name;
+  name = uniqueName(name || decodeURIComponent(label.split("/").pop()));
+  const opts = { defaultRepresentation: false, name };
+  if (ext) opts.ext = ext === "mmcif" ? "cif" : ext;
+  const comp = await stage.loadFile(source, opts);
+  objects[name] = { comp, reps: {}, color: "chainid", keep: "all" };
+  const s = comp.structure;
+  if (s && s.residueStore && s.residueStore.count > 1) show("cartoon", name);
+  else show("sticks", name);                       // small molecules
+  if (document.getElementById("ligand").checked) show("ligand", name);
+  comp.autoView(600);
+  renderPanel();
+  log(` ObjectMolecule: "${name}" loaded (${s ? s.atomCount : "?"} atoms)`);
+  return name;
+}
+
+/* base selection per representation, AND-ed with the object's kept atoms */
+const BASE_SELE = { ligand: "ligand and not water", surface: "polymer", labels: ".CA",
+                    sticks: "not water", lines: "not water" };
+function combine(o, rep) {
+  const base = rep === "labels" && o.labelSele ? o.labelSele : (BASE_SELE[rep] || "all");
+  return o.keep === "all" ? base : `(${base}) and (${o.keep})`;
+}
+
+/* ---------- target helpers ---------- */
+function targets(name) {
+  if (!name || name === "all" || name === "*") return Object.keys(objects);
+  if (!objects[name]) { log(` Error: object "${name}" not found.`); return []; }
+  return [name];
+}
+
+/* ---------- show / hide / color / label ---------- */
+function show(rep, name) {
+  if (rep === "everything") rep = "lines";
+  const type = REP[rep];
+  if (!type) return log(` Error: unknown representation "${rep}".`);
+  for (const n of targets(name)) {
+    const o = objects[n];
+    if (o.reps[rep]) { o.reps[rep].setVisibility(true); continue; }
+    const p = { color: o.color };
+    if (rep === "ligand") Object.assign(p, { color: "element" });
+    if (rep === "surface") Object.assign(p, { opacity: 0.85 });
+    if (rep === "labels") Object.assign(p, { labelType: "res", color: "white", zOffset: 2 });
+    p.sele = combine(o, rep);
+    o.reps[rep] = o.comp.addRepresentation(type, p);
   }
+}
 
-  if (loads.length === 0){
-    showError("Missing ?load=. Example: viewer.html?load=/MDpdb/3Q4U.pdb or multiple ?load=…");
-    return;
+function hide(rep, name) {
+  for (const n of targets(name)) {
+    const o = objects[n];
+    const keys = (rep === "everything" || !rep) ? Object.keys(o.reps) : [rep];
+    keys.forEach(k => o.reps[k] && o.reps[k].setVisibility(false));
   }
+}
 
-  window.addEventListener("resize", () => stage.handleResize(), false);
-  document.getElementById("resetBtn").addEventListener("click", () => stage.autoView());
+function as(rep, name) { hide("everything", name); show(rep, name); }
 
-  const assemblySelect = document.getElementById("assemblySelect");
-  const ligandToggle   = document.getElementById("ligandToggle");
-
-  // Keep track of components & representations to re-apply on assembly change
-  const components = []; // { comp, cartoonReps:[], ligandRep: null, availableAssemblies:[] }
-
-  async function loadOne(url){
-    // Guess ext if not provided via &format=
-    let ext = params.get("format");
-    if (!ext){
-      const lower = url.toLowerCase();
-      if (lower.endsWith(".pdb") || lower.endsWith(".ent")) ext = "pdb";
-      else if (lower.endsWith(".cif") || lower.endsWith(".mmcif")) ext = "mmcif";
-      else if (lower.endsWith(".bcif")) ext = "bcif";
-      else if (lower.endsWith(".sdf")) ext = "sdf";
-      else if (lower.endsWith(".mol2")) ext = "mol2";
-      else ext = "pdb";
+function color(c, name) {
+  const scheme = COLOR_ALIAS[c] || c;
+  for (const n of targets(name)) {
+    const o = objects[n];
+    o.color = scheme;
+    for (const [k, r] of Object.entries(o.reps)) {
+      if (k === "labels" || k === "ligand") continue;
+      r.setColor(scheme);
     }
-
-    const comp = await stage.loadFile(url, { ext });
-    // Get available biological assemblies from structure metadata (if any)
-    const biomols = (comp.structure && comp.structure.biomolDict) ? Object.keys(comp.structure.biomolDict) : [];
-    return { comp, biomols };
   }
+}
 
-  // Load all files
-  try {
-    for (const url of loads){
-      const { comp, biomols } = await loadOne(url);
-      components.push({ comp, cartoonReps: [], ligandRep: null, availableAssemblies: biomols });
-    }
-  } catch(err){
-    console.error(err);
-    showError("Failed to load one or more files: " + (err?.message || err));
-    return;
-  }
-
-  // Populate assembly dropdown if any file has biomolecular assemblies
-  const buSet = new Set();
-  for (const { availableAssemblies } of components){
-    for (const bu of availableAssemblies) buSet.add(bu);
-  }
-  if (buSet.size){
-    for (const bu of buSet){
-      const opt = document.createElement("option");
-      opt.value = bu;
-      opt.textContent = bu;
-      assemblySelect.appendChild(opt);
-    }
-  }
-
-  // Decide initial assembly
-  function initialAssembly(){
-    if (explicitAssembly) return explicitAssembly;      // query override
-    if (assemblySelect.value !== "auto") return assemblySelect.value;
-    // Auto: prefer BU1 if present, else AU
-    return buSet.has("BU1") ? "BU1" : "AU";
-  }
-
-  function applyReps(assembly){
-    // Remove old reps first
-    for (const entry of components){
-      entry.comp.removeAllRepresentations();
-      entry.cartoonReps = [];
-      entry.ligandRep = null;
-    }
-    // Add reps per component
-    for (const entry of components){
-      const selePolymer = "polymer"; // protein/nucleic chains
-      entry.cartoonReps.push(
-        entry.comp.addRepresentation("cartoon", {
-          sele: selePolymer,
-          assembly: assembly === "AU" ? undefined : assembly, // undefined means AU
-          colorScheme: "chainid"
-        })
-      );
-      // Ligands rep (hidden until toggled)
-      entry.ligandRep = entry.comp.addRepresentation("ball+stick", {
-        sele: "hetero and not water",
-        assembly: assembly === "AU" ? undefined : assembly,
-        visible: true
+function setLabel(type, name) {          // type: res | chainname | clear
+  for (const n of targets(name)) {
+    const o = objects[n];
+    if (o.reps.labels) { o.comp.removeRepresentation(o.reps.labels); delete o.reps.labels; }
+    if (type !== "clear") {
+      o.labelSele = type === "chainname" ? ".CA and 1" : ".CA";
+      o.reps.labels = o.comp.addRepresentation("label", {
+        sele: combine(o, "labels"), labelType: type, color: "white", zOffset: 2,
       });
     }
   }
+}
 
-  applyReps(initialAssembly());
-  await stage.autoView();
+function zoom(name) {
+  if (!name || name === "all") return stage.autoView(600);
+  targets(name).forEach(n => objects[n].comp.autoView(600));
+}
 
-  // UI: assembly switching
-  assemblySelect.addEventListener("change", async ()=>{
-    const chosen = assemblySelect.value === "auto"
-      ? (buSet.has("BU1") ? "BU1" : "AU")
-      : assemblySelect.value;
-    applyReps(chosen);
-    await stage.autoView();
+function del(name) {
+  for (const n of targets(name)) { stage.removeComponent(objects[n].comp); delete objects[n]; }
+  renderPanel();
+}
+
+function toggle(name) {
+  for (const n of targets(name)) objects[n].comp.setVisibility(!objects[n].comp.visible);
+  renderPanel();
+}
+
+/* save the (possibly edited) structure as a PDB file */
+function save(name) {
+  const list = targets(name || Object.keys(objects)[0]);
+  for (const n of list) {
+    const o = objects[n], s = o.comp.structure;
+    if (!s) continue;
+    const out = o.keep === "all" ? s : s.getView(new NGL.Selection(o.keep));
+    new NGL.PdbWriter(out).download(n);
+    log(` Saved "${n}.pdb".`);
+  }
+}
+
+/* remove atoms, e.g.  remove water   |   remove hydrogen, 1crn   |   remove resname HOH */
+const SELE_ALIAS = { water: "water", hydrogen: "hydrogen", h: "hydrogen", solvent: "water or ion", ligand: "ligand" };
+function removeAtoms(sele, name) {
+  sele = SELE_ALIAS[sele] || sele;
+  for (const n of targets(name)) {
+    const o = objects[n];
+    o.keep = `(${o.keep}) and not (${sele})`;
+    for (const [k, r] of Object.entries(o.reps)) r.setSelection(combine(o, k));
+    const left = o.comp.structure.getView(new NGL.Selection(o.keep)).atomCount;
+    log(` "${n}": removed ${sele} (${left} atoms left). Use 'save' to export.`);
+  }
+}
+
+async function png(scale = 1) {
+  const blob = await stage.makeImage({ factor: scale, antialias: true, trim: false, transparent: false });
+  NGL.download(blob, "pymol_view.png");
+  log(` Image saved (${scale}x).`);
+}
+
+/* ================================================================
+   Command line (PyMOL syntax: cmd arg1, arg2)
+   ================================================================ */
+const COMMANDS = {
+  load:   a => load(a[0], a[1]).catch(e => log(" Error: " + e)),
+  fetch:  a => load("rcsb://" + a[0], a[1] || a[0]).catch(e => log(" Error: " + e)),
+  show:   a => show(a[0] || "lines", a[1]),
+  hide:   a => hide(a[0] || "everything", a[1]),
+  as:     a => as(a[0], a[1]),
+  color:  a => color(a[0], a[1]),
+  label:  a => setLabel(a[0] === "chain" ? "chainname" : (a[0] || "res"), a[1]),
+  bg_color: a => stage.setParameters({ backgroundColor: a[0] || "black" }),
+  zoom:   a => zoom(a[0]),
+  orient: a => zoom(a[0]),
+  reset:  () => stage.autoView(600),
+  delete: a => del(a[0] || "all"),
+  enable: a => targets(a[0]).forEach(n => objects[n].comp.setVisibility(true)) || renderPanel(),
+  disable:a => targets(a[0]).forEach(n => objects[n].comp.setVisibility(false)) || renderPanel(),
+  spin:   () => stage.setSpin(true),
+  rock:   () => stage.setRock(true),
+  stop:   () => { stage.setSpin(false); stage.setRock(false); },
+  save:   a => save(a[0]),
+  remove: a => removeAtoms(a[0] || "water", a[1]),
+  png:    () => png(1),
+  ray:    () => png(3),
+  reinitialize: () => del("all"),
+  help:   () => log(" Commands: load, fetch, show, hide, as, color, label, bg_color, zoom, orient,\n" +
+                    "           reset, delete, enable, disable, spin, rock, stop, png, ray, reinitialize,\n" +
+                    "           remove <water|hydrogen|ligand|NGL selection>[, obj], save [obj]\n" +
+                    " Reps: lines sticks spheres cartoon ribbon surface labels ligand everything\n" +
+                    " Colors: any CSS color, or chain ss element spectrum b hydro\n" +
+                    " Example:  fetch 1crn   |   color ss   |   show sticks, 1crn"),
+};
+COMMANDS.bg = COMMANDS.bg_color;
+
+function run(line) {
+  line = line.trim();
+  if (!line) return;
+  log("PyMOL>" + line);
+  const sp = line.search(/\s/);
+  const cmd = (sp < 0 ? line : line.slice(0, sp)).toLowerCase();
+  const args = sp < 0 ? [] : line.slice(sp + 1).split(",").map(s => s.trim()).filter(Boolean);
+  const fn = COMMANDS[cmd];
+  if (!fn) return log(` Error: unknown command "${cmd}". Type help.`);
+  try { fn(args); } catch (e) { log(" Error: " + e.message); }
+}
+
+const history = []; let hIdx = 0;
+for (const id of ["cmd1", "cmd2"]) {
+  const el = document.getElementById(id);
+  el.addEventListener("keydown", e => {
+    if (e.key === "Enter") { history.push(el.value); hIdx = history.length; run(el.value); el.value = ""; }
+    else if (e.key === "ArrowUp" && hIdx > 0) { el.value = history[--hIdx]; e.preventDefault(); }
+    else if (e.key === "ArrowDown") { hIdx = Math.min(history.length, hIdx + 1); el.value = history[hIdx] || ""; }
   });
+}
+document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => run(b.dataset.cmd));
 
-  // UI: ligand toggle
-  ligandToggle.addEventListener("change", ()=>{
-    for (const entry of components){
-      if (entry.ligandRep) entry.ligandRep.setVisibility(ligandToggle.checked);
+/* ---------- atom picking -> status line ---------- */
+const statusEl = document.getElementById("status");
+stage.signals.clicked.add(pp => {
+  if (!pp || !pp.atom) return;
+  const a = pp.atom, obj = pp.component ? pp.component.name : "";
+  const msg = ` You clicked /${obj}//${a.chainname}/${a.resname}\`${a.resno}/${a.atomname}`;
+  statusEl.textContent = msg; log(msg);
+});
+
+/* ================================================================
+   Object panel with A S H L C buttons
+   ================================================================ */
+const SWATCHES = ["red","green","blue","yellow","magenta","cyan","orange","salmon","purple","white","grey","black"];
+const REP_ITEMS = ["lines","sticks","ribbon","cartoon","labels","spheres","surface","ligand"];
+
+function menuFor(kind, name) {
+  const onAll = name === "all";
+  switch (kind) {
+    case "A": return [
+      { hdr: "Action" },
+      { label: "zoom", fn: () => zoom(name) },
+      { label: "orient", fn: () => zoom(name) },
+      { label: "enable / disable", fn: () => toggle(name) },
+      { sep: 1 },
+      { label: "remove waters", fn: () => removeAtoms("water", name) },
+      { label: "remove hydrogens", fn: () => removeAtoms("hydrogen", name) },
+      ...(onAll ? [] : [{ label: "save as PDB", fn: () => save(name) }]),
+      { sep: 1 },
+      ...(onAll ? [{ label: "reset view", fn: () => stage.autoView(600) }] : []),
+      { label: "delete", fn: () => del(name) },
+    ];
+    case "S": return [{ hdr: "Show" }, ...REP_ITEMS.map(r => ({ label: r, fn: () => show(r, name) })),
+                      { sep: 1 }, { hdr: "As" }, ...["lines","sticks","cartoon","spheres","surface"].map(r => ({ label: r, fn: () => as(r, name) }))];
+    case "H": return [{ hdr: "Hide" }, { label: "everything", fn: () => hide("everything", name) },
+                      ...REP_ITEMS.map(r => ({ label: r, fn: () => hide(r, name) }))];
+    case "L": return [{ hdr: "Label" }, { label: "residues", fn: () => setLabel("res", name) },
+                      { label: "chains", fn: () => setLabel("chainname", name) },
+                      { label: "atom names", fn: () => setLabel("atomname", name) },
+                      { sep: 1 }, { label: "clear", fn: () => setLabel("clear", name) }];
+    case "C": return [{ hdr: "Color" },
+                      { label: "by chain", fn: () => color("chain", name) },
+                      { label: "by ss", fn: () => color("ss", name) },
+                      { label: "by element", fn: () => color("element", name) },
+                      { label: "spectrum", fn: () => color("spectrum", name) },
+                      { label: "b-factors", fn: () => color("b", name) },
+                      { label: "hydrophobicity", fn: () => color("hydro", name) },
+                      { sep: 1 },
+                      ...SWATCHES.map(c => ({ label: c, swatch: c, fn: () => color(c, name) }))];
+  }
+}
+
+function renderPanel() {
+  const box = document.getElementById("objects");
+  box.innerHTML = "";
+  for (const name of ["all", ...Object.keys(objects)]) {
+    const row = document.createElement("div");
+    row.className = "obj";
+    const nm = document.createElement("div");
+    nm.className = "name" + (name !== "all" && !objects[name].comp.visible ? " off" : "");
+    nm.textContent = name;
+    nm.title = name === "all" ? "all objects" : "click to enable/disable";
+    nm.onclick = () => toggle(name);
+    row.appendChild(nm);
+    for (const k of "ASHLC") {
+      const b = document.createElement("button");
+      b.className = "b-" + k; b.textContent = k;
+      b.onclick = e => { e.stopPropagation(); openMenu(b, menuFor(k, name)); };
+      row.appendChild(b);
     }
-  });
+    box.appendChild(row);
+  }
+}
 
-  // HUD label
-  const names = loads.map(u => decodeURIComponent(u.split("/").pop()));
-  document.getElementById("label").textContent = names.join(" + ");
-})();
+/* ---------- generic dropdown ---------- */
+let openEl = null;
+function closeMenu() { if (openEl) { openEl.remove(); openEl = null; } }
+function openMenu(anchor, items) {
+  closeMenu();
+  const m = document.createElement("div");
+  m.className = "menu";
+  for (const it of items) {
+    if (it.sep) { m.appendChild(document.createElement("hr")); continue; }
+    const d = document.createElement("div");
+    if (it.hdr) { d.className = "hdr"; d.textContent = it.hdr; }
+    else {
+      if (it.swatch) { const s = document.createElement("span"); s.className = "sw"; s.style.background = it.swatch; d.appendChild(s); }
+      d.appendChild(document.createTextNode(it.label));
+      d.onclick = () => { closeMenu(); it.fn(); };
+    }
+    m.appendChild(d);
+  }
+  document.body.appendChild(m);
+  const r = anchor.getBoundingClientRect();
+  let x = r.left, y = r.bottom;
+  const mw = m.offsetWidth, mh = m.offsetHeight;
+  if (x + mw > innerWidth) x = innerWidth - mw - 4;
+  if (y + mh > innerHeight) y = Math.max(4, r.top - mh);
+  m.style.left = x + "px"; m.style.top = y + "px";
+  openEl = m;
+}
+document.addEventListener("click", closeMenu);
+
+/* ---------- top menu bar ---------- */
+const TOPMENUS = {
+  file: [
+    { label: "Open structure…", fn: () => document.getElementById("structfile").click() },
+    { label: "Fetch PDB ID…", fn: () => { const id = prompt("PDB ID:"); if (id) run("fetch " + id); } },
+    { label: "Load CSV…", fn: () => document.getElementById("csvfile").click() },
+    { sep: 1 },
+    { label: "Save structure (PDB)", fn: () => run("save") },
+    { label: "Export PNG", fn: () => run("png") },
+    { label: "Export PNG (ray, 3x)", fn: () => run("ray") },
+    { sep: 1 },
+    { label: "Reinitialize", fn: () => run("reinitialize") },
+  ],
+  display: [
+    { hdr: "Background" },
+    ...["black","white","grey"].map(c => ({ label: c, swatch: c, fn: () => run("bg_color " + c) })),
+    { sep: 1 },
+    { label: "Orthoscopic view", fn: () => stage.setParameters({ cameraType: "orthographic" }) },
+    { label: "Perspective view", fn: () => stage.setParameters({ cameraType: "perspective" }) },
+    { label: "Fullscreen", fn: () => stage.toggleFullscreen() },
+  ],
+  setting: [
+    { label: "Toggle ligands", fn: () => { const c = document.getElementById("ligand"); c.click(); } },
+    { label: "Spin on", fn: () => run("spin") },
+    { label: "Rock on", fn: () => run("rock") },
+    { label: "Stop motion", fn: () => run("stop") },
+  ],
+  help: [
+    { label: "Command list", fn: () => run("help") },
+    { label: "About", fn: () => log(" PDBViewer – PyMOL-style interface on NGL Viewer.") },
+  ],
+};
+document.querySelectorAll("#menubar [data-menu]").forEach(s =>
+  s.onclick = e => { e.stopPropagation(); openMenu(s, TOPMENUS[s.dataset.menu]); });
+
+document.getElementById("structfile").onchange = e => {
+  [...e.target.files].forEach(f => load(f).catch(err => log(" Error: " + err)));
+  e.target.value = "";
+};
+document.getElementById("ligand").onchange = e => {
+  Object.keys(objects).forEach(n => e.target.checked ? show("ligand", n) : hide("ligand", n));
+};
+
+/* ================================================================
+   CSV data table (row click -> load structure)
+   ================================================================ */
+let rows = [], currentFolder = "";
+const FILE_RE = /\.(pdb|cif|bcif|sdf|mol2|ent)(\.gz)?$/i;
+const PDBID_RE = /^[0-9][A-Za-z0-9]{3}$/;
+
+function cellHTML(v) {
+  const s = String(v ?? "");
+  const esc = s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  if (/^https?:\/\//.test(s)) return `<a href="${esc}" target="_blank">${esc}</a>`;
+  if (PDBID_RE.test(s)) return `<a href="https://www.rcsb.org/structure/${esc}" target="_blank">${esc}</a>`;
+  if (/^PF3D7_\d+/.test(s)) return `<a href="https://plasmodb.org/plasmo/app/record/gene/${esc}" target="_blank">${esc}</a>`;
+  return esc;
+}
+
+function renderTable() {
+  const t = document.getElementById("table");
+  const q = document.getElementById("filter").value.toLowerCase();
+  if (!rows.length) { t.innerHTML = ""; return; }
+  const cols = Object.keys(rows[0]);
+  const shown = rows.filter(r => !q || Object.values(r).join(" ").toLowerCase().includes(q));
+  t.innerHTML = `<thead><tr>${cols.map(c => `<th>${cellHTML(c)}</th>`).join("")}</tr></thead>`;
+  const tb = document.createElement("tbody");
+  shown.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = cols.map(c => `<td>${cellHTML(r[c])}</td>`).join("");
+    tr.onclick = () => {
+      t.querySelectorAll("tr.sel").forEach(x => x.classList.remove("sel"));
+      tr.classList.add("sel");
+      loadRow(r);
+    };
+    tr.querySelectorAll("a").forEach(a => a.onclick = e => e.stopPropagation());
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  document.getElementById("rowcount").textContent = `${shown.length} / ${rows.length} rows`;
+}
+
+function findStructure(r) {
+  if (CONFIG.structureColumn && r[CONFIG.structureColumn]) return String(r[CONFIG.structureColumn]).trim();
+  const vals = Object.values(r).map(v => String(v ?? "").trim());
+  return vals.find(v => FILE_RE.test(v)) || vals.find(v => PDBID_RE.test(v)) || null;
+}
+
+async function loadRow(r) {
+  const v = findStructure(r);
+  if (!v) return log(" No structure file or PDB ID found in this row (set CONFIG.structureColumn).");
+  if (document.getElementById("replace").checked) del("all");
+  const tries = [];
+  if (FILE_RE.test(v)) tries.push(/^(https?:|\/)/.test(v) || v.includes("/") ? v : currentFolder + v);
+  else {                                     // PDB ID: try local folder first, then RCSB
+    if (currentFolder) tries.push(`${currentFolder}${v}.pdb`, `${currentFolder}${v}.cif`);
+    tries.push("rcsb://" + v);
+  }
+  for (const src of tries) {
+    try { log("PyMOL>load " + src); await load(src, v); return; }
+    catch (e) { /* try next */ }
+  }
+  log(` Error: could not load ${v}`);
+}
+
+function loadCSV(src, folder) {
+  currentFolder = folder || "";
+  Papa.parse(src, {
+    download: typeof src === "string", header: true, skipEmptyLines: true,
+    complete: res => { rows = res.data; renderTable(); log(` Loaded ${rows.length} rows from ${src.name || src}`); },
+    error: err => log(" CSV error: " + err),
+  });
+}
+
+const dsSel = document.getElementById("dataset");
+CONFIG.datasets.forEach((d, i) => dsSel.add(new Option(d.file, i)));
+dsSel.onchange = () => { const d = CONFIG.datasets[dsSel.value]; loadCSV(d.file, d.folder); };
+document.getElementById("csvfile").onchange = e => { if (e.target.files[0]) loadCSV(e.target.files[0], ""); };
+document.getElementById("filter").oninput = renderTable;
+
+/* ---------- start ---------- */
+log(" PyMOL-style viewer ready. Type 'help' for commands, or click a table row.");
+renderPanel();
+
+// Opened from index.html:  pymol.html?load=MDpdb/file.pdb&format=pdb
+const params = new URLSearchParams(location.search);
+if (params.get("load")) {
+  const src = params.get("load");
+  log("PyMOL>load " + src);
+  load(src, null, params.get("format")).catch(e => log(" Error: " + e));
+  if (params.get("table") !== "1") {           // viewer-only mode
+    document.getElementById("data").style.display = "none";
+    document.body.style.gridTemplateRows = "24px auto 1fr";
+    setTimeout(() => stage.handleResize(), 50);
+  }
+} else if (CONFIG.datasets.length) {
+  dsSel.onchange();
+}
 </script>
 </body>
 </html>

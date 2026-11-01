@@ -6,141 +6,447 @@
 <title>Single-Target Hitters – Drug Repurposing Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root {
-    --bg: #eef9f7;
-    --teal: #2a9d8f;
-    --teal-dark: #1f7a6e;
-    --text: #2d3954;
-    --border: #c0e8e2;
-    --panel: #ffffff;
-    --shadow: 0 2px 12px rgba(42,157,143,.1);
+  :root{
+    --bg:     #eef9f7;
+    --teal:   #2a9d8f;
+    --teal-d: #1f7a6e;
+    --teal-l: #d6f0ed;
+    --text:   #2d3954;
+    --muted:  #7a8499;
+    --border: #b0ddd8;
+    --panel:  #ffffff;
+    --shadow: 0 2px 14px rgba(42,157,143,.10);
     --radius: 14px;
+    --orange: #e08c2e;
+    --blue:   #4a86b8;
+    --red:    #d9534f;
+    --red-l:  #fdf2f2;
   }
-  html,body { margin:0; height:100%; font: 14px/1.6 system-ui, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-  body { display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 24px; box-sizing:border-box; min-height:100vh; }
+  *{box-sizing:border-box}
+  html,body{margin:0;font:14px/1.6 system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  body{padding:32px clamp(16px,4vw,48px) 60px}
 
-  .back-link {
-    position: fixed; top: 20px; left: 24px;
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600;
-    color: var(--teal); text-decoration: none;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 30px; padding: 6px 14px;
-    box-shadow: var(--shadow);
-    transition: transform .12s ease, box-shadow .12s ease;
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:13px;font-weight:600;color:var(--teal);text-decoration:none;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:30px;padding:6px 16px;box-shadow:var(--shadow);margin-bottom:28px;
+    transition:transform .12s,box-shadow .12s;
   }
-  .back-link:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(42,157,143,.18); }
+  .back-link:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(42,157,143,.2)}
 
-  .card {
-    background: var(--panel);
-    border: 2px solid var(--teal);
-    border-radius: 20px;
-    padding: 48px 52px;
-    text-align: center;
-    max-width: 520px;
-    width: 100%;
-    box-shadow: var(--shadow);
+  .page-badge{
+    display:inline-block;background:var(--teal);color:#fff;
+    font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+    padding:4px 14px;border-radius:30px;margin-bottom:12px;
+  }
+  .page-title{font-size:clamp(22px,3vw,32px);font-weight:800;color:#1a2340;margin:0 0 6px;line-height:1.2}
+  .page-sub{font-size:15px;color:var(--muted);margin:0 0 28px}
+
+  .stat-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:28px}
+  .stat-card{
+    flex:1 1 160px;background:var(--panel);
+    border:1.5px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;box-shadow:var(--shadow);
+  }
+  .stat-num{font-size:42px;font-weight:800;color:var(--teal);line-height:1}
+  .stat-label{font-size:13px;color:var(--muted);margin-top:4px}
+
+  h2{font-size:18px;font-weight:700;color:#1a2340;margin:0 0 14px;padding-top:4px}
+  .divider{height:1px;background:var(--border);margin:32px 0}
+
+  /* tier header */
+  .tier-header{
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:14px;padding:12px 18px;
+    border-radius:10px;
+  }
+  .tier-header-1{background:var(--teal-l);border:1.5px solid var(--border)}
+  .tier-header-2{background:#fff8ee;border:1.5px solid #f0cfa0}
+  .tier-header-3{background:#f5f6f8;border:1.5px solid #d5d9e2}
+  .tier-icon{font-size:20px;flex-shrink:0}
+  .tier-title{font-weight:700;font-size:15px;color:#1a2340}
+  .tier-sub{font-size:12px;color:var(--muted)}
+
+  /* drug cards grid */
+  .drug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:12px}
+  .drug-card{
+    background:var(--panel);border:1.5px solid var(--border);
+    border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);
+  }
+  .drug-name{font-size:15px;font-weight:700;color:#1a2340;margin:0 0 3px}
+  .drug-target{font-size:13px;color:var(--teal);font-weight:600;margin-bottom:6px}
+  .drug-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .drug-note{font-size:12px;color:var(--muted);line-height:1.4}
+
+  /* pills */
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+  .pill-teal{background:var(--teal-l);color:var(--teal-d)}
+  .pill-orange{background:#fff3de;color:#9a5c00}
+  .pill-blue{background:#deeef8;color:#326090}
+  .pill-red{background:var(--red-l);color:#8a1f1e}
+  .pill-gray{background:#f0f1f3;color:#5a6275}
+
+  /* vina score */
+  .vina{font-size:12px;color:#5a6a80}
+  .vina strong{color:#1a2340}
+
+  /* table */
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:var(--panel)}
+  thead th{
+    background:#d0ece8;padding:10px 14px;
+    text-align:left;font-weight:700;color:#1a2340;
+    border-bottom:1.5px solid var(--border);white-space:nowrap;
+  }
+  tbody tr:nth-child(even){background:#f2fbf9}
+  tbody tr:hover{background:var(--teal-l)}
+  td{padding:9px 14px;border-bottom:1px solid #c8e6e1;vertical-align:top}
+
+  .note-box{
+    background:#f2fbf9;border:1.5px dashed var(--border);
+    border-radius:10px;padding:14px 18px;font-size:13px;
+    color:var(--muted);margin-top:20px;line-height:1.6;
+  }
+  .note-box strong{color:var(--text)}
+
+  .warning{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--red-l);border:1px solid #f5c6c5;
+    border-radius:10px;padding:12px 16px;font-size:13px;
+    color:#7a1f1e;margin-top:10px;
   }
 
-  .badge {
-    display: inline-block;
-    background: var(--teal);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    padding: 4px 14px;
-    border-radius: 30px;
-    margin-bottom: 20px;
-  }
-
-  .big-num {
-    font-size: 72px;
-    font-weight: 800;
-    color: var(--teal);
-    line-height: 1;
-    margin: 0 0 4px;
-  }
-  .big-label {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--teal);
-    margin: 0 0 18px;
-  }
-
-  h1 { font-size: 24px; font-weight: 800; color: #1a2340; margin: 0 0 10px; }
-
-  .desc {
-    font-size: 15px;
-    color: #5a6a80;
-    line-height: 1.65;
-    margin: 0 0 28px;
-  }
-
-  .placeholder-box {
-    background: var(--bg);
-    border: 1.5px dashed var(--border);
-    border-radius: 12px;
-    padding: 22px 20px;
-    font-size: 14px;
-    color: #7a8fa0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .placeholder-icon { font-size: 28px; flex-shrink: 0; }
-
-  .bullets {
-    text-align: left;
-    list-style: none;
-    padding: 0; margin: 20px 0 0;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .bullets li {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 14px; color: #4a5a6a;
-  }
-  .bullets li::before {
-    content: "✓";
-    color: var(--teal);
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
+  @media(max-width:600px){.drug-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-  <a class="back-link" href="index.html">← Back to Overview</a>
+<a class="back-link" href="index.html">← Back to Overview</a>
 
-  <div class="card">
-    <div class="badge">One Drug · One Target</div>
+<div class="page-badge">One Drug · One Target</div>
+<h1 class="page-title">38 Single-Target Drugs — Tiered by Evidence</h1>
+<p class="page-sub">Drugs interacting with exactly one malaria protein — the cleanest repurposing candidates with clear mechanistic profiles. Tiered by number of corroborating structures.</p>
 
-    <div class="big-num">38</div>
-    <div class="big-label">drugs</div>
-
-    <h1>Single-Target Hitters</h1>
-    <p class="desc">
-      Drugs that interact with exactly one malaria protein target —
-      the cleanest repurposing candidates with a clear mechanistic profile.
-    </p>
-
-    <div class="placeholder-box">
-      <div class="placeholder-icon">🔬</div>
-      <div>
-        <strong>Table coming soon</strong><br>
-        This page will show the filtered data table for all 38 single-target drugs, with 3D interaction viewer links and external database references.
-      </div>
-    </div>
-
-    <ul class="bullets">
-      <li>Cleanest repurposing candidates</li>
-      <li>One gene → clear mechanism of action</li>
-      <li>Interpreted in §6 of the analysis</li>
-      <li>Links to RCSB PDB, UniProt, PubChem</li>
-    </ul>
+<!-- STATS -->
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="stat-num">38</div>
+    <div class="stat-label">single-target drugs total</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-num">4</div>
+    <div class="stat-label">Tier 1 — strong evidence (≥3 structures)</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">5</div>
+    <div class="stat-label">Tier 2 — modest evidence (2 structures)</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">29</div>
+    <div class="stat-label">Tier 3 — singletons (1 structure)</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TIER 1 -->
+<div class="tier-header tier-header-1">
+  <div class="tier-icon">⭐</div>
+  <div>
+    <div class="tier-title">Tier 1 — Strong Evidence (≥3 structures)</div>
+    <div class="tier-sub">Multiple independent structures corroborate the hit — highest confidence in the single-target category</div>
+  </div>
+</div>
+
+<div class="drug-grid">
+  <div class="drug-card">
+    <div class="drug-name">triclosan</div>
+    <div class="drug-target">→ PfENR (apicoplast)</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">n=29 structures</span>
+      <span class="pill pill-teal">Vina −8.3</span>
+      <span class="pill pill-orange">★ Priority #4</span>
+    </div>
+    <div class="drug-note">Published antimalarial lead (Surolia 2001 ✓). Highest cross-structure consistency (0.867) in entire dataset. Known ENR resistance liability; PK issues stalled development in 2010s.</div>
+  </div>
+  <div class="drug-card">
+    <div class="drug-name">pyrimethamine</div>
+    <div class="drug-target">→ PfDHFR-TS (catalytic pocket)</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">n=5 structures</span>
+      <span class="pill pill-teal">Vina −7.1</span>
+      <span class="pill pill-blue">Clinical drug ✓</span>
+    </div>
+    <div class="drug-note">Clinical antimalarial (Daraprim). Positive control — should kill cultured P. falciparum at known potencies. DHFR resistance mutations well-characterised.</div>
+  </div>
+  <div class="drug-card">
+    <div class="drug-name">tipifarnib</div>
+    <div class="drug-target">→ PfFTase</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">n=4 structures</span>
+      <span class="pill pill-teal">Vina −9.9</span>
+      <span class="pill pill-orange">Known FTase lead ✓</span>
+    </div>
+    <div class="drug-note">Published antimalarial lead — farnesyltransferase is a non-kinase target. Clean single-target profile on a novel malaria protein.</div>
+  </div>
+  <div class="drug-card">
+    <div class="drug-name">AEE788</div>
+    <div class="drug-target">→ PfCDPK1</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">n=4 structures</span>
+      <span class="pill pill-teal">Vina −9.8</span>
+      <span class="pill pill-orange">★ Priority #5</span>
+    </div>
+    <div class="drug-note">EGFR/VEGFR-built drug repurposed to CDPK1. Cleanest novel repurposing hit in dataset. ATP-site; kinome selectivity vs. human CDKs needs profiling before development.</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TIER 2 -->
+<div class="tier-header tier-header-2">
+  <div class="tier-icon">🔬</div>
+  <div>
+    <div class="tier-title">Tier 2 — Modest Evidence (2 structures)</div>
+    <div class="tier-sub">Two independent structures — promising but requires additional validation</div>
+  </div>
+</div>
+
+<div class="drug-grid">
+  <div class="drug-card">
+    <div class="drug-name">WR99210</div>
+    <div class="drug-target">→ PfDHFR-TS</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">Vina −7.9</span>
+      <span class="pill pill-blue">Published lead</span>
+    </div>
+    <div class="drug-note">Prodrug P218 currently in clinical development. Overcomes pyrimethamine resistance mutations.</div>
+  </div>
+  <div class="drug-card">
+    <div class="drug-name">AT7867</div>
+    <div class="drug-target">→ PfCDPK1</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">Vina −9.4</span>
+      <span class="pill pill-gray">Akt inhibitor</span>
+    </div>
+    <div class="drug-note">Strong Vina score. Akt inhibitor repurposed to CDPK1 — backed by 14-drug CDPK1 convergence.</div>
+  </div>
+  <div class="drug-card">
+    <div class="drug-name">APY-29</div>
+    <div class="drug-target">→ PfGSK-3α</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">Vina −8.8</span>
+      <span class="pill pill-gray">IRE1 inhibitor</span>
+    </div>
+    <div class="drug-note">IRE1 kinase inhibitor repurposed to GSK3 target. GSK3 target class well-represented in malaria drug programs.</div>
+  </div>
+  <div class="drug-card">
+    <div class="drug-name">dacomitinib</div>
+    <div class="drug-target">→ PfPKG</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">Vina −9.0</span>
+      <span class="pill pill-blue">FDA approved</span>
+    </div>
+    <div class="drug-note">Approved EGFR inhibitor repurposed to cGMP-dependent PfPKG. Novel target class for an approved drug.</div>
+  </div>
+  <div class="drug-card">
+    <div class="drug-name">mitoxantrone</div>
+    <div class="drug-target">→ PfCDPK1</div>
+    <div class="drug-meta">
+      <span class="pill pill-teal">Vina −7.8</span>
+      <span class="pill pill-red">Cardiotoxicity ⚠</span>
+    </div>
+    <div class="drug-note">Cardiotoxicity limits clinical use. Useful as mechanistic probe for CDPK1 biology; not a development candidate.</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TIER 3 -->
+<div class="tier-header tier-header-3">
+  <div class="tier-icon">🔍</div>
+  <div>
+    <div class="tier-title">Tier 3 — Singletons (29 drugs, 1 structure each)</div>
+    <div class="tier-sub">Single structure, single gene — provisional. Singletons on well-converged targets inherit corroboration from other drugs on the same target.</div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Drug</th>
+        <th>Target</th>
+        <th>Vina (kcal/mol)</th>
+        <th>Corroboration / Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ruboxistaurin</strong></td>
+        <td>PfCDPK1</td>
+        <td><strong>−11.72</strong> <span style="color:#2a9d8f;font-size:11px">★ highest in dataset</span></td>
+        <td>Backed by 14-drug CDPK1 convergence; PKC inhibitor</td>
+      </tr>
+      <tr>
+        <td><strong>bafetinib</strong></td>
+        <td>PfCDPK1</td>
+        <td>−10.43</td>
+        <td>Bcr-Abl inhibitor; backed by 14-drug CDPK1 convergence</td>
+      </tr>
+      <tr>
+        <td>NVP-TAE226</td>
+        <td>PfPKB</td>
+        <td>−8.49</td>
+        <td>FAK/IGF1R inhibitor; 5-drug PKB convergence provides corroboration</td>
+      </tr>
+      <tr>
+        <td>DSM265</td>
+        <td>PfDHODH</td>
+        <td>−7.2</td>
+        <td>Known DHODH lead; standalone target (no convergence). <span class="pill pill-orange">Orphan drug — spans no quadrant cleanly</span></td>
+      </tr>
+      <tr>
+        <td>MG-132</td>
+        <td>Proteasome β-5</td>
+        <td>−5.2</td>
+        <td>Validated drug class; weak Vina score. <span class="pill pill-orange">Orphan drug</span></td>
+      </tr>
+      <tr>
+        <td>iclaprim</td>
+        <td>PfDHFR-TS</td>
+        <td>—</td>
+        <td>Classical antifolate; pocket 1 (catalytic); backed by pyrimethamine/WR99210 convergence</td>
+      </tr>
+      <tr>
+        <td>LDN193189</td>
+        <td>PfPK6</td>
+        <td>—</td>
+        <td>BMP inhibitor (non-kinase scaffold) — strongest cross-class evidence for PfPK6; also contributes to Convergence Hotspots</td>
+      </tr>
+      <tr>
+        <td>NVP-BSK805</td>
+        <td>PfPK6</td>
+        <td>—</td>
+        <td>JAK inhibitor; contributes to PfPK6 7+ MoA class convergence</td>
+      </tr>
+      <tr>
+        <td>lapatinib</td>
+        <td>Multiple kinases</td>
+        <td>—</td>
+        <td>FDA-approved EGFR/HER2 inhibitor; no prior antimalarial history (Tier D)</td>
+      </tr>
+      <tr>
+        <td>bosutinib</td>
+        <td>PfCDPK1 / PfPK6</td>
+        <td>—</td>
+        <td>Abl/SRC inhibitor; contributes to PfPK6 convergence</td>
+      </tr>
+      <tr>
+        <td>GZD824</td>
+        <td>PfCDPK1 / PfPK6</td>
+        <td>—</td>
+        <td>Bcr-Abl inhibitor; PfPK6 Abl/SRC class</td>
+      </tr>
+      <tr>
+        <td>BI-2536</td>
+        <td>PfPK6</td>
+        <td>—</td>
+        <td>PLK1 inhibitor; contributes to PfPK6 convergence</td>
+      </tr>
+      <tr>
+        <td>barasertib-HQPA</td>
+        <td>PfPK6</td>
+        <td>—</td>
+        <td>Aurora B inhibitor; PfPK6 chemical diversity</td>
+      </tr>
+      <tr>
+        <td>AT13387 / Luminespib</td>
+        <td>PfHSP90</td>
+        <td>—</td>
+        <td>HSP90 inhibitor (resorcinol family); Priority #3 cluster representative</td>
+      </tr>
+      <tr>
+        <td>puromycin</td>
+        <td>PfA-M1</td>
+        <td>—</td>
+        <td>Broad-spectrum antibiotic; aminopeptidase singleton</td>
+      </tr>
+      <tr>
+        <td>sunitinib</td>
+        <td>Multiple kinases</td>
+        <td>—</td>
+        <td>FDA-approved multi-target kinase inhibitor (Tier D); name-normalized (sunitinib/sunitinibum)</td>
+      </tr>
+      <tr>
+        <td>crizotinib</td>
+        <td>PfCDPK1 / PfPK6</td>
+        <td>—</td>
+        <td>FDA-approved ALK inhibitor; contributes to PfPK6 convergence</td>
+      </tr>
+      <tr>
+        <td>+ 12 additional singletons</td>
+        <td>Various</td>
+        <td>—</td>
+        <td>Full list available in CompData.csv — see main table view</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="warning" style="margin-top:16px">
+  <div style="font-size:16px;flex-shrink:0">⚠️</div>
+  <div><strong>Borrowed corroboration requires same-pocket binding.</strong> A singleton on PfCDPK1 inherits corroboration from the 14 other CDPK1 drugs only if it binds the same pocket. Confirm pocket before claiming corroboration. Paralog assignment used keyword matching — rerun vs PlasmoDB before publication.</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- DRUG CATALOG TIERS -->
+<h2>Drug Catalog — Six Tiers by Antimalarial History</h2>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+  <div style="background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
+    <div style="font-size:22px;font-weight:800;color:var(--teal);margin-bottom:2px">A</div>
+    <div style="font-weight:700;margin-bottom:4px">Clinical Antimalarial</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">1 compound · Positive control</div>
+    <div style="font-size:13px">pyrimethamine (Daraprim)</div>
+  </div>
+  <div style="background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
+    <div style="font-size:22px;font-weight:800;color:var(--teal);margin-bottom:2px">B</div>
+    <div style="font-weight:700;margin-bottom:4px">Published Antimalarial Leads</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">4 compounds · Known programs</div>
+    <div style="font-size:13px">DSM265, WR99210, tipifarnib, triclosan</div>
+  </div>
+  <div style="background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
+    <div style="font-size:22px;font-weight:800;color:var(--teal);margin-bottom:2px">C</div>
+    <div style="font-weight:700;margin-bottom:4px">Reported Antiplasmodial Activity</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">7 compounds · Repurposing screens</div>
+    <div style="font-size:13px">pentamidine, trifluoperazine, ritonavir, vorinostat…</div>
+  </div>
+  <div style="background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
+    <div style="font-size:22px;font-weight:800;color:var(--blue);margin-bottom:2px">D</div>
+    <div style="font-weight:700;margin-bottom:4px">Approved Drugs — Novel Targets</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">~18 compounds · No antimalarial history</div>
+    <div style="font-size:13px">sunitinib, crizotinib, lapatinib, dacomitinib…</div>
+  </div>
+  <div style="background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
+    <div style="font-size:22px;font-weight:800;color:var(--muted);margin-bottom:2px">E</div>
+    <div style="font-weight:700;margin-bottom:4px">Preclinical Research Chemicals</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">~26 compounds · Chemical probes</div>
+    <div style="font-size:13px">AEE788, bafetinib, AT7867, LDN193189…</div>
+  </div>
+  <div style="background:#fdf2f2;border:1.5px solid #f5c6c5;border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
+    <div style="font-size:22px;font-weight:800;color:var(--red);margin-bottom:2px">F</div>
+    <div style="font-weight:700;margin-bottom:4px">Data Flags (excluded)</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Resolve before publishing</div>
+    <div style="font-size:12px;line-height:1.5">TMC-353121 wrong CID · <em>quinazoline</em> is a scaffold · 1223001-51-1 unmatched · triclosan coatomer-β row (artifact)</div>
+  </div>
+</div>
+
+<div class="note-box" style="margin-top:20px">
+  <strong>First-wave experiment:</strong> Triclosan (Priority #4) and pyrimethamine (positive control) are the first-wave single-target candidates. Test at known potencies — pyrimethamine rescue via DHFR mutations confirms specificity. AEE788 (Priority #5) is the cleanest novel single-target lead: test blood-stage killing and cycle arrest consistent with CDPK1 inhibition.
+</div>
 
 </body>
 </html>

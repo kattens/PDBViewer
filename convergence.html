@@ -6,141 +6,375 @@
 <title>Convergence Hotspots – Drug Repurposing Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root {
-    --bg: #eaf3fb;
-    --blue: #4a86b8;
-    --blue-dark: #326090;
-    --text: #2d3954;
+  :root{
+    --bg:     #eaf3fb;
+    --blue:   #4a86b8;
+    --blue-d: #326090;
+    --blue-l: #deeef8;
+    --text:   #2d3954;
+    --muted:  #7a8499;
     --border: #b8d4ec;
-    --panel: #ffffff;
-    --shadow: 0 2px 12px rgba(74,134,184,.1);
+    --panel:  #ffffff;
+    --shadow: 0 2px 14px rgba(74,134,184,.10);
     --radius: 14px;
+    --teal:   #2a9d8f;
+    --orange: #e08c2e;
+    --red:    #d9534f;
+    --red-l:  #fdf2f2;
   }
-  html,body { margin:0; height:100%; font: 14px/1.6 system-ui, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-  body { display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 24px; box-sizing:border-box; min-height:100vh; }
+  *{box-sizing:border-box}
+  html,body{margin:0;font:14px/1.6 system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  body{padding:32px clamp(16px,4vw,48px) 60px}
 
-  .back-link {
-    position: fixed; top: 20px; left: 24px;
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600;
-    color: var(--blue); text-decoration: none;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 30px; padding: 6px 14px;
-    box-shadow: var(--shadow);
-    transition: transform .12s ease, box-shadow .12s ease;
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:13px;font-weight:600;color:var(--blue);text-decoration:none;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:30px;padding:6px 16px;box-shadow:var(--shadow);margin-bottom:28px;
+    transition:transform .12s,box-shadow .12s;
   }
-  .back-link:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(74,134,184,.2); }
+  .back-link:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(74,134,184,.22)}
 
-  .card {
-    background: var(--panel);
-    border: 2px solid var(--blue);
-    border-radius: 20px;
-    padding: 48px 52px;
-    text-align: center;
-    max-width: 520px;
-    width: 100%;
-    box-shadow: var(--shadow);
+  .page-badge{
+    display:inline-block;background:var(--blue);color:#fff;
+    font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+    padding:4px 14px;border-radius:30px;margin-bottom:12px;
   }
+  .page-title{font-size:clamp(22px,3vw,32px);font-weight:800;color:#1a2340;margin:0 0 6px;line-height:1.2}
+  .page-sub{font-size:15px;color:var(--muted);margin:0 0 28px}
 
-  .badge {
-    display: inline-block;
-    background: var(--blue);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    padding: 4px 14px;
-    border-radius: 30px;
-    margin-bottom: 20px;
+  .stat-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:28px}
+  .stat-card{
+    flex:1 1 160px;background:var(--panel);
+    border:1.5px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;box-shadow:var(--shadow);
   }
+  .stat-num{font-size:42px;font-weight:800;color:var(--blue);line-height:1}
+  .stat-label{font-size:13px;color:var(--muted);margin-top:4px}
 
-  .big-num {
-    font-size: 72px;
-    font-weight: 800;
-    color: var(--blue);
-    line-height: 1;
-    margin: 0 0 4px;
-  }
-  .big-label {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--blue);
-    margin: 0 0 18px;
-  }
+  h2{font-size:18px;font-weight:700;color:#1a2340;margin:0 0 14px;padding-top:4px}
+  h3{font-size:15px;font-weight:700;color:#1a2340;margin:0 0 8px}
+  .divider{height:1px;background:var(--border);margin:32px 0}
 
-  h1 { font-size: 24px; font-weight: 800; color: #1a2340; margin: 0 0 10px; }
+  /* spotlight cards */
+  .spotlight{
+    background:var(--panel);border:2px solid var(--blue);
+    border-radius:var(--radius);padding:22px 26px;
+    box-shadow:var(--shadow);margin-bottom:16px;
+  }
+  .spotlight-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+  .priority-badge{
+    width:46px;height:46px;border-radius:50%;
+    background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:800;flex-shrink:0;
+  }
+  .spotlight-title{font-size:17px;font-weight:800;color:var(--blue);margin:0 0 2px}
+  .spotlight-sub{font-size:13px;color:var(--muted);margin:0}
 
-  .desc {
-    font-size: 15px;
-    color: #5a6a80;
-    line-height: 1.65;
-    margin: 0 0 28px;
+  /* drug chip row */
+  .drug-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;
+    border:1px solid;white-space:nowrap;
   }
+  .chip-blue{background:var(--blue-l);border-color:var(--border);color:var(--blue-d)}
+  .chip-amber{background:#fff3de;border-color:#f0cfa0;color:#9a5c00}
+  .chip-note{font-weight:400;font-style:italic;color:var(--muted);font-size:11px}
 
-  .placeholder-box {
-    background: var(--bg);
-    border: 1.5px dashed var(--border);
-    border-radius: 12px;
-    padding: 22px 20px;
-    font-size: 14px;
-    color: #7a8fa0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .placeholder-icon { font-size: 28px; flex-shrink: 0; }
+  /* info boxes */
+  .info-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  @media(max-width:600px){.info-row{grid-template-columns:1fr}}
+  .info-box{border-radius:10px;padding:13px 16px}
+  .info-box-green{background:#eef9f7;border:1px solid #b0ddd8}
+  .info-box-red{background:var(--red-l);border:1px solid #f5c6c5}
+  .info-box-blue{background:var(--blue-l);border:1px solid var(--border)}
+  .info-box-orange{background:#fff8ee;border:1px solid #f0cfa0}
+  .info-box-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .info-box-text{font-size:13px;line-height:1.55}
 
-  .bullets {
-    text-align: left;
-    list-style: none;
-    padding: 0; margin: 20px 0 0;
-    display: flex; flex-direction: column; gap: 8px;
+  /* target table */
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:var(--panel)}
+  thead th{
+    background:#deeef8;padding:10px 14px;
+    text-align:left;font-weight:700;color:#1a2340;
+    border-bottom:1.5px solid var(--border);white-space:nowrap;
   }
-  .bullets li {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 14px; color: #4a5a6a;
+  tbody tr:nth-child(even){background:#f2f8fd}
+  tbody tr:hover{background:var(--blue-l)}
+  td{padding:9px 14px;border-bottom:1px solid #d8eaf6;vertical-align:top}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+  .pill-blue{background:var(--blue-l);color:var(--blue-d)}
+  .pill-amber{background:#fff3de;color:#9a5c00}
+  .pill-teal{background:#d6f0ed;color:#1a6b60}
+  .pill-red{background:var(--red-l);color:#8a1f1e}
+
+  /* family grid */
+  .family-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:8px}
+  .family-card{
+    background:var(--panel);border:1.5px solid var(--border);
+    border-radius:10px;padding:14px 16px;
   }
-  .bullets li::before {
-    content: "✓";
-    color: var(--blue);
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
+  .family-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--blue);margin-bottom:4px}
+  .family-count{font-size:24px;font-weight:800;color:#1a2340}
+  .family-names{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
+
+  .note-box{
+    background:#f2f8fd;border:1.5px dashed var(--border);
+    border-radius:10px;padding:14px 18px;font-size:13px;
+    color:var(--muted);margin-top:20px;line-height:1.6;
   }
+  .note-box strong{color:var(--text)}
 </style>
 </head>
 <body>
 
-  <a class="back-link" href="index.html">← Back to Overview</a>
+<a class="back-link" href="index.html">← Back to Overview</a>
 
-  <div class="card">
-    <div class="badge">Multiple Drugs · One Target</div>
+<div class="page-badge">Multiple Drugs · One Target</div>
+<h1 class="page-title">14 Convergence Hotspots</h1>
+<p class="page-sub">Malaria protein targets hit by more than one independent drug — the strongest pharmacological validation signal in the dataset.</p>
 
-    <div class="big-num">14</div>
-    <div class="big-label">targets</div>
-
-    <h1>Convergence Hotspots</h1>
-    <p class="desc">
-      Malaria protein targets that are hit by multiple independent drugs —
-      providing the strongest pharmacological validation signal for repurposing.
-    </p>
-
-    <div class="placeholder-box">
-      <div class="placeholder-icon">🎯</div>
-      <div>
-        <strong>Table coming soon</strong><br>
-        This page will show the filtered data table for all 14 convergence targets, grouped by protein with all associated drugs and 3D interactions.
-      </div>
-    </div>
-
-    <ul class="bullets">
-      <li>Multiple drugs validated against one protein</li>
-      <li>Strongest pharmacological validation signal</li>
-      <li>Analyzed in §5 of the analysis</li>
-      <li>Grouped view by target protein</li>
-    </ul>
+<!-- STATS -->
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="stat-num">14</div>
+    <div class="stat-label">of 30 malaria targets hit by 2+ drugs</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-num">11</div>
+    <div class="stat-label">of 14 convergence targets are kinases</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">11</div>
+    <div class="stat-label">drugs on PfPK6 from 7+ MoA classes — highest diversity</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PfPK6 SPOTLIGHT -->
+<h2>Spotlight Cases — Chemical Diversity as Validation</h2>
+<p style="margin:0 0 18px;color:var(--muted);font-size:14px">Chemical diversity matters more than count — a target hit by 7 different MoA classes is stronger evidence than one hit by 10 near-identical kinase inhibitors.</p>
+
+<div class="spotlight">
+  <div class="spotlight-header">
+    <div class="priority-badge">#2</div>
+    <div>
+      <div class="spotlight-title">PfPK6 — The Standout Case</div>
+      <div class="spotlight-sub">11 drugs · 7+ pharmacology classes · Priority Hypothesis #2</div>
+    </div>
+  </div>
+
+  <div class="drug-chips">
+    <span class="chip chip-blue">BI-2536 <span class="chip-note">PLK inhibitor</span></span>
+    <span class="chip chip-blue">bosutinib <span class="chip-note">Abl/SRC</span></span>
+    <span class="chip chip-blue">GZD824 <span class="chip-note">Abl/SRC</span></span>
+    <span class="chip chip-blue">crizotinib <span class="chip-note">ALK</span></span>
+    <span class="chip chip-blue">barasertib-HQPA <span class="chip-note">Aurora</span></span>
+    <span class="chip chip-blue">NVP-BSK805 <span class="chip-note">JAK</span></span>
+    <span class="chip chip-blue">TG-101209 <span class="chip-note">JAK</span></span>
+    <span class="chip chip-amber">LDN193189 <span class="chip-note">BMP inhibitor — non-kinase ★</span></span>
+    <span class="chip chip-amber">sangivamycin <span class="chip-note">nucleoside analog — non-kinase ★</span></span>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin:0 0 12px">★ Amber = non-kinase scaffold → stronger evidence than ATP-site hits</p>
+
+  <div class="info-row">
+    <div class="info-box info-box-green">
+      <div class="info-box-label">Why It Matters</div>
+      <div class="info-box-text">Scaffold-hopping convergence from 7+ independent MoA classes, including 2 non-kinase scaffolds, makes PfPK6 the most pharmacologically validated target in the dataset</div>
+    </div>
+    <div class="info-box info-box-red">
+      <div class="info-box-label">Caution</div>
+      <div class="info-box-text">Novel target — check essentiality and life-stage expression in PlasmoDB before cell work. Kinase hits carry ATP-site artifact risk.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PfCDPK1 -->
+<div class="spotlight">
+  <div class="spotlight-header">
+    <div class="priority-badge" style="background:#2a9d8f">#6</div>
+    <div>
+      <div class="spotlight-title" style="color:#2a9d8f">PfCDPK1 — Phenothiazine Surprise</div>
+      <div class="spotlight-sub">14 kinase inhibitors + trifluoperazine (antipsychotic phenothiazine) · Priority #5 &amp; #6</div>
+    </div>
+  </div>
+
+  <div class="drug-chips">
+    <span class="chip chip-blue">AEE788 <span class="chip-note">EGFR/VEGFR — Priority #5</span></span>
+    <span class="chip chip-blue">AT7867 <span class="chip-note">Akt inhibitor</span></span>
+    <span class="chip chip-blue">dacomitinib <span class="chip-note">EGFR approved</span></span>
+    <span class="chip chip-blue">mitoxantrone <span class="chip-note">Vina −7.8</span></span>
+    <span class="chip chip-blue">bafetinib <span class="chip-note">Vina −10.43</span></span>
+    <span class="chip chip-blue">ruboxistaurin <span class="chip-note">Vina −11.72 ★ highest</span></span>
+    <span class="chip chip-amber">trifluoperazine <span class="chip-note">phenothiazine — non-kinase ★</span></span>
+  </div>
+
+  <div class="info-row">
+    <div class="info-box info-box-blue">
+      <div class="info-box-label">Mechanistic Rationale</div>
+      <div class="info-box-text">CDPK1 has calmodulin-like regulatory domains. Phenothiazines bind calmodulin with well-established affinity → mechanistically coherent, non-ATP-site engagement</div>
+    </div>
+    <div class="info-box info-box-red">
+      <div class="info-box-label">Caution</div>
+      <div class="info-box-text">CNS side effects; built to cross BBB — excellent mechanistic probe but not a practical oral antimalarial candidate</div>
+    </div>
+  </div>
+</div>
+
+<!-- PfDHFR-TS -->
+<div class="spotlight">
+  <div class="spotlight-header">
+    <div class="priority-badge" style="background:#e08c2e">#7</div>
+    <div>
+      <div class="spotlight-title" style="color:#e08c2e">PfDHFR-TS — 3 Chemotypes, 2 Pockets</div>
+      <div class="spotlight-sub">Resistance-insulated scaffold-hopping · Priority Hypothesis #7</div>
+    </div>
+  </div>
+  <div class="info-row">
+    <div class="info-box info-box-blue">
+      <div class="info-box-label">Pocket 1 — Catalytic</div>
+      <div class="info-box-text">pyrimethamine + WR99210 + iclaprim — classical antifolates at the active site</div>
+    </div>
+    <div class="info-box info-box-orange">
+      <div class="info-box-label">Pocket 2 — Second Site</div>
+      <div class="info-box-text">pentamidine (aromatic diamidine) — insulated from classical resistance mutations. Zero pocket overlap with pyrimethamine.</div>
+    </div>
+  </div>
+  <div style="margin-top:10px;font-size:13px;color:var(--muted)">⚠️ Second-site pose needs ground-truth structural validation (X-ray or cryo-EM) before claiming mechanism.</div>
+</div>
+
+<!-- PfA-M1 -->
+<div class="spotlight">
+  <div class="spotlight-header">
+    <div class="priority-badge" style="background:#6a4c9c">#8</div>
+    <div>
+      <div class="spotlight-title" style="color:#6a4c9c">PfA-M1 Aminopeptidase — HDAC/Zn-Chelator Convergence</div>
+      <div class="spotlight-sub">M-344 + vorinostat + puromycin · Priority Hypothesis #8</div>
+    </div>
+  </div>
+  <div class="info-row">
+    <div class="info-box info-box-green">
+      <div class="info-box-label">Mechanism</div>
+      <div class="info-box-text">Hydroxamate zinc coordination is plausible on Zn-metalloaminopeptidase. Published M1 inhibitor programs confirm zinc-chelation approach.</div>
+    </div>
+    <div class="info-box info-box-red">
+      <div class="info-box-label">Caution</div>
+      <div class="info-box-text">Puromycin is a singleton; broad HDAC selectivity concerns for M-344 and vorinostat. Each compound needs individual validation.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ALL 14 TARGETS TABLE -->
+<h2>All 14 Convergence Target Proteins</h2>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Target Protein</th>
+        <th>Family</th>
+        <th>Drug Count</th>
+        <th>Notable Drugs / Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>PfPK6</strong></td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td><strong>11</strong> — 7+ MoA classes</td>
+        <td>Highest chemical diversity; 2 non-kinase scaffolds (LDN193189, sangivamycin) <span class="pill pill-amber">★ Priority #2</span></td>
+      </tr>
+      <tr>
+        <td><strong>PfCDPK1</strong></td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td><strong>15</strong> kinase inhibitors + trifluoperazine</td>
+        <td>Highest drug count; phenothiazine hit is mechanistically distinct. AEE788 = Priority #5</td>
+      </tr>
+      <tr>
+        <td><strong>PfDHFR-TS</strong></td>
+        <td><span class="pill pill-teal">Folate</span></td>
+        <td><strong>5</strong> — 3 chemotypes, 2 pockets</td>
+        <td>pyrimethamine (clinical), WR99210, iclaprim (pocket 1); pentamidine (pocket 2) <span class="pill pill-amber">★ Priority #7</span></td>
+      </tr>
+      <tr>
+        <td><strong>PfHSP90</strong></td>
+        <td><span class="pill pill-teal">Chaperone</span></td>
+        <td><strong>4</strong> — resorcinol family</td>
+        <td>AT13387, Luminespib + 2 others; low chemical diversity (all same chemotype) <span class="pill pill-amber">Priority #3</span></td>
+      </tr>
+      <tr>
+        <td><strong>PfPKB</strong></td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td><strong>5</strong></td>
+        <td>NVP-TAE226 (Vina −8.49); 5-drug PKB convergence provides corroboration</td>
+      </tr>
+      <tr>
+        <td>Plasmepsin II</td>
+        <td><span class="pill pill-teal">Protease</span></td>
+        <td>Multiple (via ritonavir polypharmacology)</td>
+        <td>PF3D7_1408000; aspartyl protease family</td>
+      </tr>
+      <tr>
+        <td>Plasmepsin IV</td>
+        <td><span class="pill pill-teal">Protease</span></td>
+        <td>Multiple (via ritonavir polypharmacology)</td>
+        <td>PF3D7_1407800</td>
+      </tr>
+      <tr>
+        <td>Plasmepsin X</td>
+        <td><span class="pill pill-teal">Protease</span></td>
+        <td>Multiple (via ritonavir polypharmacology)</td>
+        <td>PF3D7_0808200 — essential for egress &amp; invasion</td>
+      </tr>
+      <tr>
+        <td><strong>PfA-M1</strong></td>
+        <td><span class="pill pill-teal">Protease</span></td>
+        <td><strong>3</strong></td>
+        <td>M-344 + vorinostat + puromycin; Zn-chelator convergence <span class="pill pill-amber">Priority #8</span></td>
+      </tr>
+      <tr>
+        <td>PfCDPK2</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>2+</td>
+        <td>CDPK family member; ATP-site caution</td>
+      </tr>
+      <tr>
+        <td>PfMAPK1</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>2+</td>
+        <td>MAP kinase; multiple kinase inhibitor hits</td>
+      </tr>
+      <tr>
+        <td>PfGSK-3α</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>2+</td>
+        <td>APY-29 (IRE1 inhibitor) notable singleton; GSK3 target class</td>
+      </tr>
+      <tr>
+        <td>Calmodulin</td>
+        <td><span class="pill pill-teal">Ca²⁺ Signaling</span></td>
+        <td>Multiple (via trifluoperazine)</td>
+        <td>Phenothiazine calmodulin story well-established in literature</td>
+      </tr>
+      <tr>
+        <td>Ca-ER binding protein</td>
+        <td><span class="pill pill-teal">Ca²⁺ Signaling</span></td>
+        <td>Multiple (via trifluoperazine)</td>
+        <td>Second Ca²⁺ signaling target of trifluoperazine</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="note-box">
+  <strong>Key insight:</strong> Chemical diversity is the validation metric — not drug count alone. PfPK6 with 7+ MoA classes (including 2 non-kinase scaffolds) outranks a target hit by 10 near-identical kinase inhibitors. Non-kinase convergence (plasmepsins via ritonavir, PfA-M1 via Zn-chelators, PfDHFR-TS via pentamidine) provides the cleanest evidence, free of ATP-site artifact.
+</div>
 
 </body>
 </html>

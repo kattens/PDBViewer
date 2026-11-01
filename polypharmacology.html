@@ -7,140 +7,359 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
-    --bg: #fff8ee;
-    --orange: #e08c2e;
-    --orange-dark: #b56b12;
-    --text: #2d3954;
-    --border: #f0cfa0;
-    --panel: #ffffff;
-    --shadow: 0 2px 12px rgba(224,140,46,.1);
-    --radius: 14px;
+    --bg:      #fffaf2;
+    --orange:  #e08c2e;
+    --orange-d:#b56b12;
+    --orange-l:#fff3de;
+    --text:    #2d3954;
+    --muted:   #7a8499;
+    --border:  #f0cfa0;
+    --panel:   #ffffff;
+    --shadow:  0 2px 14px rgba(224,140,46,.10);
+    --radius:  14px;
+    --red:     #d9534f;
+    --red-l:   #fdf2f2;
   }
-  html,body { margin:0; height:100%; font: 14px/1.6 system-ui, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-  body { display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 24px; box-sizing:border-box; min-height:100vh; }
+  *{box-sizing:border-box}
+  html,body{margin:0;font:14px/1.6 system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  body{padding:32px clamp(16px,4vw,48px) 60px}
 
-  .back-link {
-    position: fixed; top: 20px; left: 24px;
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600;
-    color: var(--orange); text-decoration: none;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 30px; padding: 6px 14px;
-    box-shadow: var(--shadow);
-    transition: transform .12s ease, box-shadow .12s ease;
+  /* ── back link ── */
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:13px;font-weight:600;color:var(--orange);text-decoration:none;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:30px;padding:6px 16px;
+    box-shadow:var(--shadow);margin-bottom:28px;
+    transition:transform .12s,box-shadow .12s;
   }
-  .back-link:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(224,140,46,.2); }
+  .back-link:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(224,140,46,.18)}
 
-  .card {
-    background: var(--panel);
-    border: 2px solid var(--orange);
-    border-radius: 20px;
-    padding: 48px 52px;
-    text-align: center;
-    max-width: 520px;
-    width: 100%;
-    box-shadow: var(--shadow);
+  /* ── page header ── */
+  .page-header{margin-bottom:28px}
+  .page-badge{
+    display:inline-block;background:var(--orange);color:#fff;
+    font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+    padding:4px 14px;border-radius:30px;margin-bottom:12px;
   }
+  .page-title{font-size:clamp(22px,3vw,32px);font-weight:800;color:#1a2340;margin:0 0 6px;line-height:1.2}
+  .page-sub{font-size:15px;color:var(--muted);margin:0}
 
-  .badge {
-    display: inline-block;
-    background: var(--orange);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    padding: 4px 14px;
-    border-radius: 30px;
-    margin-bottom: 20px;
+  /* ── stat row ── */
+  .stat-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:28px}
+  .stat-card{
+    flex:1 1 180px;background:var(--panel);
+    border:1.5px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;box-shadow:var(--shadow);
   }
+  .stat-num{font-size:42px;font-weight:800;color:var(--orange);line-height:1}
+  .stat-label{font-size:13px;color:var(--muted);margin-top:4px}
 
-  .big-num {
-    font-size: 72px;
-    font-weight: 800;
-    color: var(--orange);
-    line-height: 1;
-    margin: 0 0 4px;
-  }
-  .big-label {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--orange);
-    margin: 0 0 18px;
-  }
+  /* ── section headings ── */
+  h2{font-size:18px;font-weight:700;color:#1a2340;margin:0 0 14px;padding-top:4px}
+  h3{font-size:15px;font-weight:700;color:#1a2340;margin:0 0 8px}
 
-  h1 { font-size: 24px; font-weight: 800; color: #1a2340; margin: 0 0 10px; }
+  /* ── section divider ── */
+  .divider{height:1px;background:var(--border);margin:32px 0}
 
-  .desc {
-    font-size: 15px;
-    color: #5a6a80;
-    line-height: 1.65;
-    margin: 0 0 28px;
+  /* ── priority hero card (Ritonavir) ── */
+  .hero-card{
+    background:var(--panel);border:2px solid var(--orange);
+    border-radius:var(--radius);padding:24px 28px;
+    box-shadow:var(--shadow);margin-bottom:20px;
+    display:grid;grid-template-columns:auto 1fr;gap:0 24px;
   }
+  .priority-badge{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--orange);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:800;flex-shrink:0;margin-top:4px;
+  }
+  .hero-body{}
+  .hero-title{font-size:18px;font-weight:800;color:var(--orange);margin:0 0 2px}
+  .hero-sub{font-size:13px;color:var(--muted);margin:0 0 14px}
 
-  .placeholder-box {
-    background: var(--bg);
-    border: 1.5px dashed var(--border);
-    border-radius: 12px;
-    padding: 22px 20px;
-    font-size: 14px;
-    color: #7a8fa0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  /* plasmepsin grid */
+  .plasmo-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .plasmo-chip{
+    background:var(--orange-l);border:1.5px solid var(--border);
+    border-radius:10px;padding:10px 14px;min-width:130px;
   }
-  .placeholder-icon { font-size: 28px; flex-shrink: 0; }
+  .plasmo-chip-name{font-weight:700;font-size:13px;color:var(--orange)}
+  .plasmo-chip-gene{font-size:11px;color:var(--muted);margin-top:2px;font-family:monospace}
+  .plasmo-chip-note{font-size:11px;color:var(--text);margin-top:3px}
 
-  .bullets {
-    text-align: left;
-    list-style: none;
-    padding: 0; margin: 20px 0 0;
-    display: flex; flex-direction: column; gap: 8px;
+  /* info boxes */
+  .info-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:700px){.info-row{grid-template-columns:1fr}}
+  .info-box{border-radius:10px;padding:13px 16px}
+  .info-box-teal{background:#eef9f7;border:1px solid #b0ddd8}
+  .info-box-blue{background:#eaf3fb;border:1px solid #b8d4ec}
+  .info-box-red{background:var(--red-l);border:1px solid #f5c6c5}
+  .info-box-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .info-box-text{font-size:13px;line-height:1.5}
+
+  /* ── warning pill ── */
+  .warning{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--red-l);border:1px solid #f5c6c5;
+    border-radius:10px;padding:12px 16px;font-size:13px;
+    color:#7a1f1e;margin-top:10px;
   }
-  .bullets li {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 14px; color: #4a5a6a;
+  .warning-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+
+  /* ── drug table ── */
+  .drug-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:var(--panel)}
+  thead th{
+    background:#fdf5e8;padding:10px 14px;
+    text-align:left;font-weight:700;color:#1a2340;
+    border-bottom:1.5px solid var(--border);white-space:nowrap;
   }
-  .bullets li::before {
-    content: "✓";
-    color: var(--orange);
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
+  tbody tr:nth-child(even){background:#fffbf5}
+  tbody tr:hover{background:#fff3de}
+  td{padding:9px 14px;border-bottom:1px solid #f7edda;vertical-align:top}
+  .pill{
+    display:inline-block;font-size:11px;font-weight:600;
+    padding:2px 8px;border-radius:20px;white-space:nowrap;
+  }
+  .pill-orange{background:#fde8cc;color:#9a5c00}
+  .pill-teal{background:#d6f0ed;color:#1a6b60}
+  .pill-blue{background:#d6e8f7;color:#1a4a7a}
+  .pill-red{background:#fde0df;color:#8a1f1e}
+
+  /* ── note box ── */
+  .note-box{
+    background:#fffbf5;border:1.5px dashed var(--border);
+    border-radius:10px;padding:14px 18px;font-size:13px;
+    color:var(--muted);margin-top:20px;line-height:1.6;
+  }
+  .note-box strong{color:var(--text)}
+
+  @media(max-width:600px){
+    .hero-card{grid-template-columns:1fr}
+    .priority-badge{width:40px;height:40px;font-size:16px}
+    .plasmo-grid{gap:8px}
   }
 </style>
 </head>
 <body>
 
-  <a class="back-link" href="index.html">← Back to Overview</a>
+<a class="back-link" href="index.html">← Back to Overview</a>
 
-  <div class="card">
-    <div class="badge">One Drug · Many Targets</div>
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-badge">One Drug · Many Targets</div>
+  <h1 class="page-title">Polypharmacology — 19 Multi-Target Drugs</h1>
+  <p class="page-sub">Drugs that engage two or more P. falciparum proteins — offering resistance-robust therapeutic potential.</p>
+</div>
 
-    <div class="big-num">19</div>
-    <div class="big-label">drugs</div>
+<!-- STAT ROW -->
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="stat-num">19</div>
+    <div class="stat-label">drugs hit 2+ malaria targets</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">6</div>
+    <div class="stat-label">hit multiple paralogs in the same functional family</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">14</div>
+    <div class="stat-label">of 19 are kinase inhibitors (ATP-site caution applies)</div>
+  </div>
+</div>
 
-    <h1>Polypharmacology</h1>
-    <p class="desc">
-      Drugs that simultaneously interact with multiple malaria protein targets —
-      offering resistance-robust therapeutic potential through multi-target engagement.
-    </p>
+<div class="divider"></div>
 
-    <div class="placeholder-box">
-      <div class="placeholder-icon">💊</div>
-      <div>
-        <strong>Table coming soon</strong><br>
-        This page will show the filtered data table for all 19 polypharmacology drugs, with their full target profiles and 3D interaction viewer links.
+<!-- RITONAVIR SPOTLIGHT -->
+<h2>★ Priority #1 — Ritonavir: The Only Pan-Paralog Hit</h2>
+
+<div class="hero-card">
+  <div class="priority-badge">#1</div>
+  <div class="hero-body">
+    <div class="hero-title">Ritonavir → All 4 Plasmepsins</div>
+    <div class="hero-sub">Pan-paralog polypharmacology — resistance-robust because all four plasmepsins must mutate simultaneously to escape</div>
+
+    <div class="plasmo-grid">
+      <div class="plasmo-chip">
+        <div class="plasmo-chip-name">Plasmepsin II</div>
+        <div class="plasmo-chip-gene">PF3D7_1408000</div>
+      </div>
+      <div class="plasmo-chip">
+        <div class="plasmo-chip-name">Plasmepsin IV</div>
+        <div class="plasmo-chip-gene">PF3D7_1407800</div>
+      </div>
+      <div class="plasmo-chip">
+        <div class="plasmo-chip-name">Plasmepsin VII</div>
+        <div class="plasmo-chip-gene">PF3D7_1033800</div>
+      </div>
+      <div class="plasmo-chip">
+        <div class="plasmo-chip-name">Plasmepsin X</div>
+        <div class="plasmo-chip-gene">PF3D7_0808200</div>
+        <div class="plasmo-chip-note">Essential for egress &amp; invasion</div>
       </div>
     </div>
 
-    <ul class="bullets">
-      <li>One drug → multiple malaria protein targets</li>
-      <li>Resistance-robust therapeutic potential</li>
-      <li>Analyzed in §4 of the analysis</li>
-      <li>Target network view per drug</li>
-    </ul>
+    <div class="info-row">
+      <div class="info-box info-box-teal">
+        <div class="info-box-label">Chemical Bridge</div>
+        <div class="info-box-text">HIV protease inhibitors and plasmepsins share aspartyl protease architecture — pharmacophore is plausible</div>
+      </div>
+      <div class="info-box info-box-blue">
+        <div class="info-box-label">Resistance Logic</div>
+        <div class="info-box-text">Parasite cannot escape by mutating a single protein when all four plasmepsins are inhibited concurrently</div>
+      </div>
+      <div class="info-box info-box-red">
+        <div class="info-box-label">Watch-Out</div>
+        <div class="info-box-text">Cross-structure consistency = 0.394 — lowest in dataset. Anchor with one experimental complex before claiming polypharmacology</div>
+      </div>
+    </div>
   </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- DRUG TABLE -->
+<h2>19 Polypharmacology Drugs</h2>
+
+<div class="drug-table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Drug</th>
+        <th>Tier</th>
+        <th>Targets Hit</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ritonavir</strong></td>
+        <td><span class="pill pill-orange">★ Priority #1</span></td>
+        <td>Plasmepsin II, IV, VII, X</td>
+        <td>Only non-kinase pan-paralog hit; aspartyl protease chemistry bridge</td>
+      </tr>
+      <tr>
+        <td>sunitinib</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>Multiple kinases</td>
+        <td>Multi-target kinase inhibitor; ATP-site conservation caution applies</td>
+      </tr>
+      <tr>
+        <td>bosutinib</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfCDPK1, PfPK6 (Abl/SRC class)</td>
+        <td>Contributes to PfPK6 chemical diversity</td>
+      </tr>
+      <tr>
+        <td>crizotinib</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfCDPK1, PfPK6 (ALK inhibitor)</td>
+        <td>FDA-approved; no prior antimalarial history (Tier D)</td>
+      </tr>
+      <tr>
+        <td>trifluoperazine</td>
+        <td><span class="pill pill-teal">Non-kinase</span></td>
+        <td>PfCDPK1, Calmodulin, Ca-ER binding protein</td>
+        <td>Phenothiazine antipsychotic; calmodulin affinity well-established</td>
+      </tr>
+      <tr>
+        <td>lapatinib</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>Multiple kinases</td>
+        <td>FDA-approved EGFR/HER2 inhibitor; Tier D</td>
+      </tr>
+      <tr>
+        <td>NVP-BSK805</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfPK6 (JAK inhibitor class)</td>
+        <td>Contributes to PfPK6 convergence; 7+ MoA classes</td>
+      </tr>
+      <tr>
+        <td>TG-101209</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfPK6 (JAK inhibitor class)</td>
+        <td>See data flag: TG-101209 / TG101209 normalized to single entry</td>
+      </tr>
+      <tr>
+        <td>GZD824</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfCDPK1, PfPK6 (Abl/SRC class)</td>
+        <td>Bcr-Abl inhibitor repurposed</td>
+      </tr>
+      <tr>
+        <td>barasertib-HQPA</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfPK6 (Aurora inhibitor class)</td>
+        <td>Aurora B inhibitor; contributes to PfPK6 chemical diversity</td>
+      </tr>
+      <tr>
+        <td>BI-2536</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfPK6 (PLK inhibitor class)</td>
+        <td>PLK1 inhibitor; PfPK6 structural similarity</td>
+      </tr>
+      <tr>
+        <td>vorinostat</td>
+        <td><span class="pill pill-teal">Non-kinase</span></td>
+        <td>PfA-M1, PfCDPK1</td>
+        <td>HDAC inhibitor / Zn-chelator; metalloaminopeptidase off-target</td>
+      </tr>
+      <tr>
+        <td>M-344</td>
+        <td><span class="pill pill-teal">Non-kinase</span></td>
+        <td>PfA-M1</td>
+        <td>Hydroxamate zinc chelator; plausible on Zn-metalloaminopeptidase</td>
+      </tr>
+      <tr>
+        <td>pentamidine</td>
+        <td><span class="pill pill-teal">Non-kinase</span></td>
+        <td>PfDHFR-TS (second site)</td>
+        <td>Aromatic diamidine; zero pocket overlap with pyrimethamine</td>
+      </tr>
+      <tr>
+        <td>LDN193189</td>
+        <td><span class="pill pill-teal">Non-kinase</span></td>
+        <td>PfPK6 (BMP inhibitor — non-kinase scaffold)</td>
+        <td>★ Strongest cross-class evidence for PfPK6</td>
+      </tr>
+      <tr>
+        <td>sangivamycin</td>
+        <td><span class="pill pill-teal">Non-kinase</span></td>
+        <td>PfPK6 (nucleoside analog — non-kinase scaffold)</td>
+        <td>Pyrrolopyrimidine; first-wave experiment candidate (Priority #2 probe)</td>
+      </tr>
+      <tr>
+        <td>AT13387 / Luminespib + HSP90 cluster</td>
+        <td><span class="pill pill-blue">Chaperone</span></td>
+        <td>PfHSP90</td>
+        <td>4 resorcinol-family drugs; Priority #3 cluster (low chemical diversity)</td>
+      </tr>
+      <tr>
+        <td>ruboxistaurin</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfCDPK1 (also Single-target; highest Vina −11.72)</td>
+        <td>Highest Vina score in entire dataset; backed by 14-drug CDPK1 convergence</td>
+      </tr>
+      <tr>
+        <td>bafetinib</td>
+        <td><span class="pill pill-blue">Kinase</span></td>
+        <td>PfCDPK1 (Vina −10.43)</td>
+        <td>Bcr-Abl inhibitor; backed by CDPK1 convergence corroboration</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="warning">
+  <div class="warning-icon">⚠️</div>
+  <div><strong>Kinase ATP-site caution:</strong> 14 of 19 drugs are kinase inhibitors. P. falciparum kinase ATP pockets share structural homology with human kinases. Multi-target hits may partly reflect ATP-site conservation rather than genuine malaria polypharmacology. Non-kinase scaffold hits (ritonavir, trifluoperazine, vorinostat, LDN193189, sangivamycin, pentamidine) carry stronger evidence.</div>
+</div>
+
+<div class="note-box">
+  <strong>First-wave experiments:</strong> Ritonavir (Priority #1), sangivamycin (Priority #2 PfPK6 non-kinase probe), trifluoperazine (Priority #6 mechanistic probe). See §15 of the full analysis for parasite-killing assay design.
+</div>
 
 </body>
 </html>

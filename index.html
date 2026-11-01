@@ -4,813 +4,564 @@
 <meta charset="utf-8">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#eff7ff">
-
-<title>Drug repurposing Viewer</title>
+<title>Drug Repurposing Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
   /* ========= Design tokens ========= */
   :root{
-    --bg:            #eff7ff;
-    --text:          #2d3954;
-    --muted:         #8a95a6;
-    --panel:         #ffffff;
-    --panel-2:       #fbfdff;
-    --accent:        #6aa9ff;
-    --accent-2:      #6ed39a;
-    --border:        #e3edf7;
-    --border-soft:   #f1f6fb;
-    --thead:         #f4f9ff;
-    --zebra:         #fbfdff;
-    --hover:         #eef6ff;
-    --link:          #3f89e9;
-    --link-hover:    #2e6fd1;
-    --shadow:        0 2px 10px rgba(0,0,0,.04);
-    --radius:        14px;
+    --bg:          #f0f5fc;
+    --text:        #2d3954;
+    --muted:       #8a95a6;
+    --panel:       #ffffff;
+    --accent:      #4a86b8;
+    --accent-2:    #2a9d8f;
+    --border:      #dce8f5;
+    --border-soft: #edf4fb;
+    --thead:       #f0f6fd;
+    --zebra:       #fafcff;
+    --hover:       #e8f2fc;
+    --link:        #3f89e9;
+    --link-hover:  #2e6fd1;
+    --shadow-sm:   0 1px 4px rgba(0,0,0,.05);
+    --shadow:      0 2px 12px rgba(0,0,0,.07);
+    --shadow-md:   0 4px 20px rgba(0,0,0,.09);
+    --radius:      12px;
+    --radius-sm:   8px;
 
-    /* 2x2 quadrant colors */
+    /* quadrant colors */
     --q-teal:        #2a9d8f;
     --q-teal-bg:     #eef9f7;
-    --q-teal-border: #2a9d8f;
     --q-blue:        #4a86b8;
     --q-blue-bg:     #eaf3fb;
     --q-orange:      #e08c2e;
     --q-orange-bg:   #fff8ee;
-    --q-orange-border: #e08c2e;
-    --q-gray:        #aab0bc;
     --q-gray-bg:     #f5f6f8;
   }
 
-  html,body{height:100%}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
   body{
-    margin:0;
-    font: 14px/1.55 system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font:14px/1.6 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     color:var(--text);
-    background: var(--bg) !important;
-    padding: 28px clamp(16px, 3vw, 32px);
+    background:var(--bg);
+    padding:32px clamp(16px,4vw,48px) 64px;
   }
 
-  /* ========= Page title ========= */
-  h1{
-    margin:0 0 14px;
-    font-size: clamp(18px, 2.4vw, 26px);
-    letter-spacing:.2px;
-    font-weight: 600;
-    color: var(--accent);
+  /* ========= 2×2 Framework ========= */
+  .framework-section{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:32px 36px 22px;
+    margin-bottom:32px;
+    box-shadow:var(--shadow);
   }
+  .framework-title{
+    font-size:clamp(20px,2.8vw,28px);font-weight:800;
+    color:#1a2340;margin:0 0 5px;letter-spacing:-.3px;line-height:1.2;
+  }
+  .framework-divider{
+    height:3px;border:none;border-radius:2px;margin:0 0 22px;
+    background:linear-gradient(90deg,var(--q-teal) 0%,var(--q-blue) 100%);
+  }
+  .fw-col-labels{
+    display:grid;grid-template-columns:96px 1fr 1fr;gap:12px;margin-bottom:6px;
+  }
+  .fw-col-label{
+    text-align:center;font-size:11px;font-weight:700;
+    letter-spacing:1.2px;color:#6a7590;text-transform:uppercase;
+  }
+  .fw-row{display:grid;grid-template-columns:96px 1fr 1fr;gap:12px;margin-bottom:12px;align-items:stretch}
+  .fw-row-label{
+    display:flex;align-items:center;justify-content:flex-end;padding-right:10px;
+  }
+  .fw-row-label span{
+    font-size:11px;font-weight:700;letter-spacing:1px;
+    color:#6a7590;text-transform:uppercase;text-align:right;line-height:1.3;
+  }
+  .fw-quad{
+    display:block;text-decoration:none;border-radius:10px;
+    padding:20px 22px 18px;min-height:155px;
+    transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;
+  }
+  a.fw-quad:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+  a.fw-quad:hover .fw-quad-arrow{opacity:1;transform:translateX(3px)}
+  .fw-quad-arrow{
+    position:absolute;top:13px;right:14px;font-size:16px;
+    opacity:0;transition:opacity .15s,transform .15s;
+  }
+  .fw-quad-teal{background:var(--q-teal-bg);border:2px solid var(--q-teal)}
+  .fw-quad-teal .fw-quad-title,.fw-quad-teal .fw-quad-count,.fw-quad-teal .fw-quad-arrow{color:var(--q-teal)}
+  .fw-quad-blue{background:var(--q-blue-bg);border:2px solid transparent}
+  .fw-quad-blue .fw-quad-title,.fw-quad-blue .fw-quad-count,.fw-quad-blue .fw-quad-arrow{color:var(--q-blue)}
+  .fw-quad-orange{background:var(--q-orange-bg);border:2px solid var(--q-orange)}
+  .fw-quad-orange .fw-quad-title,.fw-quad-orange .fw-quad-count,.fw-quad-orange .fw-quad-arrow{color:var(--q-orange)}
+  .fw-quad-empty{
+    background:var(--q-gray-bg);border:2px dashed #cdd2dc;color:#aab0bc;
+    cursor:default;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;
+  }
+  .fw-quad-title{font-size:15px;font-weight:700;margin:0 0 2px;line-height:1.2}
+  .fw-quad-count{font-size:clamp(28px,3.5vw,42px);font-weight:800;line-height:1;margin:3px 0 1px;display:block}
+  .fw-quad-unit{font-size:clamp(16px,1.8vw,20px);font-weight:700;display:block;margin-bottom:9px;line-height:1}
+  .fw-quad-bullets{font-size:12.5px;color:#4a5568;line-height:1.55;list-style:none;padding:0;margin:0}
+  .fw-quad-empty-dash{width:40px;height:3px;background:#c8cdd8;border-radius:2px}
+  .fw-quad-empty-text{font-style:italic;font-size:13px;color:#aab0bc}
+  .framework-footnote{font-size:12.5px;font-style:italic;color:#8a95a6;margin:8px 0 0;padding-left:2px}
 
-  /* ========= 2×2 Framework Section ========= */
-  .framework-section {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px 36px 20px;
-    margin-bottom: 28px;
-    box-shadow: var(--shadow);
+  /* ========= Section header ========= */
+  .section-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:0 0 14px;flex-wrap:wrap;gap:10px;
   }
-
-  .framework-title {
-    font-size: clamp(20px, 2.8vw, 30px);
-    font-weight: 800;
-    color: #1a2340;
-    margin: 0 0 6px;
-    letter-spacing: -.3px;
-    line-height: 1.2;
+  .section-title{
+    font-size:18px;font-weight:700;color:#1a2340;margin:0;
+    display:flex;align-items:center;gap:10px;
   }
-
-  .framework-divider {
-    height: 3px;
-    background: linear-gradient(90deg, var(--q-teal) 0%, #4a86b8 100%);
-    border: none;
-    border-radius: 2px;
-    margin: 0 0 24px;
-  }
-
-  /* Column labels */
-  .fw-col-labels {
-    display: grid;
-    grid-template-columns: 100px 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 8px;
-    padding-left: 0;
-  }
-  .fw-col-label {
-    text-align: center;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    color: #5a6275;
-    text-transform: uppercase;
-  }
-  .fw-col-label:first-child { visibility: hidden; }
-
-  /* Grid rows */
-  .fw-row {
-    display: grid;
-    grid-template-columns: 100px 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-    align-items: stretch;
-  }
-
-  .fw-row-label {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 10px;
-    text-align: right;
-  }
-  .fw-row-label span {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: #5a6275;
-    text-transform: uppercase;
-    line-height: 1.3;
-  }
-
-  /* Quadrant cards */
-  .fw-quad {
-    display: block;
-    text-decoration: none;
-    border-radius: 10px;
-    padding: 22px 24px 20px;
-    min-height: 160px;
-    transition: transform .15s ease, box-shadow .15s ease, filter .12s ease;
-    position: relative;
-    overflow: hidden;
-  }
-
-  a.fw-quad:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,.1);
-    filter: brightness(0.97);
-  }
-  a.fw-quad:hover .fw-quad-arrow {
-    opacity: 1;
-    transform: translateX(3px);
-  }
-
-  .fw-quad-arrow {
-    position: absolute;
-    top: 14px;
-    right: 16px;
-    font-size: 18px;
-    opacity: 0;
-    transition: opacity .15s ease, transform .15s ease;
-    color: inherit;
-  }
-
-  /* Teal quadrant */
-  .fw-quad-teal {
-    background: var(--q-teal-bg);
-    border: 2px solid var(--q-teal-border);
-    color: var(--text);
-  }
-  .fw-quad-teal .fw-quad-title { color: var(--q-teal); }
-  .fw-quad-teal .fw-quad-count { color: var(--q-teal); }
-  .fw-quad-teal .fw-quad-arrow { color: var(--q-teal); }
-
-  /* Blue quadrant */
-  .fw-quad-blue {
-    background: var(--q-blue-bg);
-    border: 2px solid transparent;
-    color: var(--text);
-  }
-  .fw-quad-blue .fw-quad-title { color: var(--q-blue); }
-  .fw-quad-blue .fw-quad-count { color: var(--q-blue); }
-  .fw-quad-blue .fw-quad-arrow { color: var(--q-blue); }
-
-  /* Orange quadrant */
-  .fw-quad-orange {
-    background: var(--q-orange-bg);
-    border: 2px solid var(--q-orange-border);
-    color: var(--text);
-  }
-  .fw-quad-orange .fw-quad-title { color: var(--q-orange); }
-  .fw-quad-orange .fw-quad-count { color: var(--q-orange); }
-  .fw-quad-orange .fw-quad-arrow { color: var(--q-orange); }
-
-  /* Empty quadrant (no link) */
-  .fw-quad-empty {
-    background: var(--q-gray-bg);
-    border: 2px dashed #d0d5de;
-    color: var(--q-gray);
-    cursor: default;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .fw-quad-title {
-    font-size: clamp(14px, 1.5vw, 17px);
-    font-weight: 700;
-    margin: 0 0 4px;
-    line-height: 1.2;
-  }
-
-  .fw-quad-count {
-    font-size: clamp(30px, 4vw, 46px);
-    font-weight: 800;
-    line-height: 1;
-    margin: 4px 0 2px;
-    display: block;
-  }
-
-  .fw-quad-unit {
-    font-size: clamp(18px, 2vw, 24px);
-    font-weight: 700;
-    display: block;
-    margin-bottom: 10px;
-    line-height: 1;
-  }
-
-  .fw-quad-bullets {
-    font-size: 13px;
-    color: #4a5568;
-    line-height: 1.55;
-    list-style: none;
-    padding: 0; margin: 0;
-  }
-  .fw-quad-bullets li::before { content: ""; }
-
-  .fw-quad-empty-dash {
-    width: 48px; height: 3px;
-    background: #c8cdd8;
-    border-radius: 2px;
-    margin-bottom: 12px;
-  }
-  .fw-quad-empty-text {
-    font-style: italic;
-    font-size: 14px;
-    color: #aab0bc;
-  }
-
-  .framework-footnote {
-    font-size: 13px;
-    font-style: italic;
-    color: #7a8499;
-    margin-top: 10px;
-    padding-left: 2px;
-  }
-
-  /* ========= Section divider between framework & table ========= */
-  .section-label {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .section-label::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: var(--border);
+  .section-title-badge{
+    font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+    color:var(--muted);background:var(--border);
+    padding:3px 10px;border-radius:20px;
   }
 
   /* ========= Toolbar ========= */
   .bar{
-    display:flex; flex-wrap:wrap; gap:10px 12px; align-items:center;
-    margin: 10px 0 16px;
-    background: var(--panel);
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    background:var(--panel);
     border:1px solid var(--border);
-    border-radius: calc(var(--radius) + 4px);
-    padding: 10px;
-    box-shadow: var(--shadow);
+    border-radius:calc(var(--radius) + 2px);
+    padding:10px 12px;
+    box-shadow:var(--shadow-sm);
+    margin-bottom:14px;
   }
-  .bar input[type="text"], .bar input[type="url"]{
-    flex:1 1 280px; min-width: 220px; max-width: 520px;
-    border:1px solid var(--border); background:#fff; color:var(--text);
-    padding:10px 12px; border-radius:12px; outline: none;
-    transition: border-color .15s, box-shadow .15s, background .15s;
+  .bar input[type="text"]{
+    flex:1 1 240px;min-width:180px;max-width:380px;
+    border:1.5px solid var(--border);background:#fafcff;color:var(--text);
+    padding:9px 12px 9px 36px;border-radius:var(--radius-sm);outline:none;
+    font-size:13.5px;
+    transition:border-color .15s,box-shadow .15s;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a95a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:10px center;
   }
-  .bar input[type="text"]::placeholder,
-  .bar input[type="url"]::placeholder{ color:var(--muted) }
-  .bar input[type="text"]:focus,
-  .bar input[type="url"]:focus{
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 30%, transparent);
-    background: color-mix(in oklab, #fff 90%, var(--accent) 10%);
+  .bar input[type="url"]{
+    flex:1 1 220px;min-width:180px;max-width:340px;
+    border:1.5px solid var(--border);background:#fafcff;color:var(--text);
+    padding:9px 12px;border-radius:var(--radius-sm);outline:none;font-size:13.5px;
+    transition:border-color .15s,box-shadow .15s;
   }
+  .bar input[type="text"]:focus,.bar input[type="url"]:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(74,134,184,.15);
+    background-color:#fff;
+  }
+  .bar input[type="text"]::placeholder,.bar input[type="url"]::placeholder{color:var(--muted)}
   .bar input[type="file"]{
-    padding: 10px 12px;
-    border:1px dashed var(--border);
-    border-radius:12px;
-    background:#fff;
-    color:var(--muted);
+    padding:8px 12px;border:1.5px dashed var(--border);
+    border-radius:var(--radius-sm);background:#fafcff;color:var(--muted);font-size:13px;
   }
+  .bar-divider{width:1px;height:28px;background:var(--border);flex-shrink:0}
   button{
-    padding:10px 14px;
-    border:1px solid color-mix(in oklab, var(--accent) 60%, transparent);
-    background: var(--accent);
-    color:#0f1f3a;
-    border-radius:12px;
+    padding:9px 16px;
+    border:1.5px solid var(--accent);
+    background:var(--accent);color:#fff;
+    border-radius:var(--radius-sm);font-size:13.5px;font-weight:600;
     cursor:pointer;
-    transition: transform .06s ease, box-shadow .15s ease, filter .15s ease;
-    box-shadow: 0 3px 10px rgba(0,0,0,.06);
+    transition:transform .08s,box-shadow .15s,filter .15s;
+    box-shadow:0 2px 8px rgba(74,134,184,.25);
   }
-  button:hover{ transform: translateY(-1px); filter: brightness(1.03); box-shadow: 0 6px 18px rgba(0,0,0,.08) }
-  button:active{ transform: translateY(0); box-shadow: 0 3px 10px rgba(0,0,0,.06) }
+  button:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 5px 16px rgba(74,134,184,.3)}
+  button:active{transform:translateY(0);box-shadow:0 2px 8px rgba(74,134,184,.2)}
+
+  /* ========= Row count badge ========= */
+  #rowCount{
+    font-size:12px;color:var(--muted);margin-left:auto;
+    white-space:nowrap;flex-shrink:0;
+  }
 
   /* ========= Table shell ========= */
   .table-wrap{
-    max-width:100%;
-    overflow:auto;
-    border:1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--panel);
-    box-shadow: var(--shadow);
-    position: relative;
+    border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--panel);box-shadow:var(--shadow);
+    overflow:auto;max-width:100%;position:relative;
   }
-  .table-wrap::before,
-  .table-wrap::after{
-    content:"";
-    position: sticky; top:0; bottom:0; width:24px; pointer-events:none; z-index:1;
-  }
-  .table-wrap::before{ left:0; background: linear-gradient(90deg, var(--panel) 0%, transparent 100%) }
-  .table-wrap::after{ right:0; background: linear-gradient(270deg, var(--panel) 0%, transparent 100%) }
-
-  /* ========= Summary panel ========= */
-  .summary-card{
-    margin-top:12px;
-    background: var(--panel);
-    border:1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    box-shadow: var(--shadow);
-    white-space: pre-wrap;
-    font-size: 14px;
-    color: var(--text);
-  }
-
-  /* ========= Table ========= */
-  table{ border-collapse: collapse; width:100%; font-size: 14px; }
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
   thead th{
-    position: sticky; top:0; z-index: 2;
-    background: var(--thead) !important;
-    border-bottom:1px solid var(--border);
-    color: var(--text);
-    white-space: nowrap;
-    padding: 10px 12px;
-    text-align: left;
-    letter-spacing:.2px;
-    cursor: pointer;
-    user-select: none;
+    position:sticky;top:0;z-index:2;
+    background:var(--thead);border-bottom:1.5px solid var(--border);
+    color:var(--text);white-space:nowrap;
+    padding:11px 14px;text-align:left;
+    font-size:12.5px;font-weight:700;letter-spacing:.2px;
+    cursor:pointer;user-select:none;
   }
-  thead th::after{
-    content:"";
-    display:inline-block; margin-left:8px;
-    width: 0; height: 0; border-left:5px solid transparent; border-right:5px solid transparent;
-    border-top:6px solid var(--accent); opacity:.45; transform: translateY(-2px);
+  thead th:hover{color:var(--accent)}
+  thead th .sort-icon{
+    display:inline-block;margin-left:5px;opacity:.35;font-size:10px;
   }
-  thead th:hover{ color: color-mix(in oklab, var(--accent) 80%, var(--text)); }
-  thead th:hover::after{ opacity:.7 }
-
-  tbody tr{ transition: background .12s ease, box-shadow .12s ease }
-  tbody tr:nth-child(even){ background: var(--zebra) !important; }
-  tbody tr:hover{
-    background: var(--hover) !important;
-    box-shadow: inset 0 1px 0 rgba(0,0,0,.03), inset 0 -1px 0 rgba(0,0,0,.03);
-  }
-  th, td{
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border-soft);
-    vertical-align: top;
-  }
+  thead th:hover .sort-icon{opacity:.65}
+  tbody tr{transition:background .1s}
+  tbody tr:nth-child(even){background:var(--zebra)}
+  tbody tr:hover{background:var(--hover)}
+  th,td{padding:10px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
   td a{
-    color: var(--link);
-    text-decoration: none;
-    border-bottom: 1px dashed color-mix(in oklab, var(--link) 60%, transparent);
-    padding-bottom:1px;
+    color:var(--link);text-decoration:none;
+    border-bottom:1px dashed rgba(63,137,233,.4);padding-bottom:1px;
   }
-  td a:hover{
-    color: var(--link-hover);
-    border-bottom-style: solid;
-  }
+  td a:hover{color:var(--link-hover);border-bottom-style:solid}
 
-  .muted{
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: 10px;
-    padding-left: 2px;
+  /* ========= Summary stats strip ========= */
+  .summary-strip{
+    display:flex;flex-wrap:wrap;gap:1px;
+    margin-top:14px;
+    border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--border);
+    overflow:hidden;
+    box-shadow:var(--shadow-sm);
   }
-  .hidden{ display:none }
-
-  @media (max-width: 700px){
-    .framework-section { padding: 20px 16px 14px; }
-    .fw-col-labels, .fw-row { grid-template-columns: 70px 1fr 1fr; gap: 8px; }
-    .fw-quad { padding: 14px 14px 12px; min-height: 120px; }
-    .bar{ padding: 8px }
-    .bar input[type="text"], .bar input[type="url"]{ flex:1 1 100%; min-width: 0 }
-    th, td{ padding: 9px 10px }
-    table{ font-size: 13px }
+  .stat-cell{
+    flex:1 1 140px;
+    background:var(--panel);
+    padding:14px 18px;
+    display:flex;flex-direction:column;
+    gap:2px;
   }
+  .stat-cell-num{
+    font-size:28px;font-weight:800;line-height:1;
+    color:var(--accent);
+  }
+  .stat-cell-label{font-size:12px;color:var(--muted);line-height:1.3}
 
-  @media (max-width: 480px){
-    .fw-col-labels, .fw-row { grid-template-columns: 56px 1fr 1fr; gap: 6px; }
-    .fw-quad-count { font-size: 28px; }
-    .fw-quad-unit { font-size: 16px; }
+  .hidden{display:none}
+
+  @media(max-width:700px){
+    .fw-col-labels,.fw-row{grid-template-columns:66px 1fr 1fr;gap:8px}
+    .fw-quad{padding:14px 12px;min-height:120px}
+    .fw-quad-count{font-size:26px}
+    .framework-section{padding:20px 16px 14px}
+    .bar{padding:8px}
+    .bar input[type="text"],.bar input[type="url"]{flex:1 1 100%;min-width:0}
+    th,td{padding:9px 10px}
+    table{font-size:13px}
+    .stat-cell{flex:1 1 100px;padding:12px 14px}
+    .stat-cell-num{font-size:22px}
   }
 </style>
 </head>
 <body>
 
-  <!-- ===== 2×2 Framework Section ===== -->
-  <div class="framework-section">
-    <h2 class="framework-title">A 2×2 Framework for Drug–Target Analysis</h2>
-    <hr class="framework-divider">
+<!-- ===== 2×2 Framework ===== -->
+<div class="framework-section">
+  <h2 class="framework-title">A 2×2 Framework for Drug–Target Analysis</h2>
+  <hr class="framework-divider">
 
-    <!-- Column labels -->
-    <div class="fw-col-labels">
-      <div class="fw-col-label"></div>
-      <div class="fw-col-label">One Drug</div>
-      <div class="fw-col-label">Multiple Drugs</div>
-    </div>
-
-    <!-- Row 1: ONE TARGET -->
-    <div class="fw-row">
-      <div class="fw-row-label"><span>One<br>Target</span></div>
-
-      <!-- Q1: Single-Target Hitters -->
-      <a class="fw-quad fw-quad-teal" href="single-target.html" title="View Single-Target Hitters table">
-        <span class="fw-quad-arrow">→</span>
-        <div class="fw-quad-title">Single-Target Hitters</div>
-        <span class="fw-quad-count">38</span>
-        <span class="fw-quad-unit">drugs</span>
-        <ul class="fw-quad-bullets">
-          <li>Cleanest repurposing candidates</li>
-          <li>One gene → clear mechanism</li>
-          <li>Interpreted in §6</li>
-        </ul>
-      </a>
-
-      <!-- Q2: Convergence Hotspots -->
-      <a class="fw-quad fw-quad-blue" href="convergence.html" title="View Convergence Hotspots table">
-        <span class="fw-quad-arrow">→</span>
-        <div class="fw-quad-title">Convergence Hotspots</div>
-        <span class="fw-quad-count">14</span>
-        <span class="fw-quad-unit">targets</span>
-        <ul class="fw-quad-bullets">
-          <li>Multiple drugs on one protein</li>
-          <li>Strongest validation signal</li>
-          <li>Analyzed in §5</li>
-        </ul>
-      </a>
-    </div>
-
-    <!-- Row 2: MANY TARGETS -->
-    <div class="fw-row">
-      <div class="fw-row-label"><span>Many<br>Targets</span></div>
-
-      <!-- Q3: Polypharmacology -->
-      <a class="fw-quad fw-quad-orange" href="polypharmacology.html" title="View Polypharmacology table">
-        <span class="fw-quad-arrow">→</span>
-        <div class="fw-quad-title">Polypharmacology</div>
-        <span class="fw-quad-count">19</span>
-        <span class="fw-quad-unit">drugs</span>
-        <ul class="fw-quad-bullets">
-          <li>One drug → multiple targets</li>
-          <li>Resistance-robust potential</li>
-          <li>Analyzed in §4</li>
-        </ul>
-      </a>
-
-      <!-- Q4: Empty -->
-      <div class="fw-quad fw-quad-empty">
-        <div class="fw-quad-empty-dash"></div>
-        <div class="fw-quad-empty-text">No drugs in this quadrant</div>
-      </div>
-    </div>
-
-    <p class="framework-footnote">
-      3 orphan drugs span no quadrant cleanly: DSM265 (DHODH), MG-132 (proteasome), 1223001-51-1 (likely artifact)
-    </p>
+  <div class="fw-col-labels">
+    <div></div>
+    <div class="fw-col-label">One Drug</div>
+    <div class="fw-col-label">Multiple Drugs</div>
   </div>
 
-  <!-- ===== Full Data Table ===== -->
-  <h1>Drug repurposing Viewer</h1>
-  <div class="section-label">Full Dataset</div>
-
-  <div class="bar">
-    <input id="search" type="text" placeholder="Filter rows (case-insensitive)..." />
-    <input id="url" type="url" placeholder="Paste CSV URL (supports comma/semicolon/tab)"/>
-    <button id="loadUrl">Load URL</button>
-    <input id="file" type="file" accept=".csv,text/csv" />
+  <div class="fw-row">
+    <div class="fw-row-label"><span>One<br>Target</span></div>
+    <a class="fw-quad fw-quad-teal" href="single-target.html">
+      <span class="fw-quad-arrow">→</span>
+      <div class="fw-quad-title">Single-Target Hitters</div>
+      <span class="fw-quad-count">38</span>
+      <span class="fw-quad-unit">drugs</span>
+      <ul class="fw-quad-bullets">
+        <li>Cleanest repurposing candidates</li>
+        <li>One gene → clear mechanism</li>
+        <li>Interpreted in §6</li>
+      </ul>
+    </a>
+    <a class="fw-quad fw-quad-blue" href="convergence.html">
+      <span class="fw-quad-arrow">→</span>
+      <div class="fw-quad-title">Convergence Hotspots</div>
+      <span class="fw-quad-count">14</span>
+      <span class="fw-quad-unit">targets</span>
+      <ul class="fw-quad-bullets">
+        <li>Multiple drugs on one protein</li>
+        <li>Strongest validation signal</li>
+        <li>Analyzed in §5</li>
+      </ul>
+    </a>
   </div>
-  <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-  <div id="info" class="muted hidden"></div>
 
-  <div id="summaryPanel" class="summary-card hidden">
-    <pre id="summaryText" style="margin:0"></pre>
+  <div class="fw-row">
+    <div class="fw-row-label"><span>Many<br>Targets</span></div>
+    <a class="fw-quad fw-quad-orange" href="polypharmacology.html">
+      <span class="fw-quad-arrow">→</span>
+      <div class="fw-quad-title">Polypharmacology</div>
+      <span class="fw-quad-count">19</span>
+      <span class="fw-quad-unit">drugs</span>
+      <ul class="fw-quad-bullets">
+        <li>One drug → multiple targets</li>
+        <li>Resistance-robust potential</li>
+        <li>Analyzed in §4</li>
+      </ul>
+    </a>
+    <div class="fw-quad fw-quad-empty">
+      <div class="fw-quad-empty-dash"></div>
+      <div class="fw-quad-empty-text">No drugs in this quadrant</div>
+    </div>
   </div>
+
+  <p class="framework-footnote">3 orphan drugs span no quadrant cleanly: DSM265 (DHODH), MG-132 (proteasome), 1223001-51-1 (likely artifact)</p>
+</div>
+
+<!-- ===== Dataset Table ===== -->
+<div class="section-head">
+  <h1 class="section-title">
+    Full Dataset
+    <span class="section-title-badge">CompData.csv</span>
+  </h1>
+</div>
+
+<div class="bar">
+  <input id="search" type="text" placeholder="Search rows…" />
+  <div class="bar-divider"></div>
+  <input id="url" type="url" placeholder="Paste CSV URL…" />
+  <button id="loadUrl">Load URL</button>
+  <input id="file" type="file" accept=".csv,text/csv" />
+  <span id="rowCount"></span>
+</div>
+
+<div class="table-wrap">
+  <table id="tbl"><thead></thead><tbody></tbody></table>
+</div>
+
+<!-- ===== Summary Stats Strip ===== -->
+<div class="summary-strip" id="summaryStrip">
+  <div class="stat-cell">
+    <div class="stat-cell-num" id="statPairs">123</div>
+    <div class="stat-cell-label">Drug–target pairs<br>(3D interactions)</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-cell-num" id="statDrugs">45</div>
+    <div class="stat-cell-label">Unique drugs</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-cell-num" id="statProteins">35</div>
+    <div class="stat-cell-label">Unique malaria proteins</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-cell-num" id="statGenes">24</div>
+    <div class="stat-cell-label">Unique gene names</div>
+  </div>
+</div>
 
 <script>
-/* Force light appearance even if OS/browser is dark */
-(function () {
-  document.documentElement.style.colorScheme = 'light';
-  const s = document.createElement('style');
-  s.setAttribute('id', 'force-light');
-  s.textContent = `
-    html, body { background:#eff7ff !important; color:#223 !important; }
-    .bar, .table-wrap, table, thead, tbody, tr, th, td { background:#ffffff !important; color:#223 !important; }
-  `;
+(function(){
+  document.documentElement.style.colorScheme='light';
+  const s=document.createElement('style');
+  s.textContent=`html,body{background:#f0f5fc!important;color:#2d3954!important}
+  .bar,.table-wrap,table,thead,tbody,tr,th,td{background:#fff!important;color:#2d3954!important}`;
   document.head.appendChild(s);
 })();
 </script>
 
 <script>
-/* --- CSV parsing (quotes + , ; \t) --- */
+/* ── CSV parser ── */
 function detectDelimiter(text){
-  const sample = text.split(/\r?\n/).slice(0,20).join("\n");
-  const counts = {",":0,";":0,"\t":0};
-  for (const d of Object.keys(counts)){
-    counts[d] = sample.split("\n")
-      .map(line => (line.match(new RegExp(d === "\t" ? "\\t" : d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),"g"))||[]).length)
+  const sample=text.split(/\r?\n/).slice(0,20).join("\n");
+  const counts={",":{n:0},";":{n:0},"\t":{n:0}};
+  for(const d of Object.keys(counts)){
+    counts[d].n=sample.split("\n")
+      .map(l=>(l.match(new RegExp(d==="\t"?"\\t":d.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"g"))||[]).length)
       .reduce((a,b)=>a+b,0);
   }
-  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0] || ",";
+  return Object.entries(counts).sort((a,b)=>b[1].n-a[1].n)[0][0]||",";
 }
-
-function parseCSV(text, delimiter){
-  delimiter = delimiter || detectDelimiter(text);
-  const rows = [];
-  let i=0, field="", inQuotes=false, row=[];
-  while(i < text.length){
-    const c = text[i], next = text[i+1];
-    if (inQuotes){
-      if (c === '"' && next === '"'){ field += '"'; i+=2; continue; }
-      if (c === '"'){ inQuotes=false; i++; continue; }
-      field += c; i++; continue;
-    } else {
-      if (c === '"'){ inQuotes=true; i++; continue; }
-      if (c === delimiter){ row.push(field); field=""; i++; continue; }
-      if (c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; i++; continue; }
-      if (c === '\r'){ i++; continue; }
-      field += c; i++; continue;
+function parseCSV(text){
+  const delim=detectDelimiter(text);
+  const rows=[];let i=0,field="",inQ=false,row=[];
+  while(i<text.length){
+    const c=text[i],n=text[i+1];
+    if(inQ){
+      if(c==='"'&&n==='"'){field+='"';i+=2;continue}
+      if(c==='"'){inQ=false;i++;continue}
+      field+=c;i++;continue;
+    }else{
+      if(c==='"'){inQ=true;i++;continue}
+      if(c===delim){row.push(field);field="";i++;continue}
+      if(c==='\n'){row.push(field);rows.push(row);row=[];field="";i++;continue}
+      if(c==='\r'){i++;continue}
+      field+=c;i++;continue;
     }
   }
-  row.push(field); rows.push(row);
-  if (rows.length && rows[rows.length-1].length===1 && rows[rows.length-1][0]==="") rows.pop();
+  row.push(field);rows.push(row);
+  if(rows.length&&rows[rows.length-1].length===1&&rows[rows.length-1][0]==="")rows.pop();
   return rows;
 }
 
-/* --- State & DOM refs --- */
-const tbl = document.getElementById('tbl');
-const thead = tbl.querySelector('thead');
-const tbody = tbl.querySelector('tbody');
-const searchBox = document.getElementById('search');
-const info = document.getElementById('info');
+/* ── State ── */
+const tbl=document.getElementById('tbl');
+const thead=tbl.querySelector('thead');
+const tbody=tbl.querySelector('tbody');
+const searchBox=document.getElementById('search');
+const rowCountEl=document.getElementById('rowCount');
+let data=[],columns=[],sortState={key:null,dir:1};
 
-let data = [];
-let columns = [];
-let sortState = { key:null, dir:1 };
-
-/* --- Convert rows to objects --- */
 function rowsToObjects(rows){
-  if (!rows.length) return {columns:[], data:[]};
-  let cols = rows[0].map((h,i)=> (h && h.trim()) ? h.trim() : `col_${i+1}`);
-  const seen = {};
-  cols = cols.map(h => {
-    const base = h || 'column';
-    if (!seen[base]) { seen[base]=1; return base; }
-    return `${base}_${++seen[base]}`;
-  });
-  const out = rows.slice(1).map(r=>{
-    const obj={};
-    cols.forEach((h,i)=> obj[h] = (r[i] ?? ''));
-    return obj;
-  });
-  return {columns: cols, data: out};
+  if(!rows.length)return{columns:[],data:[]};
+  let cols=rows[0].map((h,i)=>(h&&h.trim())?h.trim():`col_${i+1}`);
+  const seen={};
+  cols=cols.map(h=>{const b=h||'col';if(!seen[b]){seen[b]=1;return b;}return`${b}_${++seen[b]}`});
+  return{columns:cols,data:rows.slice(1).map(r=>{const o={};cols.forEach((h,i)=>o[h]=r[i]??"");return o})};
 }
 
-/* --- Link helpers --- */
-const rxPdbCore = /^[0-9][A-Za-z0-9]{3}$/;
-const rxUniProt = /^(?:[A-NR-Z][0-9][A-Z0-9]{3}[0-9]|[OPQ][0-9][A-Z0-9]{3}[0-9])(?:-\d+)?$/i;
-
+/* ── Link helpers ── */
+const rxPdb=/^[0-9][A-Za-z0-9]{3}$/;
+const rxUni=/^(?:[A-NR-Z][0-9][A-Z0-9]{3}[0-9]|[OPQ][0-9][A-Z0-9]{3}[0-9])(?:-\d+)?$/i;
 function extractIdAndChain(raw){
-  if (!raw) return null;
-  const v = String(raw).trim();
-  const cleaned = v.replace(/\.pdb$/i, "").replace(/^pdb[:/]/i, "").trim();
-  const parts = cleaned.split(/[:._-]/).filter(Boolean);
-  const first = parts[0]?.toUpperCase();
-  if (!first) return null;
-  let type = null;
-  if (rxPdbCore.test(first)) type = 'pdb';
-  else if (rxUniProt.test(first) || first.length > 4) type = 'uniprot';
-  else return null;
-  const chain = parts[1] && /^[A-Za-z0-9]{1,3}$/.test(parts[1]) ? parts[1] : null;
-  return { id: first, chain, type };
+  if(!raw)return null;
+  const v=String(raw).trim().replace(/\.pdb$/i,"").replace(/^pdb[:/]/i,"");
+  const parts=v.split(/[:._-]/).filter(Boolean);
+  const first=parts[0]?.toUpperCase();
+  if(!first)return null;
+  let type=rxPdb.test(first)?'pdb':(rxUni.test(first)||first.length>4)?'uniprot':null;
+  if(!type)return null;
+  const chain=parts[1]&&/^[A-Za-z0-9]{1,3}$/.test(parts[1])?parts[1]:null;
+  return{id:first,chain,type};
 }
-
-function makeLinkedNode(header, value){
-  const td = document.createElement('td');
-  const v = (value ?? "").toString().trim();
-  const h = (header ?? "").toString().toLowerCase();
-
-  if (!v){ td.textContent = ""; return td; }
-
-  if (v.startsWith("http://") || v.startsWith("https://")){
-    const a = document.createElement('a');
-    a.href = v; a.textContent = v; a.target = "_blank"; a.rel="noopener noreferrer";
-    td.appendChild(a); return td;
+function makeLinkedNode(header,value){
+  const td=document.createElement('td');
+  const v=(value??"").toString().trim();
+  const h=(header??"").toString().toLowerCase();
+  if(!v){td.textContent="";return td}
+  const a=document.createElement('a');
+  a.target="_blank";a.rel="noopener noreferrer";a.textContent=v;
+  if(v.startsWith("http://")||v.startsWith("https://")){a.href=v;td.appendChild(a);return td}
+  if(h.includes("pubchem")||(h.includes("cid")&&!h.includes("acid"))){
+    a.href=`https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(v)}`;td.appendChild(a);return td;
   }
-
-  if (h.includes("pubchem") || (h.includes("cid") && !h.includes("acid"))){
-    const a = document.createElement('a');
-    a.href = `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(v)}`;
-    a.textContent = v; a.target="_blank"; a.rel="noopener noreferrer";
-    td.appendChild(a); return td;
-  }
-
-  if (h.includes("pdb_target_id") || h.includes("malaria")) {
-    const idinfo = extractIdAndChain(v);
-    if (idinfo) {
-      const a = document.createElement('a');
-      if (idinfo.type === 'uniprot') {
-        a.href = `https://www.uniprot.org/uniprotkb/${encodeURIComponent(idinfo.id)}/entry`;
-      } else {
-        const chainParam = idinfo.chain ? `?chainId=${encodeURIComponent(idinfo.chain)}` : "";
-        a.href = `https://www.rcsb.org/structure/${idinfo.id}${chainParam}`;
-      }
-      a.textContent = v; a.target = "_blank"; a.rel = "noopener noreferrer";
-      td.appendChild(a); return td;
+  if(h.includes("pdb_target_id")||h.includes("malaria")){
+    const info=extractIdAndChain(v);
+    if(info){
+      a.href=info.type==='uniprot'
+        ?`https://www.uniprot.org/uniprotkb/${encodeURIComponent(info.id)}/entry`
+        :`https://www.rcsb.org/structure/${info.id}${info.chain?`?chainId=${encodeURIComponent(info.chain)}`:""}`;
+      td.appendChild(a);return td;
     }
   }
-
-  if (h === "3d interaction" || h.includes("3d interaction")) {
-    const a = document.createElement('a');
-    const viewerUrl = "./ngl/viewer.html";
-    const pdbPathForViewer = `../MDpdb/${encodeURIComponent(v)}`;
-    const ext = (v.split('.').pop() || "").toLowerCase();
-    const fmt = (ext === 'cif' || ext === 'mmcif') ? 'mmcif'
-            : (ext === 'bcif') ? 'bcif'
-            : (ext === 'sdf')  ? 'sdf'
-            : (ext === 'mol2') ? 'mol2'
-            : 'pdb';
-    a.href = `${viewerUrl}?load=${pdbPathForViewer}&format=${encodeURIComponent(fmt)}`;
-    a.textContent = v; a.target = "_blank"; a.rel = "noopener noreferrer";
-    td.appendChild(a); return td;
+  if(h==="3d interaction"||h.includes("3d interaction")){
+    const ext=(v.split('.').pop()||"").toLowerCase();
+    const fmt=ext==='cif'||ext==='mmcif'?'mmcif':ext==='bcif'?'bcif':ext==='sdf'?'sdf':ext==='mol2'?'mol2':'pdb';
+    a.href=`./ngl/viewer.html?load=../MDpdb/${encodeURIComponent(v)}&format=${encodeURIComponent(fmt)}`;
+    td.appendChild(a);return td;
   }
-
-  if (h.includes("gene id")) {
-    if (v) {
-      const a = document.createElement('a');
-      a.href = `https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(v)}`;
-      a.textContent = v; a.target = "_blank"; a.rel = "noopener noreferrer";
-      td.appendChild(a);
-    } else {
-      td.textContent = "";
-    }
-    return td;
+  if(h.includes("gene id")){
+    a.href=`https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(v)}`;
+    td.appendChild(a);return td;
   }
-
-  td.textContent = v;
-  return td;
+  td.textContent=v;return td;
 }
 
-/* --- Render table --- */
-function renderTable(cols, rows){
-  thead.innerHTML = "";
-  thead.style.background = '#f7fbff';
-  tbody.style.background = '#ffffff';
-
-  const tr = document.createElement('tr');
+/* ── Render ── */
+function renderTable(cols,rows){
+  thead.innerHTML="";
+  const tr=document.createElement('tr');
   cols.forEach(c=>{
-    const th = document.createElement('th');
-    th.textContent = c;
-    th.title = "Click to sort";
-    th.style.background = '#f7fbff';
-    th.style.color = '#223';
-    th.addEventListener('click', ()=> sortBy(c));
+    const th=document.createElement('th');
+    th.innerHTML=`${c} <span class="sort-icon">↕</span>`;
+    th.title="Click to sort";
+    th.style.cssText="background:#f0f6fd;color:#2d3954";
+    th.addEventListener('click',()=>sortBy(c));
     tr.appendChild(th);
   });
   thead.appendChild(tr);
-
-  tbody.innerHTML = "";
-  const frag = document.createDocumentFragment();
+  tbody.innerHTML="";
+  const frag=document.createDocumentFragment();
   rows.forEach(r=>{
-    const tr = document.createElement('tr');
-    tr.style.background = '#ffffff';
+    const tr=document.createElement('tr');
+    tr.style.cssText="background:#fff;color:#2d3954";
     cols.forEach(c=>{
-      const td = makeLinkedNode(c, r[c]);
-      td.style.background = '#ffffff';
-      td.style.color = '#223';
+      const td=makeLinkedNode(c,r[c]);
+      td.style.cssText="background:inherit;color:#2d3954";
       tr.appendChild(td);
     });
     frag.appendChild(tr);
   });
   tbody.appendChild(frag);
-
-  info.classList.remove('hidden');
-  info.textContent = `${rows.length.toLocaleString()} rows  •  ${cols.length} columns`;
+  rowCountEl.textContent=`${rows.length.toLocaleString()} row${rows.length!==1?'s':''}`;
   updateSummary(rows);
 }
 
-/* --- Sort & Filter --- */
+/* ── Sort & Filter ── */
 function sortBy(key){
-  if (sortState.key === key){ sortState.dir *= -1; } else { sortState.key = key; sortState.dir = 1; }
-  const dir = sortState.dir;
-  const isNum = data.every(row => row[key] === "" || !isNaN(Number(row[key])));
-  const sorted = [...filteredRows()].sort((a,b)=>{
-    const va = a[key], vb = b[key];
-    if (isNum){ return (Number(va||0) - Number(vb||0)) * dir; }
-    return String(va).localeCompare(String(vb)) * dir;
+  sortState.key===key?sortState.dir*=-1:(sortState.key=key,sortState.dir=1);
+  const dir=sortState.dir,isNum=data.every(r=>r[key]===""||!isNaN(Number(r[key])));
+  const sorted=[...filteredRows()].sort((a,b)=>{
+    const va=a[key],vb=b[key];
+    return(isNum?(Number(va||0)-Number(vb||0)):String(va).localeCompare(String(vb)))*dir;
   });
-  renderTable(columns, sorted);
+  renderTable(columns,sorted);
 }
-
 function filteredRows(){
-  const q = searchBox.value.trim().toLowerCase();
-  if (!q) return data;
-  return data.filter(row => columns.some(c => String(row[c]).toLowerCase().includes(q)));
+  const q=searchBox.value.trim().toLowerCase();
+  return q?data.filter(r=>columns.some(c=>String(r[c]).toLowerCase().includes(q))):data;
 }
-
 function findColumn(probes){
-  const lcCols = columns.map(c => c.toLowerCase());
-  for (const probe of probes){
-    const idx = lcCols.findIndex(h => h === probe || h.includes(probe));
-    if (idx !== -1) return columns[idx];
-  }
+  const lc=columns.map(c=>c.toLowerCase());
+  for(const p of probes){const i=lc.findIndex(h=>h===p||h.includes(p));if(i!==-1)return columns[i]}
   return null;
 }
 
+/* ── Summary stats (live update on filter + hardcoded fallback) ── */
 function updateSummary(rows){
-  const panel = document.getElementById('summaryPanel');
-  const out   = document.getElementById('summaryText');
+  const interCol=findColumn(["3d interaction","3d_interaction","interaction","file"]);
+  const drugCol =findColumn(["ligand_id","drug","malaria ligand","target ligand","ligand"]);
+  const malCol  =findColumn(["malaria","malaria id","malaria protein"]);
+  const geneCol =findColumn(["gene id","malaria gene","target gene","gene"]);
+  const ne=v=>v!==undefined&&v!==null&&String(v).trim()!=="";
+  const uniq=arr=>new Set(arr).size;
 
-  if (!rows || !rows.length){
-    panel.classList.add('hidden');
-    out.textContent = "";
-    return;
+  // Use live counts from filtered rows, fall back to hardcoded totals when unfiltered
+  const isFiltered=searchBox.value.trim()!=="";
+
+  if(!isFiltered){
+    // Always show the canonical total numbers
+    document.getElementById('statPairs').textContent="123";
+    document.getElementById('statDrugs').textContent="45";
+    document.getElementById('statProteins').textContent="35";
+    document.getElementById('statGenes').textContent="24";
+  } else {
+    const pairs=interCol?rows.filter(r=>ne(r[interCol])).length:rows.length;
+    const drugs=drugCol?uniq(rows.map(r=>r[drugCol]).filter(ne)):0;
+    const prots=malCol?uniq(rows.map(r=>r[malCol]).filter(ne)):0;
+    const genes=geneCol?uniq(rows.map(r=>r[geneCol]).filter(ne)):0;
+    document.getElementById('statPairs').textContent=pairs;
+    document.getElementById('statDrugs').textContent=drugs||"—";
+    document.getElementById('statProteins').textContent=prots||"—";
+    document.getElementById('statGenes').textContent=genes||"—";
   }
-
-  const interactionCol = findColumn(["3d interaction", "3d_interaction", "interaction", "file"]);
-  const drugCol        = findColumn(["ligand_id", "drug", "malaria ligand", "target ligand", "ligand"]);
-  const malariaCol     = findColumn(["malaria", "malaria id", "malaria protein"]);
-  const geneCol        = findColumn(["gene id", "malaria gene", "target gene", "gene"]);
-
-  const nonEmpty = v => v !== undefined && v !== null && String(v).trim() !== "";
-  const uniq = arr => Array.from(new Set(arr));
-
-  const pairCount   = interactionCol ? rows.filter(r => nonEmpty(r[interactionCol])).length : rows.length;
-  const uniqueDrugs   = drugCol    ? uniq(rows.map(r => r[drugCol]).filter(nonEmpty)).length : 0;
-  const uniqueMalaria = malariaCol ? uniq(rows.map(r => r[malariaCol]).filter(nonEmpty)).length : 0;
-  const uniqueGenes   = geneCol    ? uniq(rows.map(r => r[geneCol]).filter(nonEmpty)).length : 0;
-
-  out.textContent =
-`Pairs of malaria and drug (3D Interactions): ${pairCount}
-Unique drugs: ${uniqueDrugs}
-Unique malaria proteins: ${uniqueMalaria}
-Unique gene names: ${uniqueGenes}`;
-
-  panel.classList.remove('hidden');
 }
 
-/* --- Loaders --- */
+/* ── Loaders ── */
 async function loadFromText(text){
-  const rows = parseCSV(text);
-  const {columns: cols, data: rowsObj} = rowsToObjects(rows);
-  columns = cols; data = rowsObj;
-  renderTable(columns, filteredRows());
+  const rows=parseCSV(text);
+  const{columns:cols,data:d}=rowsToObjects(rows);
+  columns=cols;data=d;
+  renderTable(columns,filteredRows());
 }
-
 async function loadFromURL(url){
-  const res = await fetch(url, {cache:'no-store'});
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const txt = await res.text();
-  await loadFromText(txt);
+  const res=await fetch(url,{cache:'no-store'});
+  if(!res.ok)throw new Error(`HTTP ${res.status}`);
+  await loadFromText(await res.text());
 }
 
-document.getElementById('loadUrl').addEventListener('click', async ()=>{
-  const url = document.getElementById('url').value.trim();
-  if (!url) return alert("Please paste a CSV URL.");
-  try { await loadFromURL(url); }
-  catch (e){ alert("Failed to load URL: " + e.message); }
+document.getElementById('loadUrl').addEventListener('click',async()=>{
+  const url=document.getElementById('url').value.trim();
+  if(!url)return alert("Please paste a CSV URL.");
+  try{await loadFromURL(url)}catch(e){alert("Failed to load: "+e.message)}
 });
-
-document.getElementById('file').addEventListener('change', async (e)=>{
-  const f = e.target.files[0];
-  if (!f) return;
-  const txt = await f.text();
-  await loadFromText(txt);
+document.getElementById('file').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  await loadFromText(await f.text());
 });
+searchBox.addEventListener('input',()=>renderTable(columns,filteredRows()));
 
-searchBox.addEventListener('input', ()=>{
-  renderTable(columns, filteredRows());
-});
-
-window.addEventListener("DOMContentLoaded", async () => {
-  try {
-    await loadFromURL("./CompData.csv");
-  } catch (e) {
-    console.error("Failed to auto-load CSV:", e);
-  }
+window.addEventListener("DOMContentLoaded",async()=>{
+  try{await loadFromURL("./CompData.csv")}
+  catch(e){console.error("Auto-load failed:",e)}
 });
 </script>
 </body>

@@ -331,15 +331,15 @@
 <!-- ===== Summary Stats Strip ===== -->
 <div class="summary-strip" id="summaryStrip">
   <div class="stat-cell">
-    <div class="stat-cell-num" id="statPairs">123</div>
+    <div class="stat-cell-num" id="statPairs">166</div>
     <div class="stat-cell-label">Drug–target pairs<br>(3D interactions)</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-cell-num" id="statDrugs">45</div>
-    <div class="stat-cell-label">Unique drugs</div>
+    <div class="stat-cell-num" id="statDrugs">57</div>
+    <div class="stat-cell-label">Unique compounds</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-cell-num" id="statProteins">35</div>
+    <div class="stat-cell-num" id="statProteins">30</div>
     <div class="stat-cell-label">Unique malaria proteins</div>
   </div>
   <div class="stat-cell">
@@ -519,9 +519,9 @@ function updateSummary(rows){
 
   if(!isFiltered){
     // Always show the canonical total numbers
-    document.getElementById('statPairs').textContent="123";
-    document.getElementById('statDrugs').textContent="45";
-    document.getElementById('statProteins').textContent="35";
+    document.getElementById('statPairs').textContent="166";
+    document.getElementById('statDrugs').textContent="57";
+    document.getElementById('statProteins').textContent="30";
     document.getElementById('statGenes').textContent="24";
   } else {
     const pairs=interCol?rows.filter(r=>ne(r[interCol])).length:rows.length;

@@ -9,49 +9,269 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-  /* ========= Design tokens (all colors route through here) ========= */
+  /* ========= Design tokens ========= */
   :root{
-    --bg:            #eff7ff;  /* page background: solid light blue */
+    --bg:            #eff7ff;
     --text:          #2d3954;
     --muted:         #8a95a6;
-
-    --panel:         #ffffff;  /* cards/panels/table bg */
-    --panel-2:       #fbfdff;  /* ultra-light panel tint */
-
-    --accent:        #6aa9ff;  /* primary accent (buttons/links/active) */
-    --accent-2:      #6ed39a;  /* secondary accent */
-
-    --border:        #e3edf7;  /* card/table border */
-    --border-soft:   #f1f6fb;  /* row dividers */
-
-    /* Table-specific tokens */
-    --thead:         #f4f9ff;  /* header bg */
-    --zebra:         #fbfdff;  /* even row bg */
-    --hover:         #eef6ff;  /* row hover */
-
+    --panel:         #ffffff;
+    --panel-2:       #fbfdff;
+    --accent:        #6aa9ff;
+    --accent-2:      #6ed39a;
+    --border:        #e3edf7;
+    --border-soft:   #f1f6fb;
+    --thead:         #f4f9ff;
+    --zebra:         #fbfdff;
+    --hover:         #eef6ff;
     --link:          #3f89e9;
     --link-hover:    #2e6fd1;
-
     --shadow:        0 2px 10px rgba(0,0,0,.04);
     --radius:        14px;
+
+    /* 2x2 quadrant colors */
+    --q-teal:        #2a9d8f;
+    --q-teal-bg:     #eef9f7;
+    --q-teal-border: #2a9d8f;
+    --q-blue:        #4a86b8;
+    --q-blue-bg:     #eaf3fb;
+    --q-orange:      #e08c2e;
+    --q-orange-bg:   #fff8ee;
+    --q-orange-border: #e08c2e;
+    --q-gray:        #aab0bc;
+    --q-gray-bg:     #f5f6f8;
   }
 
-  /* ========= Page layout ========= */
   html,body{height:100%}
   body{
     margin:0;
     font: 14px/1.55 system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     color:var(--text);
-    background: var(--bg) !important; /* force solid light blue (no gradient) */
+    background: var(--bg) !important;
     padding: 28px clamp(16px, 3vw, 32px);
   }
 
+  /* ========= Page title ========= */
   h1{
     margin:0 0 14px;
     font-size: clamp(18px, 2.4vw, 26px);
     letter-spacing:.2px;
     font-weight: 600;
     color: var(--accent);
+  }
+
+  /* ========= 2×2 Framework Section ========= */
+  .framework-section {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 36px 20px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+  }
+
+  .framework-title {
+    font-size: clamp(20px, 2.8vw, 30px);
+    font-weight: 800;
+    color: #1a2340;
+    margin: 0 0 6px;
+    letter-spacing: -.3px;
+    line-height: 1.2;
+  }
+
+  .framework-divider {
+    height: 3px;
+    background: linear-gradient(90deg, var(--q-teal) 0%, #4a86b8 100%);
+    border: none;
+    border-radius: 2px;
+    margin: 0 0 24px;
+  }
+
+  /* Column labels */
+  .fw-col-labels {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding-left: 0;
+  }
+  .fw-col-label {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: #5a6275;
+    text-transform: uppercase;
+  }
+  .fw-col-label:first-child { visibility: hidden; }
+
+  /* Grid rows */
+  .fw-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: stretch;
+  }
+
+  .fw-row-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    text-align: right;
+  }
+  .fw-row-label span {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #5a6275;
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+
+  /* Quadrant cards */
+  .fw-quad {
+    display: block;
+    text-decoration: none;
+    border-radius: 10px;
+    padding: 22px 24px 20px;
+    min-height: 160px;
+    transition: transform .15s ease, box-shadow .15s ease, filter .12s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  a.fw-quad:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    filter: brightness(0.97);
+  }
+  a.fw-quad:hover .fw-quad-arrow {
+    opacity: 1;
+    transform: translateX(3px);
+  }
+
+  .fw-quad-arrow {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: 18px;
+    opacity: 0;
+    transition: opacity .15s ease, transform .15s ease;
+    color: inherit;
+  }
+
+  /* Teal quadrant */
+  .fw-quad-teal {
+    background: var(--q-teal-bg);
+    border: 2px solid var(--q-teal-border);
+    color: var(--text);
+  }
+  .fw-quad-teal .fw-quad-title { color: var(--q-teal); }
+  .fw-quad-teal .fw-quad-count { color: var(--q-teal); }
+  .fw-quad-teal .fw-quad-arrow { color: var(--q-teal); }
+
+  /* Blue quadrant */
+  .fw-quad-blue {
+    background: var(--q-blue-bg);
+    border: 2px solid transparent;
+    color: var(--text);
+  }
+  .fw-quad-blue .fw-quad-title { color: var(--q-blue); }
+  .fw-quad-blue .fw-quad-count { color: var(--q-blue); }
+  .fw-quad-blue .fw-quad-arrow { color: var(--q-blue); }
+
+  /* Orange quadrant */
+  .fw-quad-orange {
+    background: var(--q-orange-bg);
+    border: 2px solid var(--q-orange-border);
+    color: var(--text);
+  }
+  .fw-quad-orange .fw-quad-title { color: var(--q-orange); }
+  .fw-quad-orange .fw-quad-count { color: var(--q-orange); }
+  .fw-quad-orange .fw-quad-arrow { color: var(--q-orange); }
+
+  /* Empty quadrant (no link) */
+  .fw-quad-empty {
+    background: var(--q-gray-bg);
+    border: 2px dashed #d0d5de;
+    color: var(--q-gray);
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fw-quad-title {
+    font-size: clamp(14px, 1.5vw, 17px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    line-height: 1.2;
+  }
+
+  .fw-quad-count {
+    font-size: clamp(30px, 4vw, 46px);
+    font-weight: 800;
+    line-height: 1;
+    margin: 4px 0 2px;
+    display: block;
+  }
+
+  .fw-quad-unit {
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 10px;
+    line-height: 1;
+  }
+
+  .fw-quad-bullets {
+    font-size: 13px;
+    color: #4a5568;
+    line-height: 1.55;
+    list-style: none;
+    padding: 0; margin: 0;
+  }
+  .fw-quad-bullets li::before { content: ""; }
+
+  .fw-quad-empty-dash {
+    width: 48px; height: 3px;
+    background: #c8cdd8;
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+  .fw-quad-empty-text {
+    font-style: italic;
+    font-size: 14px;
+    color: #aab0bc;
+  }
+
+  .framework-footnote {
+    font-size: 13px;
+    font-style: italic;
+    color: #7a8499;
+    margin-top: 10px;
+    padding-left: 2px;
+  }
+
+  /* ========= Section divider between framework & table ========= */
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
   }
 
   /* ========= Toolbar ========= */
@@ -64,8 +284,6 @@
     padding: 10px;
     box-shadow: var(--shadow);
   }
-
-  /* Inputs & buttons */
   .bar input[type="text"], .bar input[type="url"]{
     flex:1 1 280px; min-width: 220px; max-width: 520px;
     border:1px solid var(--border); background:#fff; color:var(--text);
@@ -75,12 +293,11 @@
   .bar input[type="text"]::placeholder,
   .bar input[type="url"]::placeholder{ color:var(--muted) }
   .bar input[type="text"]:focus,
-  .bar input[type="url"]::focus{
+  .bar input[type="url"]:focus{
     border-color: var(--accent);
     box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 30%, transparent);
     background: color-mix(in oklab, #fff 90%, var(--accent) 10%);
   }
-
   .bar input[type="file"]{
     padding: 10px 12px;
     border:1px dashed var(--border);
@@ -88,7 +305,6 @@
     background:#fff;
     color:var(--muted);
   }
-
   button{
     padding:10px 14px;
     border:1px solid color-mix(in oklab, var(--accent) 60%, transparent);
@@ -135,7 +351,6 @@
 
   /* ========= Table ========= */
   table{ border-collapse: collapse; width:100%; font-size: 14px; }
-
   thead th{
     position: sticky; top:0; z-index: 2;
     background: var(--thead) !important;
@@ -148,7 +363,6 @@
     cursor: pointer;
     user-select: none;
   }
-
   thead th::after{
     content:"";
     display:inline-block; margin-left:8px;
@@ -164,13 +378,11 @@
     background: var(--hover) !important;
     box-shadow: inset 0 1px 0 rgba(0,0,0,.03), inset 0 -1px 0 rgba(0,0,0,.03);
   }
-
   th, td{
     padding: 10px 12px;
     border-bottom: 1px solid var(--border-soft);
     vertical-align: top;
   }
-
   td a{
     color: var(--link);
     text-decoration: none;
@@ -191,15 +403,100 @@
   .hidden{ display:none }
 
   @media (max-width: 700px){
+    .framework-section { padding: 20px 16px 14px; }
+    .fw-col-labels, .fw-row { grid-template-columns: 70px 1fr 1fr; gap: 8px; }
+    .fw-quad { padding: 14px 14px 12px; min-height: 120px; }
     .bar{ padding: 8px }
     .bar input[type="text"], .bar input[type="url"]{ flex:1 1 100%; min-width: 0 }
     th, td{ padding: 9px 10px }
     table{ font-size: 13px }
   }
+
+  @media (max-width: 480px){
+    .fw-col-labels, .fw-row { grid-template-columns: 56px 1fr 1fr; gap: 6px; }
+    .fw-quad-count { font-size: 28px; }
+    .fw-quad-unit { font-size: 16px; }
+  }
 </style>
 </head>
 <body>
+
+  <!-- ===== 2×2 Framework Section ===== -->
+  <div class="framework-section">
+    <h2 class="framework-title">A 2×2 Framework for Drug–Target Analysis</h2>
+    <hr class="framework-divider">
+
+    <!-- Column labels -->
+    <div class="fw-col-labels">
+      <div class="fw-col-label"></div>
+      <div class="fw-col-label">One Drug</div>
+      <div class="fw-col-label">Multiple Drugs</div>
+    </div>
+
+    <!-- Row 1: ONE TARGET -->
+    <div class="fw-row">
+      <div class="fw-row-label"><span>One<br>Target</span></div>
+
+      <!-- Q1: Single-Target Hitters -->
+      <a class="fw-quad fw-quad-teal" href="single-target.html" title="View Single-Target Hitters table">
+        <span class="fw-quad-arrow">→</span>
+        <div class="fw-quad-title">Single-Target Hitters</div>
+        <span class="fw-quad-count">38</span>
+        <span class="fw-quad-unit">drugs</span>
+        <ul class="fw-quad-bullets">
+          <li>Cleanest repurposing candidates</li>
+          <li>One gene → clear mechanism</li>
+          <li>Interpreted in §6</li>
+        </ul>
+      </a>
+
+      <!-- Q2: Convergence Hotspots -->
+      <a class="fw-quad fw-quad-blue" href="convergence.html" title="View Convergence Hotspots table">
+        <span class="fw-quad-arrow">→</span>
+        <div class="fw-quad-title">Convergence Hotspots</div>
+        <span class="fw-quad-count">14</span>
+        <span class="fw-quad-unit">targets</span>
+        <ul class="fw-quad-bullets">
+          <li>Multiple drugs on one protein</li>
+          <li>Strongest validation signal</li>
+          <li>Analyzed in §5</li>
+        </ul>
+      </a>
+    </div>
+
+    <!-- Row 2: MANY TARGETS -->
+    <div class="fw-row">
+      <div class="fw-row-label"><span>Many<br>Targets</span></div>
+
+      <!-- Q3: Polypharmacology -->
+      <a class="fw-quad fw-quad-orange" href="polypharmacology.html" title="View Polypharmacology table">
+        <span class="fw-quad-arrow">→</span>
+        <div class="fw-quad-title">Polypharmacology</div>
+        <span class="fw-quad-count">19</span>
+        <span class="fw-quad-unit">drugs</span>
+        <ul class="fw-quad-bullets">
+          <li>One drug → multiple targets</li>
+          <li>Resistance-robust potential</li>
+          <li>Analyzed in §4</li>
+        </ul>
+      </a>
+
+      <!-- Q4: Empty -->
+      <div class="fw-quad fw-quad-empty">
+        <div class="fw-quad-empty-dash"></div>
+        <div class="fw-quad-empty-text">No drugs in this quadrant</div>
+      </div>
+    </div>
+
+    <p class="framework-footnote">
+      3 orphan drugs span no quadrant cleanly: DSM265 (DHODH), MG-132 (proteasome), 1223001-51-1 (likely artifact)
+    </p>
+  </div>
+
+  <!-- ===== Full Data Table ===== -->
   <h1>Drug repurposing Viewer</h1>
+  <div class="section-label">Full Dataset</div>
+
   <div class="bar">
     <input id="search" type="text" placeholder="Filter rows (case-insensitive)..." />
     <input id="url" type="url" placeholder="Paste CSV URL (supports comma/semicolon/tab)"/>
@@ -208,8 +505,8 @@
   </div>
   <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
   <div id="info" class="muted hidden"></div>
-  
-  <div id="summaryPanel" class="summary-card hidden"> 
+
+  <div id="summaryPanel" class="summary-card hidden">
     <pre id="summaryText" style="margin:0"></pre>
   </div>
 
@@ -270,8 +567,8 @@ const tbody = tbl.querySelector('tbody');
 const searchBox = document.getElementById('search');
 const info = document.getElementById('info');
 
-let data = [];     // array of objects
-let columns = [];  // header names
+let data = [];
+let columns = [];
 let sortState = { key:null, dir:1 };
 
 /* --- Convert rows to objects --- */
@@ -293,25 +590,20 @@ function rowsToObjects(rows){
 }
 
 /* --- Link helpers --- */
-const rxPdbCore = /^[0-9][A-Za-z0-9]{3}$/;  // e.g., 3Q4U, 2PML
-// Broad UniProt pattern (canonical + isoforms like P12345-2)
+const rxPdbCore = /^[0-9][A-Za-z0-9]{3}$/;
 const rxUniProt = /^(?:[A-NR-Z][0-9][A-Z0-9]{3}[0-9]|[OPQ][0-9][A-Z0-9]{3}[0-9])(?:-\d+)?$/i;
 
-/** Accepts PDB (4-char) or UniProt (longer/standard). Optional chain as second token. */
 function extractIdAndChain(raw){
   if (!raw) return null;
   const v = String(raw).trim();
   const cleaned = v.replace(/\.pdb$/i, "").replace(/^pdb[:/]/i, "").trim();
   const parts = cleaned.split(/[:._-]/).filter(Boolean);
-
   const first = parts[0]?.toUpperCase();
   if (!first) return null;
-
   let type = null;
   if (rxPdbCore.test(first)) type = 'pdb';
   else if (rxUniProt.test(first) || first.length > 4) type = 'uniprot';
   else return null;
-
   const chain = parts[1] && /^[A-Za-z0-9]{1,3}$/.test(parts[1]) ? parts[1] : null;
   return { id: first, chain, type };
 }
@@ -323,14 +615,12 @@ function makeLinkedNode(header, value){
 
   if (!v){ td.textContent = ""; return td; }
 
-  // 0) direct URL
   if (v.startsWith("http://") || v.startsWith("https://")){
     const a = document.createElement('a');
     a.href = v; a.textContent = v; a.target = "_blank"; a.rel="noopener noreferrer";
     td.appendChild(a); return td;
   }
 
-  // 1) PubChem CID
   if (h.includes("pubchem") || (h.includes("cid") && !h.includes("acid"))){
     const a = document.createElement('a');
     a.href = `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(v)}`;
@@ -338,7 +628,6 @@ function makeLinkedNode(header, value){
     td.appendChild(a); return td;
   }
 
-  // 2) RCSB PDB / UniProt link for target/malaria columns
   if (h.includes("pdb_target_id") || h.includes("malaria")) {
     const idinfo = extractIdAndChain(v);
     if (idinfo) {
@@ -349,43 +638,31 @@ function makeLinkedNode(header, value){
         const chainParam = idinfo.chain ? `?chainId=${encodeURIComponent(idinfo.chain)}` : "";
         a.href = `https://www.rcsb.org/structure/${idinfo.id}${chainParam}`;
       }
-      a.textContent = v;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      td.appendChild(a);
-      return td;
+      a.textContent = v; a.target = "_blank"; a.rel = "noopener noreferrer";
+      td.appendChild(a); return td;
     }
   }
 
-  // 3) 3D Interaction → NGL viewer
   if (h === "3d interaction" || h.includes("3d interaction")) {
     const a = document.createElement('a');
     const viewerUrl = "./ngl/viewer.html";
     const pdbPathForViewer = `../MDpdb/${encodeURIComponent(v)}`;
-
     const ext = (v.split('.').pop() || "").toLowerCase();
     const fmt = (ext === 'cif' || ext === 'mmcif') ? 'mmcif'
             : (ext === 'bcif') ? 'bcif'
             : (ext === 'sdf')  ? 'sdf'
             : (ext === 'mol2') ? 'mol2'
             : 'pdb';
-
     a.href = `${viewerUrl}?load=${pdbPathForViewer}&format=${encodeURIComponent(fmt)}`;
-    a.textContent = v;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    td.appendChild(a);
-    return td;
+    a.textContent = v; a.target = "_blank"; a.rel = "noopener noreferrer";
+    td.appendChild(a); return td;
   }
 
-  // 4) Gene ID → PlasmoDB
   if (h.includes("gene id")) {
     if (v) {
       const a = document.createElement('a');
       a.href = `https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(v)}`;
-      a.textContent = v;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
+      a.textContent = v; a.target = "_blank"; a.rel = "noopener noreferrer";
       td.appendChild(a);
     } else {
       td.textContent = "";
@@ -393,19 +670,16 @@ function makeLinkedNode(header, value){
     return td;
   }
 
-  // 5) plain text
-  td.textContent = v; 
+  td.textContent = v;
   return td;
 }
 
 /* --- Render table --- */
 function renderTable(cols, rows){
-  // clear header first
   thead.innerHTML = "";
   thead.style.background = '#f7fbff';
   tbody.style.background = '#ffffff';
 
-  // build header row
   const tr = document.createElement('tr');
   cols.forEach(c=>{
     const th = document.createElement('th');
@@ -418,7 +692,6 @@ function renderTable(cols, rows){
   });
   thead.appendChild(tr);
 
-  // build body
   tbody.innerHTML = "";
   const frag = document.createDocumentFragment();
   rows.forEach(r=>{
@@ -434,7 +707,6 @@ function renderTable(cols, rows){
   });
   tbody.appendChild(frag);
 
-  // info
   info.classList.remove('hidden');
   info.textContent = `${rows.length.toLocaleString()} rows  •  ${cols.length} columns`;
   updateSummary(rows);
@@ -459,7 +731,6 @@ function filteredRows(){
   return data.filter(row => columns.some(c => String(row[c]).toLowerCase().includes(q)));
 }
 
-/** Find the first column whose header matches any of the probes (case-insensitive). */
 function findColumn(probes){
   const lcCols = columns.map(c => c.toLowerCase());
   for (const probe of probes){
@@ -469,7 +740,6 @@ function findColumn(probes){
   return null;
 }
 
-/** Build and render the summary for the CURRENT (filtered) rows. */
 function updateSummary(rows){
   const panel = document.getElementById('summaryPanel');
   const out   = document.getElementById('summaryText');
@@ -480,31 +750,18 @@ function updateSummary(rows){
     return;
   }
 
-  // Try to resolve likely column names in a flexible way.
   const interactionCol = findColumn(["3d interaction", "3d_interaction", "interaction", "file"]);
   const drugCol        = findColumn(["ligand_id", "drug", "malaria ligand", "target ligand", "ligand"]);
   const malariaCol     = findColumn(["malaria", "malaria id", "malaria protein"]);
   const geneCol        = findColumn(["gene id", "malaria gene", "target gene", "gene"]);
 
-  // Helpers
   const nonEmpty = v => v !== undefined && v !== null && String(v).trim() !== "";
   const uniq = arr => Array.from(new Set(arr));
 
-  const pairCount = interactionCol
-    ? rows.filter(r => nonEmpty(r[interactionCol])).length
-    : rows.length;
-
-  const uniqueDrugs = drugCol
-    ? uniq(rows.map(r => r[drugCol]).filter(nonEmpty)).length
-    : 0;
-
-  const uniqueMalaria = malariaCol
-    ? uniq(rows.map(r => r[malariaCol]).filter(nonEmpty)).length
-    : 0;
-
-  const uniqueGenes = geneCol
-    ? uniq(rows.map(r => r[geneCol]).filter(nonEmpty)).length
-    : 0;
+  const pairCount   = interactionCol ? rows.filter(r => nonEmpty(r[interactionCol])).length : rows.length;
+  const uniqueDrugs   = drugCol    ? uniq(rows.map(r => r[drugCol]).filter(nonEmpty)).length : 0;
+  const uniqueMalaria = malariaCol ? uniq(rows.map(r => r[malariaCol]).filter(nonEmpty)).length : 0;
+  const uniqueGenes   = geneCol    ? uniq(rows.map(r => r[geneCol]).filter(nonEmpty)).length : 0;
 
   out.textContent =
 `Pairs of malaria and drug (3D Interactions): ${pairCount}
@@ -545,10 +802,9 @@ document.getElementById('file').addEventListener('change', async (e)=>{
 });
 
 searchBox.addEventListener('input', ()=>{
-  renderTable(columns, filteredRows()); // (fixed) no second render
+  renderTable(columns, filteredRows());
 });
 
-/* --- Auto load a default CSV file from the same folder as index.html --- */
 window.addEventListener("DOMContentLoaded", async () => {
   try {
     await loadFromURL("./CompData.csv");

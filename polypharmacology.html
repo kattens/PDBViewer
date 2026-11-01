@@ -361,5 +361,68 @@
   <strong>First-wave experiments:</strong> Ritonavir (Priority #1), sangivamycin (Priority #2 PfPK6 non-kinase probe), trifluoperazine (Priority #6 mechanistic probe). See §15 of the full analysis for parasite-killing assay design.
 </div>
 
+
+<script>
+(function(){
+  function pubUrl(name){
+    return 'https://pubchem.ncbi.nlm.nih.gov/compound/'+encodeURIComponent(name.trim());
+  }
+  function plasmoUrl(id){
+    id=id.trim();
+    var m=id.match(/PF3D7_\d+/i);
+    if(m) return 'https://plasmodb.org/plasmo/app/record/gene/'+m[0];
+    return 'https://plasmodb.org/plasmo/app/search?q='+encodeURIComponent(id);
+  }
+  function lnk(href,html,sty){
+    return '<a href="'+href+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted;text-underline-offset:2px;'+(sty||'')+'">'+html+'</a>';
+  }
+
+  // Plasmepsin gene ID chips → PlasmoDB gene record
+  document.querySelectorAll('.plasmo-chip-gene').forEach(function(el){
+    var t=el.textContent.trim();
+    if(t) el.innerHTML=lnk(plasmoUrl(t),el.innerHTML,'font-weight:600');
+  });
+
+  // Tables
+  document.querySelectorAll('table').forEach(function(tbl){
+    var hdrs=Array.from(tbl.querySelectorAll('thead th')).map(function(th){return th.textContent.trim().toLowerCase();});
+    var isDrug=hdrs[0]&&hdrs[0].indexOf('drug')!==-1;
+    var isTarget=hdrs[0]&&(hdrs[0].indexOf('target')!==-1||hdrs[0].indexOf('protein')!==-1);
+
+    tbl.querySelectorAll('tbody tr').forEach(function(tr){
+      var cells=tr.querySelectorAll('td');
+      if(!cells.length) return;
+
+      if(isDrug){
+        // col 0: drug name → PubChem
+        var dc=cells[0];
+        if(!dc.querySelector('a')){
+          var n=dc.textContent.trim();
+          if(n&&!n.startsWith('+')) dc.innerHTML=lnk(pubUrl(n),dc.innerHTML);
+        }
+        // col 2 (Targets Hit) → PlasmoDB for Pf* names and PF3D7 IDs
+        var ti=(hdrs[1]&&hdrs[1].indexOf('tier')!==-1)?2:1;
+        if(cells[ti]&&!cells[ti].querySelector('a')){
+          cells[ti].innerHTML=cells[ti].innerHTML
+            .replace(/(PF3D7_\d+)/g,function(m){return lnk(plasmoUrl(m),m);})
+            .replace(/(Pf[A-Z][A-Za-z0-9\-]+)/g,function(m){return lnk(plasmoUrl(m),m);});
+        }
+      }
+
+      if(isTarget){
+        var tc=cells[0];
+        if(!tc.querySelector('a')){
+          var tn=tc.textContent.trim();
+          if(tn&&/^Pf|Plasme/i.test(tn)) tc.innerHTML=lnk(plasmoUrl(tn),tc.innerHTML);
+        }
+        Array.from(cells).forEach(function(c){
+          if(!c.querySelector('a'))
+            c.innerHTML=c.innerHTML.replace(/(PF3D7_\d+)/g,function(m){return lnk(plasmoUrl(m),m);});
+        });
+      }
+    });
+  });
+})();
+</script>
 </body>
 </html>

@@ -3,358 +3,414 @@
 <head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="#eff7ff">
 <title>Drug Repurposing Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  /* ========= Design tokens ========= */
-  :root{
-    --bg:          #f0f5fc;
-    --text:        #2d3954;
-    --muted:       #8a95a6;
-    --panel:       #ffffff;
-    --accent:      #4a86b8;
-    --accent-2:    #2a9d8f;
-    --border:      #dce8f5;
-    --border-soft: #edf4fb;
-    --thead:       #f0f6fd;
-    --zebra:       #fafcff;
-    --hover:       #e8f2fc;
-    --link:        #3f89e9;
-    --link-hover:  #2e6fd1;
-    --shadow-sm:   0 1px 4px rgba(0,0,0,.05);
-    --shadow:      0 2px 12px rgba(0,0,0,.07);
-    --shadow-md:   0 4px 20px rgba(0,0,0,.09);
-    --radius:      12px;
-    --radius-sm:   8px;
+/* ── Design tokens ── */
+:root{
+  --navy:    #1a2340;
+  --navy-2:  #243050;
+  --bg:      #f2f6fb;
+  --panel:   #ffffff;
+  --text:    #2d3954;
+  --muted:   #7a8699;
+  --border:  #dce8f5;
+  --soft:    #edf4fb;
+  --teal:    #2a9d8f;
+  --blue:    #4a86b8;
+  --orange:  #e08c2e;
+  --link:    #3f89e9;
+  --hover-bg:#e8f2fc;
+  --radius:  12px;
+  --r-sm:    8px;
+  --shadow:  0 2px 12px rgba(0,0,0,.07);
+  --shadow-md:0 4px 20px rgba(0,0,0,.10);
+}
 
-    /* quadrant colors */
-    --q-teal:        #2a9d8f;
-    --q-teal-bg:     #eef9f7;
-    --q-blue:        #4a86b8;
-    --q-blue-bg:     #eaf3fb;
-    --q-orange:      #e08c2e;
-    --q-orange-bg:   #fff8ee;
-    --q-gray-bg:     #f5f6f8;
-  }
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font:14px/1.65 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  color:var(--text);
+  background:var(--bg);
+}
 
-  *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%}
-  body{
-    font:14px/1.6 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    color:var(--text);
-    background:var(--bg);
-    padding:32px clamp(16px,4vw,48px) 64px;
-  }
+/* ── Hero ── */
+.hero{
+  background:var(--navy);
+  padding:40px clamp(20px,5vw,64px) 36px;
+}
+.hero-inner{
+  max-width:1100px;margin:0 auto;
+  display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;
+}
+.hero-text{flex:1 1 300px}
+.hero-eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--teal);margin:0 0 10px;
+}
+.hero-title{
+  font-size:clamp(24px,3.5vw,36px);font-weight:800;
+  color:#fff;margin:0 0 12px;line-height:1.18;letter-spacing:-.3px;
+}
+.hero-sub{
+  font-size:14.5px;line-height:1.65;color:#a8bcd6;
+  margin:0;max-width:520px;
+}
+.hero-sub em{color:#cde0f4;font-style:italic}
 
-  /* ========= 2×2 Framework ========= */
-  .framework-section{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:32px 36px 22px;
-    margin-bottom:32px;
-    box-shadow:var(--shadow);
-  }
-  .framework-title{
-    font-size:clamp(20px,2.8vw,28px);font-weight:800;
-    color:#1a2340;margin:0 0 5px;letter-spacing:-.3px;line-height:1.2;
-  }
-  .framework-divider{
-    height:3px;border:none;border-radius:2px;margin:0 0 22px;
-    background:linear-gradient(90deg,var(--q-teal) 0%,var(--q-blue) 100%);
-  }
-  .fw-col-labels{
-    display:grid;grid-template-columns:96px 1fr 1fr;gap:12px;margin-bottom:6px;
-  }
-  .fw-col-label{
-    text-align:center;font-size:11px;font-weight:700;
-    letter-spacing:1.2px;color:#6a7590;text-transform:uppercase;
-  }
-  .fw-row{display:grid;grid-template-columns:96px 1fr 1fr;gap:12px;margin-bottom:12px;align-items:stretch}
-  .fw-row-label{
-    display:flex;align-items:center;justify-content:flex-end;padding-right:10px;
-  }
-  .fw-row-label span{
-    font-size:11px;font-weight:700;letter-spacing:1px;
-    color:#6a7590;text-transform:uppercase;text-align:right;line-height:1.3;
-  }
-  .fw-quad{
-    display:block;text-decoration:none;border-radius:10px;
-    padding:20px 22px 18px;min-height:155px;
-    transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;
-  }
-  a.fw-quad:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
-  a.fw-quad:hover .fw-quad-arrow{opacity:1;transform:translateX(3px)}
-  .fw-quad-arrow{
-    position:absolute;top:13px;right:14px;font-size:16px;
-    opacity:0;transition:opacity .15s,transform .15s;
-  }
-  .fw-quad-teal{background:var(--q-teal-bg);border:2px solid var(--q-teal)}
-  .fw-quad-teal .fw-quad-title,.fw-quad-teal .fw-quad-count,.fw-quad-teal .fw-quad-arrow{color:var(--q-teal)}
-  .fw-quad-blue{background:var(--q-blue-bg);border:2px solid transparent}
-  .fw-quad-blue .fw-quad-title,.fw-quad-blue .fw-quad-count,.fw-quad-blue .fw-quad-arrow{color:var(--q-blue)}
-  .fw-quad-orange{background:var(--q-orange-bg);border:2px solid var(--q-orange)}
-  .fw-quad-orange .fw-quad-title,.fw-quad-orange .fw-quad-count,.fw-quad-orange .fw-quad-arrow{color:var(--q-orange)}
-  .fw-quad-empty{
-    background:var(--q-gray-bg);border:2px dashed #cdd2dc;color:#aab0bc;
-    cursor:default;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:10px;
-  }
-  .fw-quad-title{font-size:15px;font-weight:700;margin:0 0 2px;line-height:1.2}
-  .fw-quad-count{font-size:clamp(28px,3.5vw,42px);font-weight:800;line-height:1;margin:3px 0 1px;display:block}
-  .fw-quad-unit{font-size:clamp(16px,1.8vw,20px);font-weight:700;display:block;margin-bottom:9px;line-height:1}
-  .fw-quad-bullets{font-size:12.5px;color:#4a5568;line-height:1.55;list-style:none;padding:0;margin:0}
-  .fw-quad-empty-dash{width:40px;height:3px;background:#c8cdd8;border-radius:2px}
-  .fw-quad-empty-text{font-style:italic;font-size:13px;color:#aab0bc}
-  .framework-footnote{font-size:12.5px;font-style:italic;color:#8a95a6;margin:8px 0 0;padding-left:2px}
+/* hero stat tiles */
+.hero-stats{
+  display:flex;flex-wrap:wrap;gap:12px;flex-shrink:0;align-self:center;
+}
+.hstat{
+  background:rgba(255,255,255,.07);
+  border:1.5px solid rgba(255,255,255,.13);
+  border-radius:10px;padding:18px 24px;min-width:110px;text-align:center;
+  transition:background .15s;
+}
+.hstat:hover{background:rgba(255,255,255,.12)}
+.hstat-num{
+  font-size:36px;font-weight:800;line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.hstat-label{font-size:11.5px;color:#8faac4;margin-top:5px;line-height:1.3}
+.hstat-teal .hstat-num{color:var(--teal)}
+.hstat-blue .hstat-num{color:#7ab4d8}
+.hstat-orange .hstat-num{color:#e8a555}
 
-  /* ========= Section header ========= */
-  .section-head{
-    display:flex;align-items:center;justify-content:space-between;
-    margin:0 0 14px;flex-wrap:wrap;gap:10px;
-  }
-  .section-title{
-    font-size:18px;font-weight:700;color:#1a2340;margin:0;
-    display:flex;align-items:center;gap:10px;
-  }
-  .section-title-badge{
-    font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
-    color:var(--muted);background:var(--border);
-    padding:3px 10px;border-radius:20px;
-  }
+/* ── Page body ── */
+.page-body{
+  max-width:1100px;
+  margin:0 auto;
+  padding:36px clamp(16px,4vw,48px) 64px;
+}
 
-  /* ========= Toolbar ========= */
-  .bar{
-    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:calc(var(--radius) + 2px);
-    padding:10px 12px;
-    box-shadow:var(--shadow-sm);
-    margin-bottom:14px;
-  }
-  .bar input[type="text"]{
-    flex:1 1 240px;min-width:180px;max-width:380px;
-    border:1.5px solid var(--border);background:#fafcff;color:var(--text);
-    padding:9px 12px 9px 36px;border-radius:var(--radius-sm);outline:none;
-    font-size:13.5px;
-    transition:border-color .15s,box-shadow .15s;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a95a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:10px center;
-  }
-  .bar input[type="url"]{
-    flex:1 1 220px;min-width:180px;max-width:340px;
-    border:1.5px solid var(--border);background:#fafcff;color:var(--text);
-    padding:9px 12px;border-radius:var(--radius-sm);outline:none;font-size:13.5px;
-    transition:border-color .15s,box-shadow .15s;
-  }
-  .bar input[type="text"]:focus,.bar input[type="url"]:focus{
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px rgba(74,134,184,.15);
-    background-color:#fff;
-  }
-  .bar input[type="text"]::placeholder,.bar input[type="url"]::placeholder{color:var(--muted)}
-  .bar input[type="file"]{
-    padding:8px 12px;border:1.5px dashed var(--border);
-    border-radius:var(--radius-sm);background:#fafcff;color:var(--muted);font-size:13px;
-  }
-  .bar-divider{width:1px;height:28px;background:var(--border);flex-shrink:0}
-  button{
-    padding:9px 16px;
-    border:1.5px solid var(--accent);
-    background:var(--accent);color:#fff;
-    border-radius:var(--radius-sm);font-size:13.5px;font-weight:600;
-    cursor:pointer;
-    transition:transform .08s,box-shadow .15s,filter .15s;
-    box-shadow:0 2px 8px rgba(74,134,184,.25);
-  }
-  button:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 5px 16px rgba(74,134,184,.3)}
-  button:active{transform:translateY(0);box-shadow:0 2px 8px rgba(74,134,184,.2)}
+/* ── Framework ── */
+.framework{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:28px 30px 20px;
+  margin-bottom:36px;
+  box-shadow:var(--shadow);
+}
+.fw-title{font-size:17px;font-weight:700;color:var(--navy);margin:0 0 4px}
+.fw-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
 
-  /* ========= Row count badge ========= */
-  #rowCount{
-    font-size:12px;color:var(--muted);margin-left:auto;
-    white-space:nowrap;flex-shrink:0;
-  }
+/* axis labels */
+.fw-grid{
+  display:grid;
+  grid-template-columns:72px 1fr 1fr;
+  grid-template-rows:auto auto auto;
+  gap:10px;
+}
+.fw-corner{} /* empty top-left */
+.fw-col-lbl,.fw-row-lbl{
+  display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+  color:#9aa5bc;
+}
+.fw-row-lbl{
+  flex-direction:column;gap:2px;text-align:center;justify-content:center;
+  border-right:2px solid var(--border);padding-right:10px;
+}
 
-  /* ========= Table shell ========= */
-  .table-wrap{
-    border:1px solid var(--border);border-radius:var(--radius);
-    background:var(--panel);box-shadow:var(--shadow);
-    overflow:auto;max-width:100%;position:relative;
-  }
-  table{border-collapse:collapse;width:100%;font-size:13.5px}
-  thead th{
-    position:sticky;top:0;z-index:2;
-    background:var(--thead);border-bottom:1.5px solid var(--border);
-    color:var(--text);white-space:nowrap;
-    padding:11px 14px;text-align:left;
-    font-size:12.5px;font-weight:700;letter-spacing:.2px;
-    cursor:pointer;user-select:none;
-  }
-  thead th:hover{color:var(--accent)}
-  thead th .sort-icon{
-    display:inline-block;margin-left:5px;opacity:.35;font-size:10px;
-  }
-  thead th:hover .sort-icon{opacity:.65}
-  tbody tr{transition:background .1s}
-  tbody tr:nth-child(even){background:var(--zebra)}
-  tbody tr:hover{background:var(--hover)}
-  th,td{padding:10px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
-  td a{
-    color:var(--link);text-decoration:none;
-    border-bottom:1px dashed rgba(63,137,233,.4);padding-bottom:1px;
-  }
-  td a:hover{color:var(--link-hover);border-bottom-style:solid}
+/* quadrant cards */
+.quad{
+  display:block;text-decoration:none;
+  border-radius:10px;padding:22px 22px 18px;
+  min-height:140px;position:relative;overflow:hidden;
+  transition:transform .15s,box-shadow .15s;
+}
+a.quad:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+a.quad:hover .quad-arrow{opacity:1;transform:translateX(4px)}
+.quad-arrow{
+  position:absolute;top:14px;right:15px;font-size:15px;
+  opacity:0;transition:opacity .15s,transform .15s;
+}
+.quad-teal{background:#eef9f7;border:2px solid var(--teal)}
+.quad-teal .quad-name,.quad-teal .quad-big,.quad-teal .quad-arrow{color:var(--teal)}
+.quad-blue{background:#eaf3fb;border:2px solid var(--blue)}
+.quad-blue .quad-name,.quad-blue .quad-big,.quad-blue .quad-arrow{color:var(--blue)}
+.quad-orange{background:#fff8ee;border:2px solid var(--orange)}
+.quad-orange .quad-name,.quad-orange .quad-big,.quad-orange .quad-arrow{color:var(--orange)}
+.quad-empty{
+  background:#f5f6f8;border:2px dashed #cdd2dc;color:#aab0bc;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+}
+.quad-name{font-size:13.5px;font-weight:700;margin:0 0 6px;line-height:1.2}
+.quad-big{font-size:clamp(30px,4vw,44px);font-weight:800;line-height:1;display:block}
+.quad-unit{font-size:14px;font-weight:600;opacity:.75;display:block;margin-bottom:10px}
+.quad-desc{font-size:12.5px;color:#4a5568;line-height:1.5;margin:0}
+.quad-empty-line{width:36px;height:2px;background:#c8cdd8;border-radius:2px}
+.quad-empty-text{font-style:italic;font-size:12px;color:#b0b6c3}
 
-  /* ========= Summary stats strip ========= */
-  .summary-strip{
-    display:flex;flex-wrap:wrap;gap:1px;
-    margin-top:14px;
-    border:1px solid var(--border);border-radius:var(--radius);
-    background:var(--border);
-    overflow:hidden;
-    box-shadow:var(--shadow-sm);
-  }
-  .stat-cell{
-    flex:1 1 140px;
-    background:var(--panel);
-    padding:14px 18px;
-    display:flex;flex-direction:column;
-    gap:2px;
-  }
-  .stat-cell-num{
-    font-size:28px;font-weight:800;line-height:1;
-    color:var(--accent);
-  }
-  .stat-cell-label{font-size:12px;color:var(--muted);line-height:1.3}
+.fw-note{font-size:12px;color:var(--muted);margin:14px 0 0;font-style:italic}
 
-  .hidden{display:none}
+/* ── Dataset section ── */
+.section-header{margin-bottom:14px}
+.section-label{
+  font-size:11px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;
+  color:var(--teal);margin:0 0 4px;
+}
+.section-title{font-size:19px;font-weight:700;color:var(--navy);margin:0 0 4px}
+.section-sub{font-size:13px;color:var(--muted);margin:0}
 
-  @media(max-width:700px){
-    .fw-col-labels,.fw-row{grid-template-columns:66px 1fr 1fr;gap:8px}
-    .fw-quad{padding:14px 12px;min-height:120px}
-    .fw-quad-count{font-size:26px}
-    .framework-section{padding:20px 16px 14px}
-    .bar{padding:8px}
-    .bar input[type="text"],.bar input[type="url"]{flex:1 1 100%;min-width:0}
-    th,td{padding:9px 10px}
-    table{font-size:13px}
-    .stat-cell{flex:1 1 100px;padding:12px 14px}
-    .stat-cell-num{font-size:22px}
-  }
+/* ── Toolbar ── */
+.toolbar{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:calc(var(--r-sm) + 2px);
+  padding:10px 12px;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  margin-bottom:12px;
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+}
+.search-wrap{
+  position:relative;flex:1 1 220px;
+}
+.search-wrap svg{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  pointer-events:none;color:var(--muted);
+}
+.toolbar input[type="text"]{
+  width:100%;
+  border:1.5px solid var(--border);background:#fafcff;color:var(--text);
+  padding:9px 12px 9px 34px;border-radius:var(--r-sm);outline:none;
+  font-size:13.5px;transition:border-color .15s,box-shadow .15s;
+}
+.toolbar input[type="text"]:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,134,184,.14);background:#fff;
+}
+.toolbar input[type="text"]::placeholder{color:var(--muted)}
+.row-count{font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0;margin-left:auto}
+
+/* advanced toggle */
+details.adv{width:100%;border-top:1px solid var(--border);padding-top:8px;margin-top:2px}
+details.adv summary{
+  font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;
+  list-style:none;display:inline-flex;align-items:center;gap:5px;
+  user-select:none;
+}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::after{content:"▾";font-size:10px;transition:transform .15s}
+details.adv[open] summary::after{transform:rotate(-180deg)}
+.adv-inner{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.adv-inner input[type="url"]{
+  flex:1 1 200px;border:1.5px solid var(--border);background:#fafcff;color:var(--text);
+  padding:7px 10px;border-radius:var(--r-sm);outline:none;font-size:13px;
+  transition:border-color .15s;
+}
+.adv-inner input[type="url"]:focus{border-color:var(--blue)}
+.adv-inner input[type="url"]::placeholder{color:var(--muted)}
+.adv-inner input[type="file"]{
+  flex:1 1 180px;padding:6px 10px;border:1.5px dashed var(--border);
+  border-radius:var(--r-sm);background:#fafcff;color:var(--muted);font-size:12.5px;
+}
+button{
+  padding:8px 16px;
+  border:1.5px solid var(--blue);background:var(--blue);color:#fff;
+  border-radius:var(--r-sm);font-size:13px;font-weight:600;
+  cursor:pointer;transition:filter .15s,box-shadow .15s,transform .08s;
+  box-shadow:0 2px 8px rgba(74,134,184,.22);
+}
+button:hover{filter:brightness(1.08);box-shadow:0 4px 14px rgba(74,134,184,.3);transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+
+/* ── Table ── */
+.table-wrap{
+  border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--panel);box-shadow:var(--shadow);
+  overflow:auto;max-width:100%;
+}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+thead th{
+  position:sticky;top:0;z-index:2;
+  background:#f0f6fd;border-bottom:1.5px solid var(--border);
+  color:var(--text);white-space:nowrap;
+  padding:11px 14px;text-align:left;
+  font-size:12px;font-weight:700;letter-spacing:.2px;
+  cursor:pointer;user-select:none;
+}
+thead th:hover{color:var(--blue)}
+.sort-icon{display:inline-block;margin-left:4px;opacity:.35;font-size:10px}
+thead th:hover .sort-icon{opacity:.7}
+tbody tr{transition:background .1s}
+tbody tr:nth-child(even){background:#fafcff}
+tbody tr:hover{background:var(--hover-bg)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--soft);vertical-align:top}
+td a{color:var(--link);text-decoration:none;border-bottom:1px dashed rgba(63,137,233,.4);padding-bottom:1px}
+td a:hover{color:#2e6fd1;border-bottom-style:solid}
+
+/* ── Summary strip (filtered results) ── */
+.summary-strip{
+  display:flex;flex-wrap:wrap;gap:1px;
+  margin-top:14px;
+  border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--border);overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+}
+.stat-cell{
+  flex:1 1 120px;background:var(--panel);
+  padding:14px 18px;display:flex;flex-direction:column;gap:2px;
+}
+.stat-cell-num{font-size:26px;font-weight:800;line-height:1;color:var(--blue);font-variant-numeric:tabular-nums}
+.stat-cell-label{font-size:12px;color:var(--muted);line-height:1.3}
+.summary-strip-label{
+  width:100%;background:var(--soft);padding:7px 18px;
+  font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--muted);
+}
+
+.hidden{display:none}
+
+@media(max-width:680px){
+  .hero-inner{flex-direction:column;gap:24px}
+  .hero-stats{align-self:stretch}
+  .hstat{flex:1 1 80px;padding:14px 10px}
+  .hstat-num{font-size:28px}
+  .fw-grid{grid-template-columns:52px 1fr 1fr;gap:7px}
+  .quad{padding:14px 14px 12px;min-height:110px}
+  .quad-big{font-size:28px}
+  .framework{padding:20px 16px 14px}
+  th,td{padding:8px 10px;font-size:12.5px}
+  .stat-cell{flex:1 1 100%}
+}
 </style>
 </head>
 <body>
 
-<!-- ===== 2×2 Framework ===== -->
-<div class="framework-section">
-  <h2 class="framework-title">A 2×2 Framework for Drug–Target Analysis</h2>
-  <hr class="framework-divider">
+<!-- ===== Hero ===== -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <p class="hero-eyebrow">Computational Drug Repurposing · P. falciparum</p>
+      <h1 class="hero-title">Malaria Drug<br>Repurposing Viewer</h1>
+      <p class="hero-sub">FDA-approved and investigational drugs docked against <em>P. falciparum</em> target proteins — ranked by binding score to identify repurposing candidates against malaria.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat hstat-teal">
+        <div class="hstat-num">166</div>
+        <div class="hstat-label">Drug–Target Pairs</div>
+      </div>
+      <div class="hstat hstat-blue">
+        <div class="hstat-num">57</div>
+        <div class="hstat-label">Unique Compounds</div>
+      </div>
+      <div class="hstat hstat-orange">
+        <div class="hstat-num">30</div>
+        <div class="hstat-label">Malaria Proteins</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <div class="fw-col-labels">
-    <div></div>
-    <div class="fw-col-label">One Drug</div>
-    <div class="fw-col-label">Multiple Drugs</div>
+<!-- ===== Page body ===== -->
+<div class="page-body">
+
+  <!-- 2×2 Framework -->
+  <div class="framework">
+    <div class="fw-title">How the drugs are categorized</div>
+    <p class="fw-sub">Every drug–target pair falls into one of three patterns — click a tile to explore that group.</p>
+
+    <div class="fw-grid">
+      <!-- row 0: column labels -->
+      <div class="fw-corner"></div>
+      <div class="fw-col-lbl">One Drug</div>
+      <div class="fw-col-lbl">Multiple Drugs</div>
+
+      <!-- row 1: one target -->
+      <div class="fw-row-lbl"><span>One<br>Target</span></div>
+      <a class="quad quad-teal" href="single-target.html">
+        <span class="quad-arrow">→</span>
+        <div class="quad-name">Single-Target Hitters</div>
+        <span class="quad-big">38</span>
+        <span class="quad-unit">drugs</span>
+        <p class="quad-desc">One drug binds one protein — the cleanest mechanistic signal and clearest starting point for development.</p>
+      </a>
+      <a class="quad quad-blue" href="convergence.html">
+        <span class="quad-arrow">→</span>
+        <div class="quad-name">Convergence Hotspots</div>
+        <span class="quad-big">14</span>
+        <span class="quad-unit">targets</span>
+        <p class="quad-desc">Many independent drugs converge on the same protein — strong evidence the target is pharmacologically tractable.</p>
+      </a>
+
+      <!-- row 2: many targets -->
+      <div class="fw-row-lbl"><span>Many<br>Targets</span></div>
+      <a class="quad quad-orange" href="polypharmacology.html">
+        <span class="quad-arrow">→</span>
+        <div class="quad-name">Polypharmacology</div>
+        <span class="quad-big">19</span>
+        <span class="quad-unit">drugs</span>
+        <p class="quad-desc">One drug hits multiple proteins simultaneously — resistance-robust because the parasite can't escape by mutating a single gene.</p>
+      </a>
+      <div class="quad quad-empty">
+        <div class="quad-empty-line"></div>
+        <div class="quad-empty-text">No entries in this quadrant</div>
+      </div>
+    </div>
+
+    <p class="fw-note">3 drugs don't fit neatly: DSM265 (DHODH), MG-132 (proteasome), and 1223001-51-1 (likely artifact)</p>
   </div>
 
-  <div class="fw-row">
-    <div class="fw-row-label"><span>One<br>Target</span></div>
-    <a class="fw-quad fw-quad-teal" href="single-target.html">
-      <span class="fw-quad-arrow">→</span>
-      <div class="fw-quad-title">Single-Target Hitters</div>
-      <span class="fw-quad-count">38</span>
-      <span class="fw-quad-unit">drugs</span>
-      <ul class="fw-quad-bullets">
-        <li>Cleanest repurposing candidates</li>
-        <li>One gene → clear mechanism</li>
-        <li>Interpreted in §6</li>
-      </ul>
-    </a>
-    <a class="fw-quad fw-quad-blue" href="convergence.html">
-      <span class="fw-quad-arrow">→</span>
-      <div class="fw-quad-title">Convergence Hotspots</div>
-      <span class="fw-quad-count">14</span>
-      <span class="fw-quad-unit">targets</span>
-      <ul class="fw-quad-bullets">
-        <li>Multiple drugs on one protein</li>
-        <li>Strongest validation signal</li>
-        <li>Analyzed in §5</li>
-      </ul>
-    </a>
+  <!-- Dataset -->
+  <div class="section-header">
+    <p class="section-label">Browse the data</p>
+    <h2 class="section-title">Full Dataset — 166 Drug–Target Pairs</h2>
+    <p class="section-sub">Search by drug name, protein, gene, or any other field. Click any column header to sort.</p>
   </div>
 
-  <div class="fw-row">
-    <div class="fw-row-label"><span>Many<br>Targets</span></div>
-    <a class="fw-quad fw-quad-orange" href="polypharmacology.html">
-      <span class="fw-quad-arrow">→</span>
-      <div class="fw-quad-title">Polypharmacology</div>
-      <span class="fw-quad-count">19</span>
-      <span class="fw-quad-unit">drugs</span>
-      <ul class="fw-quad-bullets">
-        <li>One drug → multiple targets</li>
-        <li>Resistance-robust potential</li>
-        <li>Analyzed in §4</li>
-      </ul>
-    </a>
-    <div class="fw-quad fw-quad-empty">
-      <div class="fw-quad-empty-dash"></div>
-      <div class="fw-quad-empty-text">No drugs in this quadrant</div>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="search" type="text" placeholder="Search drugs, proteins, genes…" />
+    </div>
+    <span id="rowCount" class="row-count"></span>
+
+    <details class="adv">
+      <summary>Load your own data</summary>
+      <div class="adv-inner">
+        <input id="url" type="url" placeholder="Paste CSV URL…" />
+        <button id="loadUrl">Load URL</button>
+        <input id="file" type="file" accept=".csv,text/csv" />
+      </div>
+    </details>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tbl"><thead></thead><tbody></tbody></table>
+  </div>
+
+  <!-- Summary strip — visible when filtering -->
+  <div class="summary-strip hidden" id="summaryStrip">
+    <div class="summary-strip-label">Filtered results</div>
+    <div class="stat-cell">
+      <div class="stat-cell-num" id="statPairs">—</div>
+      <div class="stat-cell-label">Drug–target pairs</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-num" id="statDrugs">—</div>
+      <div class="stat-cell-label">Unique compounds</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-num" id="statProteins">—</div>
+      <div class="stat-cell-label">Malaria proteins</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-num" id="statGenes">—</div>
+      <div class="stat-cell-label">Gene names</div>
     </div>
   </div>
 
-  <p class="framework-footnote">3 orphan drugs span no quadrant cleanly: DSM265 (DHODH), MG-132 (proteasome), 1223001-51-1 (likely artifact)</p>
-</div>
-
-<!-- ===== Dataset Table ===== -->
-<div class="section-head">
-  <h1 class="section-title">
-    Full Dataset
-    <span class="section-title-badge">CompData.csv</span>
-  </h1>
-</div>
-
-<div class="bar">
-  <input id="search" type="text" placeholder="Search rows…" />
-  <div class="bar-divider"></div>
-  <input id="url" type="url" placeholder="Paste CSV URL…" />
-  <button id="loadUrl">Load URL</button>
-  <input id="file" type="file" accept=".csv,text/csv" />
-  <span id="rowCount"></span>
-</div>
-
-<div class="table-wrap">
-  <table id="tbl"><thead></thead><tbody></tbody></table>
-</div>
-
-<!-- ===== Summary Stats Strip ===== -->
-<div class="summary-strip" id="summaryStrip">
-  <div class="stat-cell">
-    <div class="stat-cell-num" id="statPairs">166</div>
-    <div class="stat-cell-label">Drug–target pairs<br>(3D interactions)</div>
-  </div>
-  <div class="stat-cell">
-    <div class="stat-cell-num" id="statDrugs">57</div>
-    <div class="stat-cell-label">Unique compounds</div>
-  </div>
-  <div class="stat-cell">
-    <div class="stat-cell-num" id="statProteins">30</div>
-    <div class="stat-cell-label">Unique malaria proteins</div>
-  </div>
-  <div class="stat-cell">
-    <div class="stat-cell-num" id="statGenes">24</div>
-    <div class="stat-cell-label">Unique gene names</div>
-  </div>
-</div>
+</div><!-- /page-body -->
 
 <script>
 (function(){
   document.documentElement.style.colorScheme='light';
-  const s=document.createElement('style');
-  s.textContent=`html,body{background:#f0f5fc!important;color:#2d3954!important}
-  .bar,.table-wrap,table,thead,tbody,tr,th,td{background:#fff!important;color:#2d3954!important}`;
-  document.head.appendChild(s);
 })();
 </script>
 
@@ -463,7 +519,6 @@ function renderTable(cols,rows){
     const th=document.createElement('th');
     th.innerHTML=`${c} <span class="sort-icon">↕</span>`;
     th.title="Click to sort";
-    th.style.cssText="background:#f0f6fd;color:#2d3954";
     th.addEventListener('click',()=>sortBy(c));
     tr.appendChild(th);
   });
@@ -472,12 +527,7 @@ function renderTable(cols,rows){
   const frag=document.createDocumentFragment();
   rows.forEach(r=>{
     const tr=document.createElement('tr');
-    tr.style.cssText="background:#fff;color:#2d3954";
-    cols.forEach(c=>{
-      const td=makeLinkedNode(c,r[c]);
-      td.style.cssText="background:inherit;color:#2d3954";
-      tr.appendChild(td);
-    });
+    cols.forEach(c=>{tr.appendChild(makeLinkedNode(c,r[c]))});
     frag.appendChild(tr);
   });
   tbody.appendChild(frag);
@@ -505,8 +555,13 @@ function findColumn(probes){
   return null;
 }
 
-/* ── Summary stats (live update on filter + hardcoded fallback) ── */
+/* ── Summary strip (shows only when filtered) ── */
 function updateSummary(rows){
+  const strip=document.getElementById('summaryStrip');
+  const isFiltered=searchBox.value.trim()!=="";
+  if(!isFiltered){strip.classList.add('hidden');return}
+  strip.classList.remove('hidden');
+
   const interCol=findColumn(["3d interaction","3d_interaction","interaction","file"]);
   const drugCol =findColumn(["ligand_id","drug","malaria ligand","target ligand","ligand"]);
   const malCol  =findColumn(["malaria","malaria id","malaria protein"]);
@@ -514,25 +569,14 @@ function updateSummary(rows){
   const ne=v=>v!==undefined&&v!==null&&String(v).trim()!=="";
   const uniq=arr=>new Set(arr).size;
 
-  // Use live counts from filtered rows, fall back to hardcoded totals when unfiltered
-  const isFiltered=searchBox.value.trim()!=="";
-
-  if(!isFiltered){
-    // Always show the canonical total numbers
-    document.getElementById('statPairs').textContent="166";
-    document.getElementById('statDrugs').textContent="57";
-    document.getElementById('statProteins').textContent="30";
-    document.getElementById('statGenes').textContent="24";
-  } else {
-    const pairs=interCol?rows.filter(r=>ne(r[interCol])).length:rows.length;
-    const drugs=drugCol?uniq(rows.map(r=>r[drugCol]).filter(ne)):0;
-    const prots=malCol?uniq(rows.map(r=>r[malCol]).filter(ne)):0;
-    const genes=geneCol?uniq(rows.map(r=>r[geneCol]).filter(ne)):0;
-    document.getElementById('statPairs').textContent=pairs;
-    document.getElementById('statDrugs').textContent=drugs||"—";
-    document.getElementById('statProteins').textContent=prots||"—";
-    document.getElementById('statGenes').textContent=genes||"—";
-  }
+  const pairs=interCol?rows.filter(r=>ne(r[interCol])).length:rows.length;
+  const drugs=drugCol?uniq(rows.map(r=>r[drugCol]).filter(ne)):0;
+  const prots=malCol?uniq(rows.map(r=>r[malCol]).filter(ne)):0;
+  const genes=geneCol?uniq(rows.map(r=>r[geneCol]).filter(ne)):0;
+  document.getElementById('statPairs').textContent=pairs;
+  document.getElementById('statDrugs').textContent=drugs||"—";
+  document.getElementById('statProteins').textContent=prots||"—";
+  document.getElementById('statGenes').textContent=genes||"—";
 }
 
 /* ── Loaders ── */

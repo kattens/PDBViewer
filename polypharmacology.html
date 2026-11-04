@@ -141,6 +141,102 @@
     .priority-badge{width:40px;height:40px;font-size:16px}
     .plasmo-grid{gap:8px}
   }
+
+  /* ── Drug accordion list ── */
+  .drug-list-section{margin-bottom:0}
+  .dla-bar{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px;
+  }
+  .dla-label{font-size:14px;font-weight:700;color:#1a2340;margin-right:4px}
+  .ds-toggle{display:flex;gap:5px}
+  .ds-btn{
+    padding:4px 14px;border-radius:20px;border:1.5px solid var(--border);
+    background:var(--panel);color:var(--muted);font-size:11.5px;font-weight:600;
+    cursor:pointer;transition:all .15s;
+  }
+  .ds-btn.ds-active{background:var(--orange);color:#fff;border-color:var(--orange)}
+  .ds-btn:hover:not(.ds-active){background:var(--orange-l);color:var(--orange-d)}
+  .dla-loader{font-size:12px}
+  .dla-loader summary{
+    list-style:none;cursor:pointer;padding:4px 12px;
+    border:1.5px solid var(--border);border-radius:20px;
+    background:var(--panel);font-size:11.5px;font-weight:600;color:var(--muted);
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .dla-loader[open] summary::after{content:" ▴"}
+  .dla-loader:not([open]) summary::after{content:" ▾"}
+  .dla-loader-inner{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    margin-top:8px;padding:10px 14px;
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  }
+  .dla-loader-inner input[type=url]{
+    flex:1 1 200px;border:1px solid var(--border);border-radius:6px;
+    padding:5px 10px;font-size:12px;color:var(--text);background:#fafcff;
+  }
+  .dla-loader-inner button{
+    padding:5px 14px;border-radius:6px;border:none;
+    background:var(--orange);color:#fff;font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .dla-loader-inner button:hover{background:var(--orange-d)}
+  .poly-status{font-size:11.5px;color:var(--muted)}
+  .poly-status.ok{color:#2a9d8f;font-weight:600}
+  .poly-status.err{color:var(--red)}
+
+  .poly-accordion{display:flex;flex-direction:column;gap:5px;margin-bottom:0}
+  .pa-item{
+    background:var(--panel);border:1.5px solid var(--border);
+    border-radius:10px;overflow:hidden;
+    box-shadow:0 1px 6px rgba(224,140,46,.06);
+    transition:border-color .15s;
+  }
+  .pa-item.pa-open{border-color:var(--orange)}
+  .pa-btn{
+    width:100%;background:none;border:none;padding:10px 16px;
+    cursor:pointer;display:flex;align-items:center;gap:10px;
+    font:inherit;text-align:left;
+  }
+  .pa-btn:hover{background:var(--orange-l)}
+  .pa-name-wrap{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .pa-name{font-weight:700;font-size:13.5px;color:#1a2340}
+  .pa-note{font-size:11.5px;color:var(--muted);font-weight:400;line-height:1.4}
+  .pa-publink{
+    font-size:11px;color:var(--orange);text-decoration:none;
+    padding:2px 8px;border-radius:10px;border:1px solid var(--border);
+    background:var(--orange-l);white-space:nowrap;
+    transition:background .12s,color .12s;
+  }
+  .pa-publink:hover{background:var(--orange);color:#fff}
+  .pa-count{
+    font-size:11px;color:var(--muted);background:var(--bg);
+    padding:2px 8px;border-radius:10px;border:1px solid var(--border);
+    white-space:nowrap;
+  }
+  .pa-count.has-data{color:var(--orange-d);font-weight:600;border-color:var(--border)}
+  .pa-arrow{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+  .pa-item.pa-open .pa-arrow{transform:rotate(180deg)}
+  .pa-panel{
+    display:none;padding:4px 16px 14px;
+    border-top:1px solid var(--border);
+  }
+  .pa-item.pa-open .pa-panel{display:block}
+  .pa-tbl-wrap{
+    overflow-x:auto;border:1px solid var(--border);
+    border-radius:8px;margin-top:8px;
+  }
+  .pa-tbl-wrap table{font-size:12px;min-width:360px;border-radius:8px;overflow:hidden}
+  .pa-tbl-wrap thead th{background:#fdf5e8;padding:8px 12px;font-size:11.5px}
+  .pa-tbl-wrap td{padding:7px 12px;border-bottom:1px solid #f7edda}
+  .pa-tbl-wrap tbody tr:last-child td{border-bottom:none}
+  .pa-tbl-wrap tbody tr:hover{background:#fff8ee}
+  .pa-empty{
+    font-size:13px;color:var(--muted);padding:10px 0;
+    font-style:italic;line-height:1.5;
+  }
+  .pa-ds-note{
+    font-size:11px;color:var(--muted);margin-top:6px;
+    display:flex;align-items:center;gap:5px;
+  }
 </style>
 </head>
 <body>
@@ -168,6 +264,29 @@
     <div class="stat-num">14</div>
     <div class="stat-label">of 19 are kinase inhibitors (ATP-site caution applies)</div>
   </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- DRUG ACCORDION LIST -->
+<div class="drug-list-section">
+  <div class="dla-bar">
+    <span class="dla-label">19 Polypharmacology Drugs</span>
+    <div class="ds-toggle">
+      <button class="ds-btn ds-active" id="btnExp">Experimental</button>
+      <button class="ds-btn" id="btnComp">Computational</button>
+    </div>
+    <details class="dla-loader" id="dlaLoader">
+      <summary>Load dataset</summary>
+      <div class="dla-loader-inner">
+        <input id="polyUrl" type="url" placeholder="Paste CSV URL…" />
+        <button id="polyLoadBtn">Load URL</button>
+        <input id="polyFile" type="file" accept=".csv,text/csv" />
+        <span id="polyStatus" class="poly-status"></span>
+      </div>
+    </details>
+  </div>
+  <div id="polyAccordion" class="poly-accordion"></div>
 </div>
 
 <div class="divider"></div>
@@ -218,12 +337,7 @@
   </div>
 </div>
 
-<div class="divider"></div>
-
-<!-- DRUG TABLE -->
-<h2>19 Polypharmacology Drugs</h2>
-
-<div class="drug-table-wrap">
+<div class="drug-table-wrap" hidden>
   <table>
     <thead>
       <tr>
@@ -352,17 +466,246 @@
   </table>
 </div>
 
-<div class="warning">
-  <div class="warning-icon">⚠️</div>
-  <div><strong>Kinase ATP-site caution:</strong> 14 of 19 drugs are kinase inhibitors. P. falciparum kinase ATP pockets share structural homology with human kinases. Multi-target hits may partly reflect ATP-site conservation rather than genuine malaria polypharmacology. Non-kinase scaffold hits (ritonavir, trifluoperazine, vorinostat, LDN193189, sangivamycin, pentamidine) carry stronger evidence.</div>
-</div>
-
-<div class="note-box">
-  <strong>First-wave experiments:</strong> Ritonavir (Priority #1), sangivamycin (Priority #2 PfPK6 non-kinase probe), trifluoperazine (Priority #6 mechanistic probe). See §15 of the full analysis for parasite-killing assay design.
-</div>
 
 
 <script>
+/* ── Polypharmacology accordion ── */
+(function(){
+  var DRUGS = [
+    {name:"ritonavir",         note:"Only non-kinase pan-paralog hit; aspartyl protease chemistry bridge"},
+    {name:"sunitinib",         note:"Multi-target kinase inhibitor; ATP-site conservation caution applies"},
+    {name:"bosutinib",         note:"Contributes to PfPK6 chemical diversity"},
+    {name:"crizotinib",        note:"FDA-approved; no prior antimalarial history (Tier D)"},
+    {name:"trifluoperazine",   note:"Phenothiazine antipsychotic; calmodulin affinity well-established"},
+    {name:"lapatinib",         note:"FDA-approved EGFR/HER2 inhibitor; Tier D"},
+    {name:"NVP-BSK805",        note:"Contributes to PfPK6 convergence; 7+ MoA classes"},
+    {name:"TG-101209",         note:"TG-101209 / TG101209 normalized to single entry"},
+    {name:"GZD824",            note:"Bcr-Abl inhibitor repurposed"},
+    {name:"barasertib-HQPA",   note:"Aurora B inhibitor; contributes to PfPK6 chemical diversity"},
+    {name:"BI-2536",           note:"PLK1 inhibitor; PfPK6 structural similarity"},
+    {name:"vorinostat",        note:"HDAC inhibitor / Zn-chelator; metalloaminopeptidase off-target"},
+    {name:"M-344",             note:"Hydroxamate zinc chelator; plausible on Zn-metalloaminopeptidase"},
+    {name:"pentamidine",       note:"Aromatic diamidine; zero pocket overlap with pyrimethamine"},
+    {name:"LDN193189",         note:"★ Strongest cross-class evidence for PfPK6"},
+    {name:"sangivamycin",      note:"Pyrrolopyrimidine; first-wave experiment candidate (Priority #2 probe)"},
+    {name:"AT13387",           note:"4 resorcinol-family drugs; Priority #3 cluster (low chemical diversity)"},
+    {name:"ruboxistaurin",     note:"Highest Vina score in entire dataset; backed by 14-drug CDPK1 convergence"},
+    {name:"bafetinib",         note:"Bcr-Abl inhibitor; backed by CDPK1 convergence corroboration"}
+  ];
+  // Aliases: variations of the same drug name in CSVs
+  var ALIASES = {
+    "tg-101209":   ["tg-101209","tg101209"],
+    "at13387":     ["at13387","luminespib","at-13387"],
+    "nvp-bsk805":  ["nvp-bsk805","bsk805"],
+    "barasertib-hqpa": ["barasertib-hqpa","barasertib"]
+  };
+
+  var datasets = {exp: null, comp: null};
+  var currentDs = "exp";
+
+  /* ── Build accordion skeleton ── */
+  var acc = document.getElementById("polyAccordion");
+  DRUGS.forEach(function(d){
+    var item = document.createElement("div");
+    item.className = "pa-item";
+    item.dataset.drug = d.name;
+    var pubHref = "https://pubchem.ncbi.nlm.nih.gov/compound/" + encodeURIComponent(d.name);
+    item.innerHTML =
+      '<button class="pa-btn">' +
+        '<span class="pa-name-wrap">' +
+          '<span class="pa-name">' + esc(d.name) + '</span>' +
+          (d.note ? '<span class="pa-note">' + esc(d.note) + '</span>' : '') +
+        '</span>' +
+        '<a class="pa-publink" href="' + pubHref + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">PubChem ↗</a>' +
+        '<span class="pa-count">—</span>' +
+        '<span class="pa-arrow">▼</span>' +
+      '</button>' +
+      '<div class="pa-panel">' +
+        '<div class="pa-empty">Load a dataset above (paste URL or choose file) to see CSV entries for this drug.</div>' +
+      '</div>';
+    item.querySelector(".pa-btn").addEventListener("click", function(){ paToggle(item); });
+    acc.appendChild(item);
+  });
+
+  function paToggle(item){
+    var isOpen = item.classList.contains("pa-open");
+    document.querySelectorAll(".pa-item.pa-open").forEach(function(el){ el.classList.remove("pa-open"); });
+    if(!isOpen){
+      item.classList.add("pa-open");
+      var panel = item.querySelector(".pa-panel");
+      if(panel.dataset.populated !== currentDs) populatePanel(item, panel);
+    }
+  }
+
+  function populatePanel(item, panel){
+    var drug = item.dataset.drug;
+    var data = datasets[currentDs];
+    if(!data){
+      panel.innerHTML = '<div class="pa-empty">Load a dataset above to see CSV entries for this drug.</div>';
+      return;
+    }
+    var rows = filterDrug(data.rows, data.headers, drug);
+    if(!rows.length){
+      panel.innerHTML =
+        '<div class="pa-empty">No rows matched "' + esc(drug) + '" in the loaded ' +
+        (currentDs==="exp"?"experimental":"computational") + ' dataset.</div>' +
+        '<div class="pa-ds-note">Try the other dataset or check spelling in your CSV.</div>';
+    } else {
+      panel.innerHTML = buildTable(data.headers, rows);
+      linkifyPanel(panel);
+    }
+    panel.dataset.populated = currentDs;
+  }
+
+  function filterDrug(rows, headers, drug){
+    var dIdx = -1;
+    headers.forEach(function(h,i){
+      if(dIdx === -1 && h.toLowerCase().indexOf("drug") !== -1) dIdx = i;
+    });
+    if(dIdx === -1) dIdx = 0;
+    var dl = drug.toLowerCase();
+    var alts = ALIASES[dl] || [dl];
+    return rows.filter(function(row){
+      return alts.indexOf((row[dIdx]||"").trim().toLowerCase()) !== -1;
+    });
+  }
+
+  function buildTable(headers, rows){
+    var html = '<div class="pa-tbl-wrap"><table><thead><tr>';
+    headers.forEach(function(h){ html += '<th>' + esc(h) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    rows.forEach(function(row){
+      html += '<tr>';
+      row.forEach(function(cell){ html += '<td>' + esc(cell) + '</td>'; });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    var dsLabel = currentDs === "exp" ? "Experimental" : "Computational";
+    html += '<div class="pa-ds-note">📄 ' + rows.length + ' ' + (rows.length===1?'row':'rows') + ' · ' + dsLabel + ' dataset</div>';
+    return html;
+  }
+
+  function linkifyPanel(panel){
+    panel.querySelectorAll("td").forEach(function(td){
+      if(td.querySelector("a")) return;
+      td.innerHTML = td.innerHTML
+        .replace(/(PF3D7_\d+)/g, function(m){
+          return '<a href="https://plasmodb.org/plasmo/app/record/gene/'+m+'" target="_blank" rel="noopener" style="color:var(--orange);text-decoration:underline dotted">'+m+'</a>';
+        })
+        .replace(/(Pf[A-Z][A-Za-z0-9\-]+)/g, function(m){
+          return '<a href="https://plasmodb.org/plasmo/app/search?q='+encodeURIComponent(m)+'" target="_blank" rel="noopener" style="color:var(--orange);text-decoration:underline dotted">'+m+'</a>';
+        });
+    });
+  }
+
+  function updateCounts(){
+    document.querySelectorAll(".pa-item").forEach(function(item){
+      var drug = item.dataset.drug;
+      var data = datasets[currentDs];
+      var badge = item.querySelector(".pa-count");
+      if(!data){ badge.textContent = "—"; badge.classList.remove("has-data"); return; }
+      var n = filterDrug(data.rows, data.headers, drug).length;
+      badge.textContent = n + (n===1?" entry":" entries");
+      badge.classList.toggle("has-data", n > 0);
+      var panel = item.querySelector(".pa-panel");
+      if(panel) delete panel.dataset.populated;
+      if(item.classList.contains("pa-open")) populatePanel(item, panel);
+    });
+  }
+
+  /* ── CSV parsing ── */
+  function parseCSV(text){
+    var lines = text.replace(/\r\n/g,"\n").replace(/\r/g,"\n").split("\n");
+    var sample = lines.slice(0,5).join("\n");
+    var delim = sample.split("\t").length > sample.split(",").length ? "\t" :
+                sample.split(";").length > sample.split(",").length ? ";" : ",";
+    function parseLine(line){
+      var fields=[], i=0, inQ=false, f="", ch;
+      while(i<line.length){
+        ch=line[i];
+        if(inQ){if(ch==='"' && line[i+1]==='"'){f+='"';i+=2}else if(ch==='"'){inQ=false;i++}else{f+=ch;i++}}
+        else if(ch==='"'){inQ=true;i++}
+        else if(ch===delim){fields.push(f);f="";i++}
+        else{f+=ch;i++}
+      }
+      fields.push(f);
+      return fields;
+    }
+    var headers=null, rows=[];
+    for(var li=0;li<lines.length;li++){
+      var line=lines[li];
+      if(!line.trim()) continue;
+      var fields=parseLine(line);
+      if(!headers){headers=fields.map(function(h){return h.trim();});continue;}
+      if(fields.every(function(f){return !f.trim();})) continue;
+      while(fields.length<headers.length) fields.push("");
+      rows.push(fields.map(function(f){return f.trim();}));
+    }
+    return {headers:headers||[], rows:rows};
+  }
+
+  function setStatus(msg, cls){
+    var el = document.getElementById("polyStatus");
+    el.textContent = msg;
+    el.className = "poly-status" + (cls?" "+cls:"");
+  }
+
+  function ingestText(text){
+    try{
+      var parsed = parseCSV(text);
+      datasets[currentDs] = parsed;
+      setStatus("✓ " + parsed.rows.length + " rows loaded", "ok");
+      updateCounts();
+    } catch(e){ setStatus("Parse error: " + e.message, "err"); }
+  }
+
+  /* ── Dataset toggle ── */
+  document.getElementById("btnExp").addEventListener("click", function(){
+    currentDs = "exp";
+    this.classList.add("ds-active");
+    document.getElementById("btnComp").classList.remove("ds-active");
+    updateCounts();
+    if(datasets.exp) setStatus("✓ " + datasets.exp.rows.length + " rows loaded", "ok");
+    else setStatus("", "");
+  });
+  document.getElementById("btnComp").addEventListener("click", function(){
+    currentDs = "comp";
+    this.classList.add("ds-active");
+    document.getElementById("btnExp").classList.remove("ds-active");
+    updateCounts();
+    if(datasets.comp) setStatus("✓ " + datasets.comp.rows.length + " rows loaded", "ok");
+    else setStatus("", "");
+  });
+
+  /* ── URL loader ── */
+  document.getElementById("polyLoadBtn").addEventListener("click", function(){
+    var url = document.getElementById("polyUrl").value.trim();
+    if(!url){ setStatus("Paste a URL first.", "err"); return; }
+    setStatus("Loading…");
+    fetch(url, {cache:"no-store"})
+      .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .then(function(t){ ingestText(t); })
+      .catch(function(e){ setStatus("Error: " + e.message, "err"); });
+  });
+
+  /* ── File loader ── */
+  document.getElementById("polyFile").addEventListener("change", function(){
+    var f = this.files[0];
+    if(!f) return;
+    setStatus("Reading…");
+    var reader = new FileReader();
+    reader.onload = function(e){ ingestText(e.target.result); };
+    reader.readAsText(f);
+  });
+
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+})();
+</script>
+
+<script>
+/* ── Original link-enrichment script ── */
 (function(){
   function pubUrl(name){
     return 'https://pubchem.ncbi.nlm.nih.gov/compound/'+encodeURIComponent(name.trim());

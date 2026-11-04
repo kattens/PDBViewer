@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!doctype html>
 <html lang="en">
 <head>
@@ -127,6 +128,97 @@
     color:var(--muted);margin-top:20px;line-height:1.6;
   }
   .note-box strong{color:var(--text)}
+
+  /* ── Target accordion ── */
+  .target-list-section{margin-bottom:0}
+  .tla-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+  .tla-label{font-size:14px;font-weight:700;color:#1a2340;margin-right:4px}
+  .ds-toggle{display:flex;gap:5px}
+  .ds-btn{
+    padding:4px 14px;border-radius:20px;border:1.5px solid var(--border);
+    background:var(--panel);color:var(--muted);font-size:11.5px;font-weight:600;
+    cursor:pointer;transition:all .15s;
+  }
+  .ds-btn.ds-active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .ds-btn:hover:not(.ds-active){background:var(--blue-l);color:var(--blue-d)}
+  .tla-loader{font-size:12px}
+  .tla-loader summary{
+    list-style:none;cursor:pointer;padding:4px 12px;
+    border:1.5px solid var(--border);border-radius:20px;
+    background:var(--panel);font-size:11.5px;font-weight:600;color:var(--muted);
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .tla-loader[open] summary::after{content:" ▴"}
+  .tla-loader:not([open]) summary::after{content:" ▾"}
+  .tla-loader-inner{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    margin-top:8px;padding:10px 14px;
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  }
+  .tla-loader-inner input[type=url]{
+    flex:1 1 200px;border:1px solid var(--border);border-radius:6px;
+    padding:5px 10px;font-size:12px;color:var(--text);background:#fafcff;
+  }
+  .tla-loader-inner button{
+    padding:5px 14px;border-radius:6px;border:none;
+    background:var(--blue);color:#fff;font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .tla-loader-inner button:hover{background:var(--blue-d)}
+  .conv-status{font-size:11.5px;color:var(--muted)}
+  .conv-status.ok{color:#2a9d8f;font-weight:600}
+  .conv-status.err{color:var(--red)}
+
+  .conv-accordion{display:flex;flex-direction:column;gap:5px}
+  .ca-item{
+    background:var(--panel);border:1.5px solid var(--border);
+    border-radius:10px;overflow:hidden;
+    box-shadow:0 1px 6px rgba(74,134,184,.07);
+    transition:border-color .15s;
+  }
+  .ca-item.ca-open{border-color:var(--blue)}
+  .ca-btn{
+    width:100%;background:none;border:none;padding:10px 16px;
+    cursor:pointer;display:flex;align-items:center;gap:10px;
+    font:inherit;text-align:left;
+  }
+  .ca-btn:hover{background:var(--blue-l)}
+  .ca-name-wrap{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .ca-name{font-weight:700;font-size:13.5px;color:#1a2340}
+  .ca-gene{
+    font-size:11px;color:var(--blue-d);font-family:monospace;font-weight:600;
+  }
+  .ca-note{font-size:11.5px;color:var(--muted);font-weight:400;line-height:1.4}
+  .ca-plaslink{
+    font-size:11px;color:var(--blue);text-decoration:none;
+    padding:2px 8px;border-radius:10px;border:1px solid var(--border);
+    background:var(--blue-l);white-space:nowrap;
+    transition:background .12s,color .12s;
+  }
+  .ca-plaslink:hover{background:var(--blue);color:#fff}
+  .ca-count{
+    font-size:11px;color:var(--muted);background:var(--bg);
+    padding:2px 8px;border-radius:10px;border:1px solid var(--border);
+    white-space:nowrap;
+  }
+  .ca-count.has-data{color:var(--blue-d);font-weight:600}
+  .ca-arrow{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+  .ca-item.ca-open .ca-arrow{transform:rotate(180deg)}
+  .ca-panel{
+    display:none;padding:4px 16px 14px;
+    border-top:1px solid var(--border);
+  }
+  .ca-item.ca-open .ca-panel{display:block}
+  .ca-tbl-wrap{
+    overflow-x:auto;border:1px solid var(--border);
+    border-radius:8px;margin-top:8px;
+  }
+  .ca-tbl-wrap table{font-size:12px;min-width:360px}
+  .ca-tbl-wrap thead th{background:#deeef8;padding:8px 12px;font-size:11.5px}
+  .ca-tbl-wrap td{padding:7px 12px;border-bottom:1px solid #d8eaf6}
+  .ca-tbl-wrap tbody tr:last-child td{border-bottom:none}
+  .ca-tbl-wrap tbody tr:hover{background:var(--blue-l)}
+  .ca-empty{font-size:13px;color:var(--muted);padding:10px 0;font-style:italic;line-height:1.5}
+  .ca-ds-note{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:5px}
 </style>
 </head>
 <body>
@@ -270,10 +362,31 @@
 
 <div class="divider"></div>
 
-<!-- ALL 14 TARGETS TABLE -->
-<h2>All 14 Convergence Target Proteins</h2>
+<!-- TARGET ACCORDION -->
+<div class="target-list-section">
+  <div class="tla-bar">
+    <span class="tla-label">14 Convergence Target Proteins</span>
+    <div class="ds-toggle">
+      <button class="ds-btn ds-active" id="btnExp">Experimental</button>
+      <button class="ds-btn" id="btnComp">Computational</button>
+    </div>
+    <details class="tla-loader" id="tlaLoader">
+      <summary>Load dataset ▾</summary>
+      <div class="tla-loader-inner">
+        <input id="convUrl" type="url" placeholder="Paste CSV URL…" style="flex:1;min-width:0;padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;background:var(--panel)">
+        <button id="convLoadBtn">Load URL</button>
+        <label style="cursor:pointer;font-size:12px;color:var(--blue);font-weight:600;white-space:nowrap">or <input id="convFile" type="file" accept=".csv,text/csv" style="display:none"> Browse file</label>
+        <span id="convStatus" class="conv-status"></span>
+      </div>
+    </details>
+  </div>
+  <div id="convAccordion" class="conv-accordion"></div>
+</div>
 
-<div class="table-wrap">
+<div class="divider"></div>
+
+<!-- ALL 14 TARGETS TABLE (hidden, kept for linkification) -->
+<div class="table-wrap" hidden>
   <table>
     <thead>
       <tr>
@@ -378,6 +491,263 @@
 
 
 <script>
+/* ── Convergence Target Accordion ── */
+(function(){
+  /* Gene IDs verified from ExpData.csv + CompData.csv + full analysis report (ranked by drug count) */
+  var TARGETS = [
+    {name:"PfCDPK1",    gene:"PF3D7_0217500", geneAlt:[],                note:"Rank #1 · 15 drugs — highest drug count; 15 kinase inhibitors + trifluoperazine; AEE788 = Priority #5"},
+    {name:"PfPK6",      gene:"PF3D7_1337100", geneAlt:[],                note:"Rank #2 · 11 drugs, 7+ MoA classes — highest chemical diversity; 2 non-kinase scaffolds (LDN193189, sangivamycin)"},
+    {name:"PfPKG",      gene:"PF3D7_1436600", geneAlt:[],                note:"Rank #3 · 10 drugs; cGMP-dependent protein kinase; essential for gametocyte egress and invasion"},
+    {name:"PfPK5",      gene:"PF3D7_1356900", geneAlt:[],                note:"Rank #4 · 8 drugs; cyclin-dependent-like kinase; GZD824, danusertib among hits"},
+    {name:"PfCDPK2",    gene:"PF3D7_0610600", geneAlt:[],                note:"Rank #5 · 6 drugs; calcium-dependent protein kinase 2; ATP-site caution applies"},
+    {name:"PfDHFR-TS",  gene:"PF3D7_0417200", geneAlt:[],                note:"Rank #6 · 5 drugs, 3 chemotypes, 2 pockets; pyrimethamine (clinical), pentamidine (pocket 2)"},
+    {name:"PfPKB",      gene:"PF3D7_1246900", geneAlt:[],                note:"Rank #6 · 5 drugs; RAC-beta serine/threonine-protein kinase; NVP-TAE226 notable hit"},
+    {name:"PfCDPK4",    gene:"PF3D7_0717500", geneAlt:[],                note:"Rank #6 · 5 drugs; calcium-dependent protein kinase 4; essential for male gametocyte activation"},
+    {name:"PfHSP90",    gene:"PF3D7_0708400", geneAlt:[],                note:"Rank #9 · 4 drugs; resorcinol-family inhibitors; AT13387 cluster — low chemical diversity"},
+    {name:"PfA-M1",     gene:"PF3D7_1311800", geneAlt:[],                note:"Rank #10 · 3 drugs (M-344, vorinostat, puromycin); M1-family alanyl aminopeptidase; Zn-chelator convergence"},
+    {name:"PfMAPK2",    gene:"PF3D7_1113900", geneAlt:[],                note:"Rank #10 · 3 drugs; mitogen-activated protein kinase 2; multiple kinase inhibitor hits"},
+    {name:"PfENR",      gene:"PF3D7_0615100", geneAlt:[],                note:"Rank #12 · 2 drugs; enoyl-acyl carrier reductase; triclosan (clinical candidate) confirmed hit"},
+    {name:"PfMO15/CDK", gene:"PF3D7_1014400", geneAlt:[],                note:"Rank #12 · 2 drugs; MO15/CDK-related kinase; cell-division checkpoint target"},
+    {name:"PfMAPK1",    gene:"PF3D7_1431500", geneAlt:[],                note:"Rank #12 · 2 drugs; mitogen-activated protein kinase 1; multiple kinase inhibitor hits"}
+  ];
+
+  var datasets = {exp: null, comp: null};
+  var currentDs = "exp";
+
+  function plasmoUrl(id){
+    id = id.trim();
+    var m = id.match(/PF3D7_\d+/i);
+    if(m) return 'https://plasmodb.org/plasmo/app/record/gene/'+m[0];
+    return 'https://plasmodb.org/plasmo/app/search?q='+encodeURIComponent(id);
+  }
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* Build accordion skeleton */
+  var acc = document.getElementById('convAccordion');
+  TARGETS.forEach(function(t, i){
+    var geneHasId = /PF3D7_/i.test(t.gene);
+    var plasLink = plasmoUrl(geneHasId ? t.gene : t.name);
+    var geneDisplay = geneHasId ? t.gene : '(search PlasmoDB)';
+    var item = document.createElement('div');
+    item.className = 'ca-item';
+    item.dataset.idx = i;
+    item.innerHTML =
+      '<button class="ca-btn" aria-expanded="false">' +
+        '<span class="ca-name-wrap">' +
+          '<span class="ca-name">'+esc(t.name)+'</span>' +
+          '<span class="ca-gene">'+esc(geneDisplay)+'</span>' +
+          '<span class="ca-note">'+esc(t.note)+'</span>' +
+        '</span>' +
+        '<a class="ca-plaslink" href="'+plasLink+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">PlasmoDB ↗</a>' +
+        '<span class="ca-count">—</span>' +
+        '<span class="ca-arrow">▼</span>' +
+      '</button>' +
+      '<div class="ca-panel"><div class="ca-empty">Load a dataset above to see CSV entries for this target.</div></div>';
+    item.querySelector('.ca-btn').addEventListener('click', function(){ caToggle(item); });
+    acc.appendChild(item);
+  });
+
+  function caToggle(item){
+    var isOpen = item.classList.contains('ca-open');
+    document.querySelectorAll('.ca-item.ca-open').forEach(function(o){ o.classList.remove('ca-open'); o.querySelector('.ca-btn').setAttribute('aria-expanded','false'); });
+    if(!isOpen){
+      item.classList.add('ca-open');
+      item.querySelector('.ca-btn').setAttribute('aria-expanded','true');
+      var panel = item.querySelector('.ca-panel');
+      var populated = panel.dataset.populated;
+      if(populated !== currentDs) populatePanel(item, panel);
+    }
+  }
+
+  function populatePanel(item, panel){
+    var t = TARGETS[+item.dataset.idx];
+    var ds = datasets[currentDs];
+    if(!ds){ panel.innerHTML = '<div class="ca-empty">Load a dataset above to see CSV entries for this target.</div>'; return; }
+    var rows = filterTarget(ds.rows, ds.headers, t.name, t.gene);
+    if(!rows.length){
+      panel.innerHTML = '<div class="ca-empty">No rows matched "'+esc(t.name)+'" in the '+currentDs+' dataset.</div>';
+    } else {
+      panel.innerHTML =
+        '<div class="ca-tbl-wrap">'+buildTable(ds.headers, rows)+'</div>'+
+        '<div class="ca-ds-note">'+rows.length+' row'+(rows.length===1?'':'s')+' · '+currentDs+' dataset · filtered by gene id = '+esc(t.gene)+'</div>';
+      linkifyPanel(panel, t);
+    }
+    panel.dataset.populated = currentDs;
+    updateCounts();
+  }
+
+  /* Find the index of the "gene id" column (and optional "gene id_old" for CompData) */
+  function findGeneIdCols(headers){
+    var main = -1, alt = -1;
+    for(var i=0;i<headers.length;i++){
+      var h = headers[i].toLowerCase().trim();
+      if(h === 'gene id') main = i;
+      else if(h === 'gene id_old') alt = i;
+    }
+    /* fallback: look for "gene id" anywhere in header string */
+    if(main < 0){
+      for(var j=0;j<headers.length;j++){
+        var h2 = headers[j].toLowerCase().trim();
+        if(h2.indexOf('gene id') !== -1 && h2.indexOf('old') === -1){ main = j; break; }
+      }
+    }
+    return {main:main, alt:alt};
+  }
+
+  function filterTarget(rows, headers, targetName, geneId){
+    /* geneId is a PF3D7_XXXXXXX string; match rows where gene id column equals it */
+    var cols = findGeneIdCols(headers);
+    if(cols.main < 0 && cols.alt < 0) return [];
+    var needle = (geneId||'').trim().toUpperCase();
+    return rows.filter(function(r){
+      var v1 = cols.main >= 0 ? (r[cols.main]||'').trim().toUpperCase() : '';
+      var v2 = cols.alt  >= 0 ? (r[cols.alt] ||'').trim().toUpperCase() : '';
+      return v1 === needle || v2 === needle;
+    });
+  }
+
+  function buildTable(headers, rows){
+    var html = '<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>';
+    headers.forEach(function(h){ html += '<th style="padding:7px 10px;text-align:left;white-space:nowrap;background:#deeef8;font-weight:700;color:#326090;border-bottom:2px solid var(--border)">'+esc(h)+'</th>'; });
+    html += '</tr></thead><tbody>';
+    rows.forEach(function(r,ri){
+      html += '<tr style="background:'+(ri%2?'var(--blue-l)':'var(--panel)')+'">';
+      headers.forEach(function(_,ci){ html += '<td style="padding:6px 10px;border-bottom:1px solid var(--border);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r[ci]||'')+'">'+esc(r[ci]||'')+'</td>'; });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  function linkifyPanel(panel, t){
+    panel.querySelectorAll('td').forEach(function(td){
+      var txt = td.textContent.trim();
+      if(!txt) return;
+      /* PF3D7_ gene IDs */
+      if(/PF3D7_\d+/i.test(txt)){
+        td.innerHTML = td.innerHTML.replace(/(PF3D7_\d+)/gi,function(m){
+          return '<a href="https://plasmodb.org/plasmo/app/record/gene/'+m+'" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline dotted">'+esc(m)+'</a>';
+        });
+      }
+      /* drug names (CID or typical patterns) */
+      if(/^[A-Za-z0-9]/.test(txt) && td.closest('tr') && !td.innerHTML.includes('<a')){
+        var hdrs = Array.from(panel.querySelectorAll('th')).map(function(th){return th.textContent.toLowerCase();});
+        var ci = Array.from(td.parentElement.children).indexOf(td);
+        if(hdrs[ci] && (hdrs[ci].indexOf('drug')!==-1||hdrs[ci].indexOf('compound')!==-1||hdrs[ci].indexOf('name')!==-1)){
+          td.innerHTML = '<a href="https://pubchem.ncbi.nlm.nih.gov/compound/'+encodeURIComponent(txt)+'" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline dotted">'+esc(txt)+'</a>';
+        }
+      }
+    });
+  }
+
+  function updateCounts(){
+    document.querySelectorAll('.ca-item').forEach(function(item){
+      var t = TARGETS[+item.dataset.idx];
+      var cnt = item.querySelector('.ca-count');
+      var ds = datasets[currentDs];
+      if(!ds){ cnt.textContent = '—'; cnt.classList.remove('has-data'); return; }
+      var rows = filterTarget(ds.rows, ds.headers, t.name, t.gene);
+      if(rows.length){ cnt.textContent = rows.length+' row'+(rows.length===1?'':'s'); cnt.classList.add('has-data'); }
+      else { cnt.textContent = '0 rows'; cnt.classList.remove('has-data'); }
+    });
+  }
+
+  function parseCSV(text){
+    var lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+    if(!lines.length) return null;
+    /* detect delimiter */
+    var sample = lines.slice(0,5).join('\n');
+    var tab = (sample.match(/\t/g)||[]).length;
+    var sc  = (sample.match(/;/g)||[]).length;
+    var cm  = (sample.match(/,/g)||[]).length;
+    var dlm = tab>sc&&tab>cm ? '\t' : sc>cm ? ';' : ',';
+    function splitRow(line){
+      var res=[],cur='',inq=false;
+      for(var i=0;i<line.length;i++){
+        var c=line[i];
+        if(c==='"'){ if(inq&&line[i+1]==='"'){cur+='"';i++;} else inq=!inq; }
+        else if(c===dlm&&!inq){ res.push(cur);cur=''; }
+        else cur+=c;
+      }
+      res.push(cur); return res;
+    }
+    var headers=null, rows=[];
+    for(var i=0;i<lines.length;i++){
+      if(!lines[i].trim()) continue;
+      var cols=splitRow(lines[i]);
+      if(!headers){ headers=cols.map(function(h){return h.trim();}); continue; }
+      if(cols.length<2) continue;
+      rows.push(cols.map(function(c){return c.trim();}));
+    }
+    return headers ? {headers:headers, rows:rows} : null;
+  }
+
+  function setStatus(msg, ok){
+    var el = document.getElementById('convStatus');
+    el.textContent = msg;
+    el.className = 'conv-status' + (ok ? ' ok' : '');
+  }
+
+  function ingestText(text){
+    var parsed = parseCSV(text);
+    if(!parsed || !parsed.headers.length){ setStatus('Could not parse CSV.', false); return; }
+    datasets[currentDs] = parsed;
+    setStatus('✓ '+parsed.rows.length+' rows loaded', true);
+    /* reset all panel populated flags */
+    document.querySelectorAll('.ca-panel').forEach(function(p){ delete p.dataset.populated; });
+    /* repopulate any open panel */
+    document.querySelectorAll('.ca-item.ca-open').forEach(function(item){
+      populatePanel(item, item.querySelector('.ca-panel'));
+    });
+    updateCounts();
+    var loader = document.getElementById('tlaLoader');
+    if(loader) loader.open = false;
+  }
+
+  document.getElementById('btnExp').addEventListener('click', function(){
+    if(currentDs==='exp') return;
+    currentDs='exp';
+    document.getElementById('btnExp').classList.add('ds-active');
+    document.getElementById('btnComp').classList.remove('ds-active');
+    document.querySelectorAll('.ca-panel').forEach(function(p){ delete p.dataset.populated; });
+    document.querySelectorAll('.ca-item.ca-open').forEach(function(item){
+      populatePanel(item, item.querySelector('.ca-panel'));
+    });
+    updateCounts();
+  });
+  document.getElementById('btnComp').addEventListener('click', function(){
+    if(currentDs==='comp') return;
+    currentDs='comp';
+    document.getElementById('btnComp').classList.add('ds-active');
+    document.getElementById('btnExp').classList.remove('ds-active');
+    document.querySelectorAll('.ca-panel').forEach(function(p){ delete p.dataset.populated; });
+    document.querySelectorAll('.ca-item.ca-open').forEach(function(item){
+      populatePanel(item, item.querySelector('.ca-panel'));
+    });
+    updateCounts();
+  });
+
+  document.getElementById('convLoadBtn').addEventListener('click', function(){
+    var url = document.getElementById('convUrl').value.trim();
+    if(!url) return;
+    setStatus('Loading…', false);
+    fetch(url)
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+      .then(ingestText)
+      .catch(function(e){ setStatus('Error: '+e.message, false); });
+  });
+
+  document.getElementById('convFile').addEventListener('change', function(e){
+    var f = e.target.files[0]; if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){ ingestText(ev.target.result); };
+    reader.readAsText(f);
+  });
+
+})();
+</script>
+
+<script>
 (function(){
   function pubUrl(name){
     return 'https://pubchem.ncbi.nlm.nih.gov/compound/'+encodeURIComponent(name.trim());
@@ -450,3 +820,5 @@
 </script>
 </body>
 </html>
+
+</body></html>

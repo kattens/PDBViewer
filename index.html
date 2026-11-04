@@ -98,23 +98,13 @@ body{
 .fw-title{font-size:17px;font-weight:700;color:var(--navy);margin:0 0 4px}
 .fw-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
 
-/* axis labels */
+/* two-card grid */
 .fw-grid{
   display:grid;
-  grid-template-columns:72px 1fr 1fr;
-  grid-template-rows:auto auto auto;
-  gap:10px;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
 }
-.fw-corner{} /* empty top-left */
-.fw-col-lbl,.fw-row-lbl{
-  display:flex;align-items:center;justify-content:center;
-  font-size:10.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
-  color:#9aa5bc;
-}
-.fw-row-lbl{
-  flex-direction:column;gap:2px;text-align:center;justify-content:center;
-  border-right:2px solid var(--border);padding-right:10px;
-}
+@media(max-width:560px){.fw-grid{grid-template-columns:1fr}}
 
 /* quadrant cards */
 .quad{
@@ -129,23 +119,14 @@ a.quad:hover .quad-arrow{opacity:1;transform:translateX(4px)}
   position:absolute;top:14px;right:15px;font-size:15px;
   opacity:0;transition:opacity .15s,transform .15s;
 }
-.quad-teal{background:#eef9f7;border:2px solid var(--teal)}
-.quad-teal .quad-name,.quad-teal .quad-big,.quad-teal .quad-arrow{color:var(--teal)}
 .quad-blue{background:#eaf3fb;border:2px solid var(--blue)}
 .quad-blue .quad-name,.quad-blue .quad-big,.quad-blue .quad-arrow{color:var(--blue)}
 .quad-orange{background:#fff8ee;border:2px solid var(--orange)}
 .quad-orange .quad-name,.quad-orange .quad-big,.quad-orange .quad-arrow{color:var(--orange)}
-.quad-empty{
-  background:#f5f6f8;border:2px dashed #cdd2dc;color:#aab0bc;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-}
 .quad-name{font-size:13.5px;font-weight:700;margin:0 0 6px;line-height:1.2}
 .quad-big{font-size:clamp(30px,4vw,44px);font-weight:800;line-height:1;display:block}
 .quad-unit{font-size:14px;font-weight:600;opacity:.75;display:block;margin-bottom:10px}
 .quad-desc{font-size:12.5px;color:#4a5568;line-height:1.5;margin:0}
-.quad-empty-line{width:36px;height:2px;background:#c8cdd8;border-radius:2px}
-.quad-empty-text{font-style:italic;font-size:12px;color:#b0b6c3}
-
 .fw-note{font-size:12px;color:var(--muted);margin:14px 0 0;font-style:italic}
 
 /* ── Dataset section ── */
@@ -315,20 +296,6 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
     <p class="fw-sub">Every drug–target pair falls into one of three patterns — click a tile to explore that group.</p>
 
     <div class="fw-grid">
-      <!-- row 0: column labels -->
-      <div class="fw-corner"></div>
-      <div class="fw-col-lbl">One Drug</div>
-      <div class="fw-col-lbl">Multiple Drugs</div>
-
-      <!-- row 1: one target -->
-      <div class="fw-row-lbl"><span>One<br>Target</span></div>
-      <a class="quad quad-teal" href="single-target.html">
-        <span class="quad-arrow">→</span>
-        <div class="quad-name">Single-Target Hitters</div>
-        <span class="quad-big">38</span>
-        <span class="quad-unit">drugs</span>
-        <p class="quad-desc">One drug binds one protein — the cleanest mechanistic signal and clearest starting point for development.</p>
-      </a>
       <a class="quad quad-blue" href="convergence.html">
         <span class="quad-arrow">→</span>
         <div class="quad-name">Convergence Hotspots</div>
@@ -336,9 +303,6 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
         <span class="quad-unit">targets</span>
         <p class="quad-desc">Many independent drugs converge on the same protein — strong evidence the target is pharmacologically tractable.</p>
       </a>
-
-      <!-- row 2: many targets -->
-      <div class="fw-row-lbl"><span>Many<br>Targets</span></div>
       <a class="quad quad-orange" href="polypharmacology.html">
         <span class="quad-arrow">→</span>
         <div class="quad-name">Polypharmacology</div>
@@ -346,13 +310,7 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
         <span class="quad-unit">drugs</span>
         <p class="quad-desc">One drug hits multiple proteins simultaneously — resistance-robust because the parasite can't escape by mutating a single gene.</p>
       </a>
-      <div class="quad quad-empty">
-        <div class="quad-empty-line"></div>
-        <div class="quad-empty-text">No entries in this quadrant</div>
-      </div>
     </div>
-
-    <p class="fw-note">3 drugs don't fit neatly: DSM265 (DHODH), MG-132 (proteasome), and 1223001-51-1 (likely artifact)</p>
   </div>
 
   <!-- Dataset -->

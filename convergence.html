@@ -629,7 +629,7 @@
     if (h.indexOf('3d interaction') !== -1) {
       var ext = v.split('.').pop().toLowerCase();
       var fmt = (ext==='cif'||ext==='mmcif') ? 'mmcif' : ext==='bcif' ? 'bcif' : ext==='sdf' ? 'sdf' : ext==='mol2' ? 'mol2' : 'pdb';
-      return lnk('./ngl/viewer.html?load=../MDpdb/'+encodeURIComponent(v)+'&format='+fmt, v);
+      return lnk('./ngl/viewer.html?load=https://raw.githubusercontent.com/kattens/PDBViewer/main/MDpdb/'+encodeURIComponent(v)+'&format='+fmt, v);
     }
     if (h.indexOf('gene id') !== -1) {
       if (/^PF3D7_\d+/i.test(v))

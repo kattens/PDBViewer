@@ -248,6 +248,26 @@
   <p class="page-sub">Drugs that engage two or more P. falciparum proteins — offering resistance-robust therapeutic potential.</p>
 </div>
 
+<!-- DRUG ACCORDION LIST -->
+<div class="drug-list-section">
+  <div class="dla-bar">
+    <span class="dla-label">19 Polypharmacology Drugs</span>
+    <div class="ds-toggle">
+      <button class="ds-btn ds-active" id="btnExp">Experimental</button>
+      <button class="ds-btn" id="btnComp">Computational</button>
+    </div>
+    <details class="dla-loader" id="dlaLoader">
+      <summary>Load dataset</summary>
+      <div class="dla-loader-inner">
+        <input id="polyUrl" type="url" placeholder="Paste CSV URL…" />
+        <button id="polyLoadBtn">Load URL</button>
+        <input id="polyFile" type="file" accept=".csv,text/csv" />
+        <span id="polyStatus" class="poly-status"></span>
+      </div>
+    </details>
+  </div>
+  <div id="polyAccordion" class="poly-accordion"></div>
+</div>
 
 <div class="divider" style="margin-top:28px"></div>
 
@@ -317,137 +337,8 @@
 
 <div class="divider"></div>
 
-<!-- DRUG TABLE -->
-<h2>19 Polypharmacology Drugs</h2>
 
-<div class="drug-table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th>Drug</th>
-        <th>Tier</th>
-        <th>Targets Hit</th>
-        <th>Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>ritonavir</strong></td>
-        <td><span class="pill pill-orange">★ Priority #1</span></td>
-        <td>Plasmepsin II, IV, VII, X</td>
-        <td>Only non-kinase pan-paralog hit; aspartyl protease chemistry bridge</td>
-      </tr>
-      <tr>
-        <td>sunitinib</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>Multiple kinases</td>
-        <td>Multi-target kinase inhibitor; ATP-site conservation caution applies</td>
-      </tr>
-      <tr>
-        <td>bosutinib</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfCDPK1, PfPK6 (Abl/SRC class)</td>
-        <td>Contributes to PfPK6 chemical diversity</td>
-      </tr>
-      <tr>
-        <td>crizotinib</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfCDPK1, PfPK6 (ALK inhibitor)</td>
-        <td>FDA-approved; no prior antimalarial history (Tier D)</td>
-      </tr>
-      <tr>
-        <td>trifluoperazine</td>
-        <td><span class="pill pill-teal">Non-kinase</span></td>
-        <td>PfCDPK1, Calmodulin, Ca-ER binding protein</td>
-        <td>Phenothiazine antipsychotic; calmodulin affinity well-established</td>
-      </tr>
-      <tr>
-        <td>lapatinib</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>Multiple kinases</td>
-        <td>FDA-approved EGFR/HER2 inhibitor; Tier D</td>
-      </tr>
-      <tr>
-        <td>NVP-BSK805</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfPK6 (JAK inhibitor class)</td>
-        <td>Contributes to PfPK6 convergence; 7+ MoA classes</td>
-      </tr>
-      <tr>
-        <td>TG-101209</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfPK6 (JAK inhibitor class)</td>
-        <td>See data flag: TG-101209 / TG101209 normalized to single entry</td>
-      </tr>
-      <tr>
-        <td>GZD824</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfCDPK1, PfPK6 (Abl/SRC class)</td>
-        <td>Bcr-Abl inhibitor repurposed</td>
-      </tr>
-      <tr>
-        <td>barasertib-HQPA</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfPK6 (Aurora inhibitor class)</td>
-        <td>Aurora B inhibitor; contributes to PfPK6 chemical diversity</td>
-      </tr>
-      <tr>
-        <td>BI-2536</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfPK6 (PLK inhibitor class)</td>
-        <td>PLK1 inhibitor; PfPK6 structural similarity</td>
-      </tr>
-      <tr>
-        <td>vorinostat</td>
-        <td><span class="pill pill-teal">Non-kinase</span></td>
-        <td>PfA-M1, PfCDPK1</td>
-        <td>HDAC inhibitor / Zn-chelator; metalloaminopeptidase off-target</td>
-      </tr>
-      <tr>
-        <td>M-344</td>
-        <td><span class="pill pill-teal">Non-kinase</span></td>
-        <td>PfA-M1</td>
-        <td>Hydroxamate zinc chelator; plausible on Zn-metalloaminopeptidase</td>
-      </tr>
-      <tr>
-        <td>pentamidine</td>
-        <td><span class="pill pill-teal">Non-kinase</span></td>
-        <td>PfDHFR-TS (second site)</td>
-        <td>Aromatic diamidine; zero pocket overlap with pyrimethamine</td>
-      </tr>
-      <tr>
-        <td>LDN193189</td>
-        <td><span class="pill pill-teal">Non-kinase</span></td>
-        <td>PfPK6 (BMP inhibitor — non-kinase scaffold)</td>
-        <td>★ Strongest cross-class evidence for PfPK6</td>
-      </tr>
-      <tr>
-        <td>sangivamycin</td>
-        <td><span class="pill pill-teal">Non-kinase</span></td>
-        <td>PfPK6 (nucleoside analog — non-kinase scaffold)</td>
-        <td>Pyrrolopyrimidine; first-wave experiment candidate (Priority #2 probe)</td>
-      </tr>
-      <tr>
-        <td>AT13387 / Luminespib + HSP90 cluster</td>
-        <td><span class="pill pill-blue">Chaperone</span></td>
-        <td>PfHSP90</td>
-        <td>4 resorcinol-family drugs; Priority #3 cluster (low chemical diversity)</td>
-      </tr>
-      <tr>
-        <td>ruboxistaurin</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfCDPK1 (also Single-target; highest Vina −11.72)</td>
-        <td>Highest Vina score in entire dataset; backed by 14-drug CDPK1 convergence</td>
-      </tr>
-      <tr>
-        <td>bafetinib</td>
-        <td><span class="pill pill-blue">Kinase</span></td>
-        <td>PfCDPK1 (Vina −10.43)</td>
-        <td>Bcr-Abl inhibitor; backed by CDPK1 convergence corroboration</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+
 
 
 <script>

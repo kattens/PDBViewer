@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!doctype html>
 <html lang="en">
 <head>
@@ -187,6 +186,7 @@
   .ca-gene{
     font-size:11px;color:var(--blue-d);font-family:monospace;font-weight:600;
   }
+  .ca-gname{font-size:11px;color:var(--muted);font-style:italic;font-weight:400}
   .ca-note{font-size:11.5px;color:var(--muted);font-weight:400;line-height:1.4}
   .ca-plaslink{
     font-size:11px;color:var(--blue);text-decoration:none;
@@ -493,22 +493,22 @@
 <script>
 /* ── Convergence Target Accordion ── */
 (function(){
-  /* Gene IDs verified from ExpData.csv + CompData.csv + full analysis report (ranked by drug count) */
+  /* Gene IDs + gene names verified from ExpData.csv + CompData.csv + full analysis report */
   var TARGETS = [
-    {name:"PfCDPK1",    gene:"PF3D7_0217500", geneAlt:[],                note:"Rank #1 · 15 drugs — highest drug count; 15 kinase inhibitors + trifluoperazine; AEE788 = Priority #5"},
-    {name:"PfPK6",      gene:"PF3D7_1337100", geneAlt:[],                note:"Rank #2 · 11 drugs, 7+ MoA classes — highest chemical diversity; 2 non-kinase scaffolds (LDN193189, sangivamycin)"},
-    {name:"PfPKG",      gene:"PF3D7_1436600", geneAlt:[],                note:"Rank #3 · 10 drugs; cGMP-dependent protein kinase; essential for gametocyte egress and invasion"},
-    {name:"PfPK5",      gene:"PF3D7_1356900", geneAlt:[],                note:"Rank #4 · 8 drugs; cyclin-dependent-like kinase; GZD824, danusertib among hits"},
-    {name:"PfCDPK2",    gene:"PF3D7_0610600", geneAlt:[],                note:"Rank #5 · 6 drugs; calcium-dependent protein kinase 2; ATP-site caution applies"},
-    {name:"PfDHFR-TS",  gene:"PF3D7_0417200", geneAlt:[],                note:"Rank #6 · 5 drugs, 3 chemotypes, 2 pockets; pyrimethamine (clinical), pentamidine (pocket 2)"},
-    {name:"PfPKB",      gene:"PF3D7_1246900", geneAlt:[],                note:"Rank #6 · 5 drugs; RAC-beta serine/threonine-protein kinase; NVP-TAE226 notable hit"},
-    {name:"PfCDPK4",    gene:"PF3D7_0717500", geneAlt:[],                note:"Rank #6 · 5 drugs; calcium-dependent protein kinase 4; essential for male gametocyte activation"},
-    {name:"PfHSP90",    gene:"PF3D7_0708400", geneAlt:[],                note:"Rank #9 · 4 drugs; resorcinol-family inhibitors; AT13387 cluster — low chemical diversity"},
-    {name:"PfA-M1",     gene:"PF3D7_1311800", geneAlt:[],                note:"Rank #10 · 3 drugs (M-344, vorinostat, puromycin); M1-family alanyl aminopeptidase; Zn-chelator convergence"},
-    {name:"PfMAPK2",    gene:"PF3D7_1113900", geneAlt:[],                note:"Rank #10 · 3 drugs; mitogen-activated protein kinase 2; multiple kinase inhibitor hits"},
-    {name:"PfENR",      gene:"PF3D7_0615100", geneAlt:[],                note:"Rank #12 · 2 drugs; enoyl-acyl carrier reductase; triclosan (clinical candidate) confirmed hit"},
-    {name:"PfMO15/CDK", gene:"PF3D7_1014400", geneAlt:[],                note:"Rank #12 · 2 drugs; MO15/CDK-related kinase; cell-division checkpoint target"},
-    {name:"PfMAPK1",    gene:"PF3D7_1431500", geneAlt:[],                note:"Rank #12 · 2 drugs; mitogen-activated protein kinase 1; multiple kinase inhibitor hits"}
+    {name:"PfCDPK1",    gene:"PF3D7_0217500", geneName:"calcium-dependent protein kinase 1",                           note:"Rank #1 · 15 drugs — highest drug count; 15 kinase inhibitors + trifluoperazine; AEE788 = Priority #5"},
+    {name:"PfPK6",      gene:"PF3D7_1337100", geneName:"protein kinase 6",                                             note:"Rank #2 · 11 drugs, 7+ MoA classes — highest chemical diversity; 2 non-kinase scaffolds (LDN193189, sangivamycin)"},
+    {name:"PfPKG",      gene:"PF3D7_1436600", geneName:"cGMP-dependent protein kinase",                                note:"Rank #3 · 10 drugs; cGMP-dependent protein kinase; essential for gametocyte egress and invasion"},
+    {name:"PfPK5",      gene:"PF3D7_1356900", geneName:"protein kinase 5",                                             note:"Rank #4 · 8 drugs; cyclin-dependent-like kinase; GZD824, danusertib among hits"},
+    {name:"PfCDPK2",    gene:"PF3D7_0610600", geneName:"calcium-dependent protein kinase 2",                           note:"Rank #5 · 6 drugs; calcium-dependent protein kinase 2; ATP-site caution applies"},
+    {name:"PfDHFR-TS",  gene:"PF3D7_0417200", geneName:"bifunctional dihydrofolate reductase-thymidylate synthase",    note:"Rank #6 · 5 drugs, 3 chemotypes, 2 pockets; pyrimethamine (clinical), pentamidine (pocket 2)"},
+    {name:"PfPKB",      gene:"PF3D7_1246900", geneName:"RAC-beta serine/threonine protein kinase",                     note:"Rank #6 · 5 drugs; RAC-beta serine/threonine-protein kinase; NVP-TAE226 notable hit"},
+    {name:"PfCDPK4",    gene:"PF3D7_0717500", geneName:"calcium-dependent protein kinase 4",                           note:"Rank #6 · 5 drugs; calcium-dependent protein kinase 4; essential for male gametocyte activation"},
+    {name:"PfHSP90",    gene:"PF3D7_0708400", geneName:"heat shock protein 90",                                        note:"Rank #9 · 4 drugs; resorcinol-family inhibitors; AT13387 cluster — low chemical diversity"},
+    {name:"PfA-M1",     gene:"PF3D7_1311800", geneName:"M1-family alanyl aminopeptidase",                              note:"Rank #10 · 3 drugs (M-344, vorinostat, puromycin); M1-family alanyl aminopeptidase; Zn-chelator convergence"},
+    {name:"PfMAPK2",    gene:"PF3D7_1113900", geneName:"mitogen-activated protein kinase 2",                           note:"Rank #10 · 3 drugs; mitogen-activated protein kinase 2; multiple kinase inhibitor hits"},
+    {name:"PfENR",      gene:"PF3D7_0615100", geneName:"enoyl-acyl carrier reductase",                                 note:"Rank #12 · 2 drugs; enoyl-acyl carrier reductase; triclosan (clinical candidate) confirmed hit"},
+    {name:"PfMO15/CDK", gene:"PF3D7_1014400", geneName:"MO15-related protein kinase",                                  note:"Rank #12 · 2 drugs; MO15/CDK-related kinase; cell-division checkpoint target"},
+    {name:"PfMAPK1",    gene:"PF3D7_1431500", geneName:"mitogen-activated protein kinase 1",                           note:"Rank #12 · 2 drugs; mitogen-activated protein kinase 1; multiple kinase inhibitor hits"}
   ];
 
   var datasets = {exp: null, comp: null};
@@ -535,7 +535,7 @@
       '<button class="ca-btn" aria-expanded="false">' +
         '<span class="ca-name-wrap">' +
           '<span class="ca-name">'+esc(t.name)+'</span>' +
-          '<span class="ca-gene">'+esc(geneDisplay)+'</span>' +
+          '<span class="ca-gene">'+esc(geneDisplay)+'</span>'+(t.geneName ? '<span class="ca-gname">'+esc(t.geneName)+'</span>' : '') +
           '<span class="ca-note">'+esc(t.note)+'</span>' +
         '</span>' +
         '<a class="ca-plaslink" href="'+plasLink+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">PlasmoDB ↗</a>' +
@@ -606,39 +606,52 @@
     });
   }
 
+  function makeLinkedCell(header, value, accent) {
+    if (!value || !value.trim()) return esc(value || '');
+    var h = header.toLowerCase().trim();
+    var v = value.trim();
+    function lnk(url, label) {
+      return '<a href="'+esc(url)+'" target="_blank" rel="noopener" style="color:'+accent+';text-decoration:underline dotted">'+esc(label)+'</a>';
+    }
+    if (/^https?:\/\//i.test(v)) return lnk(v, v);
+    if (h.indexOf('pubchem') !== -1 || (h.indexOf('cid') !== -1 && h.indexOf('acid') === -1)) {
+      if (/^\d+$/.test(v)) return lnk('https://pubchem.ncbi.nlm.nih.gov/compound/'+v, v);
+    }
+    if (h.indexOf('pdb_target_id') !== -1 || h === 'malaria') {
+      var pdbM = v.match(/^(\d[A-Z0-9]{3})(?:[_\s]([A-Z]))?$/i);
+      if (pdbM) {
+        var pid = pdbM[1].toUpperCase(), chn = pdbM[2];
+        return lnk('https://www.rcsb.org/structure/'+pid+(chn?'?chainId='+chn.toUpperCase():''), v);
+      }
+      if (/^[A-Z][A-Z0-9]{5,9}$/i.test(v) && v.indexOf('_') === -1)
+        return lnk('https://www.uniprot.org/uniprotkb/'+v+'/entry', v);
+    }
+    if (h.indexOf('3d interaction') !== -1) {
+      var ext = v.split('.').pop().toLowerCase();
+      var fmt = (ext==='cif'||ext==='mmcif') ? 'mmcif' : ext==='bcif' ? 'bcif' : ext==='sdf' ? 'sdf' : ext==='mol2' ? 'mol2' : 'pdb';
+      return lnk('./ngl/viewer.html?load=../MDpdb/'+encodeURIComponent(v)+'&format='+fmt, v);
+    }
+    if (h.indexOf('gene id') !== -1) {
+      if (/^PF3D7_\d+/i.test(v))
+        return lnk('https://plasmodb.org/plasmo/app/record/gene/'+v, v);
+    }
+    return esc(v);
+  }
+
   function buildTable(headers, rows){
     var html = '<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>';
     headers.forEach(function(h){ html += '<th style="padding:7px 10px;text-align:left;white-space:nowrap;background:#deeef8;font-weight:700;color:#326090;border-bottom:2px solid var(--border)">'+esc(h)+'</th>'; });
     html += '</tr></thead><tbody>';
     rows.forEach(function(r,ri){
       html += '<tr style="background:'+(ri%2?'var(--blue-l)':'var(--panel)')+'">';
-      headers.forEach(function(_,ci){ html += '<td style="padding:6px 10px;border-bottom:1px solid var(--border);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r[ci]||'')+'">'+esc(r[ci]||'')+'</td>'; });
+      headers.forEach(function(h,ci){ html += '<td style="padding:6px 10px;border-bottom:1px solid var(--border);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r[ci]||'')+'">'+makeLinkedCell(h, r[ci]||'', 'var(--blue)')+'</td>'; });
       html += '</tr>';
     });
     html += '</tbody></table>';
     return html;
   }
 
-  function linkifyPanel(panel, t){
-    panel.querySelectorAll('td').forEach(function(td){
-      var txt = td.textContent.trim();
-      if(!txt) return;
-      /* PF3D7_ gene IDs */
-      if(/PF3D7_\d+/i.test(txt)){
-        td.innerHTML = td.innerHTML.replace(/(PF3D7_\d+)/gi,function(m){
-          return '<a href="https://plasmodb.org/plasmo/app/record/gene/'+m+'" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline dotted">'+esc(m)+'</a>';
-        });
-      }
-      /* drug names (CID or typical patterns) */
-      if(/^[A-Za-z0-9]/.test(txt) && td.closest('tr') && !td.innerHTML.includes('<a')){
-        var hdrs = Array.from(panel.querySelectorAll('th')).map(function(th){return th.textContent.toLowerCase();});
-        var ci = Array.from(td.parentElement.children).indexOf(td);
-        if(hdrs[ci] && (hdrs[ci].indexOf('drug')!==-1||hdrs[ci].indexOf('compound')!==-1||hdrs[ci].indexOf('name')!==-1)){
-          td.innerHTML = '<a href="https://pubchem.ncbi.nlm.nih.gov/compound/'+encodeURIComponent(txt)+'" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline dotted">'+esc(txt)+'</a>';
-        }
-      }
-    });
-  }
+  function linkifyPanel(panel, t){ /* superseded by makeLinkedCell in buildTable */ }
 
   function updateCounts(){
     document.querySelectorAll('.ca-item').forEach(function(item){
@@ -744,6 +757,35 @@
     reader.readAsText(f);
   });
 
+  /* ── Auto-load both datasets from GitHub on page load ── */
+  var RAW_BASE = 'https://raw.githubusercontent.com/kattens/PDBViewer/main/';
+  setStatus('Loading datasets…', false);
+  function autoLoad(ds, filename){
+    fetch(RAW_BASE + filename)
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+      .then(function(text){
+        var parsed = parseCSV(text);
+        if(!parsed || !parsed.headers.length) throw new Error('Empty CSV');
+        datasets[ds] = parsed;
+        /* if this is the active dataset, refresh UI */
+        if(ds === currentDs){
+          setStatus('✓ '+parsed.rows.length+' rows loaded', true);
+          document.querySelectorAll('.ca-panel').forEach(function(p){ delete p.dataset.populated; });
+          document.querySelectorAll('.ca-item.ca-open').forEach(function(item){
+            populatePanel(item, item.querySelector('.ca-panel'));
+          });
+          var loader = document.getElementById('tlaLoader');
+          if(loader) loader.open = false;
+        }
+        updateCounts();
+      })
+      .catch(function(e){
+        if(ds === currentDs) setStatus('Auto-load failed — use the loader above. ('+e.message+')', false);
+      });
+  }
+  autoLoad('exp',  'ExpData.csv');
+  autoLoad('comp', 'CompData.csv');
+
 })();
 </script>
 
@@ -820,5 +862,3 @@
 </script>
 </body>
 </html>
-
-</body></html>

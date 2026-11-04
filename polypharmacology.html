@@ -197,9 +197,7 @@
     font:inherit;text-align:left;
   }
   .pa-btn:hover{background:var(--orange-l)}
-  .pa-name-wrap{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
-  .pa-name{font-weight:700;font-size:13.5px;color:#1a2340}
-  .pa-note{font-size:11.5px;color:var(--muted);font-weight:400;line-height:1.4}
+  .pa-name{font-weight:700;font-size:13.5px;color:#1a2340;flex:1}
   .pa-publink{
     font-size:11px;color:var(--orange);text-decoration:none;
     padding:2px 8px;border-radius:10px;border:1px solid var(--border);
@@ -250,24 +248,6 @@
   <p class="page-sub">Drugs that engage two or more P. falciparum proteins — offering resistance-robust therapeutic potential.</p>
 </div>
 
-<!-- STAT ROW -->
-<div class="stat-row">
-  <div class="stat-card">
-    <div class="stat-num">19</div>
-    <div class="stat-label">drugs hit 2+ malaria targets</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-num">6</div>
-    <div class="stat-label">hit multiple paralogs in the same functional family</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-num">14</div>
-    <div class="stat-label">of 19 are kinase inhibitors (ATP-site caution applies)</div>
-  </div>
-</div>
-
-<div class="divider"></div>
-
 <!-- DRUG ACCORDION LIST -->
 <div class="drug-list-section">
   <div class="dla-bar">
@@ -287,6 +267,24 @@
     </details>
   </div>
   <div id="polyAccordion" class="poly-accordion"></div>
+</div>
+
+<div class="divider" style="margin-top:28px"></div>
+
+<!-- STAT ROW -->
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="stat-num">19</div>
+    <div class="stat-label">drugs hit 2+ malaria targets</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">6</div>
+    <div class="stat-label">hit multiple paralogs in the same functional family</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">14</div>
+    <div class="stat-label">of 19 are kinase inhibitors (ATP-site caution applies)</div>
+  </div>
 </div>
 
 <div class="divider"></div>
@@ -337,7 +335,12 @@
   </div>
 </div>
 
-<div class="drug-table-wrap" hidden>
+<div class="divider"></div>
+
+<!-- DRUG TABLE -->
+<h2>19 Polypharmacology Drugs</h2>
+
+<div class="drug-table-wrap">
   <table>
     <thead>
       <tr>
@@ -466,31 +469,24 @@
   </table>
 </div>
 
+<div class="warning">
+  <div class="warning-icon">⚠️</div>
+  <div><strong>Kinase ATP-site caution:</strong> 14 of 19 drugs are kinase inhibitors. P. falciparum kinase ATP pockets share structural homology with human kinases. Multi-target hits may partly reflect ATP-site conservation rather than genuine malaria polypharmacology. Non-kinase scaffold hits (ritonavir, trifluoperazine, vorinostat, LDN193189, sangivamycin, pentamidine) carry stronger evidence.</div>
+</div>
+
+<div class="note-box">
+  <strong>First-wave experiments:</strong> Ritonavir (Priority #1), sangivamycin (Priority #2 PfPK6 non-kinase probe), trifluoperazine (Priority #6 mechanistic probe). See §15 of the full analysis for parasite-killing assay design.
+</div>
 
 
 <script>
 /* ── Polypharmacology accordion ── */
 (function(){
   var DRUGS = [
-    {name:"ritonavir",         note:"Only non-kinase pan-paralog hit; aspartyl protease chemistry bridge"},
-    {name:"sunitinib",         note:"Multi-target kinase inhibitor; ATP-site conservation caution applies"},
-    {name:"bosutinib",         note:"Contributes to PfPK6 chemical diversity"},
-    {name:"crizotinib",        note:"FDA-approved; no prior antimalarial history (Tier D)"},
-    {name:"trifluoperazine",   note:"Phenothiazine antipsychotic; calmodulin affinity well-established"},
-    {name:"lapatinib",         note:"FDA-approved EGFR/HER2 inhibitor; Tier D"},
-    {name:"NVP-BSK805",        note:"Contributes to PfPK6 convergence; 7+ MoA classes"},
-    {name:"TG-101209",         note:"TG-101209 / TG101209 normalized to single entry"},
-    {name:"GZD824",            note:"Bcr-Abl inhibitor repurposed"},
-    {name:"barasertib-HQPA",   note:"Aurora B inhibitor; contributes to PfPK6 chemical diversity"},
-    {name:"BI-2536",           note:"PLK1 inhibitor; PfPK6 structural similarity"},
-    {name:"vorinostat",        note:"HDAC inhibitor / Zn-chelator; metalloaminopeptidase off-target"},
-    {name:"M-344",             note:"Hydroxamate zinc chelator; plausible on Zn-metalloaminopeptidase"},
-    {name:"pentamidine",       note:"Aromatic diamidine; zero pocket overlap with pyrimethamine"},
-    {name:"LDN193189",         note:"★ Strongest cross-class evidence for PfPK6"},
-    {name:"sangivamycin",      note:"Pyrrolopyrimidine; first-wave experiment candidate (Priority #2 probe)"},
-    {name:"AT13387",           note:"4 resorcinol-family drugs; Priority #3 cluster (low chemical diversity)"},
-    {name:"ruboxistaurin",     note:"Highest Vina score in entire dataset; backed by 14-drug CDPK1 convergence"},
-    {name:"bafetinib",         note:"Bcr-Abl inhibitor; backed by CDPK1 convergence corroboration"}
+    "ritonavir","sunitinib","bosutinib","crizotinib","trifluoperazine",
+    "lapatinib","NVP-BSK805","TG-101209","GZD824","barasertib-HQPA",
+    "BI-2536","vorinostat","M-344","pentamidine","LDN193189",
+    "sangivamycin","AT13387","ruboxistaurin","bafetinib"
   ];
   // Aliases: variations of the same drug name in CSVs
   var ALIASES = {
@@ -505,18 +501,15 @@
 
   /* ── Build accordion skeleton ── */
   var acc = document.getElementById("polyAccordion");
-  DRUGS.forEach(function(d){
+  DRUGS.forEach(function(drug){
     var item = document.createElement("div");
     item.className = "pa-item";
-    item.dataset.drug = d.name;
-    var pubHref = "https://pubchem.ncbi.nlm.nih.gov/compound/" + encodeURIComponent(d.name);
+    item.dataset.drug = drug;
+    var pubUrl = "https://pubchem.ncbi.nlm.nih.gov/compound/" + encodeURIComponent(drug);
     item.innerHTML =
       '<button class="pa-btn">' +
-        '<span class="pa-name-wrap">' +
-          '<span class="pa-name">' + esc(d.name) + '</span>' +
-          (d.note ? '<span class="pa-note">' + esc(d.note) + '</span>' : '') +
-        '</span>' +
-        '<a class="pa-publink" href="' + pubHref + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">PubChem ↗</a>' +
+        '<span class="pa-name">' + esc(drug) + '</span>' +
+        '<a class="pa-publink" href="' + pubUrl + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">PubChem ↗</a>' +
         '<span class="pa-count">—</span>' +
         '<span class="pa-arrow">▼</span>' +
       '</button>' +
@@ -570,13 +563,45 @@
     });
   }
 
+  function makeLinkedCell(header, value, accent) {
+    if (!value || !value.trim()) return esc(value || '');
+    var h = header.toLowerCase().trim();
+    var v = value.trim();
+    function lnk(url, label) {
+      return '<a href="'+esc(url)+'" target="_blank" rel="noopener" style="color:'+accent+';text-decoration:underline dotted">'+esc(label)+'</a>';
+    }
+    if (/^https?:\/\//i.test(v)) return lnk(v, v);
+    if (h.indexOf('pubchem') !== -1 || (h.indexOf('cid') !== -1 && h.indexOf('acid') === -1)) {
+      if (/^\d+$/.test(v)) return lnk('https://pubchem.ncbi.nlm.nih.gov/compound/'+v, v);
+    }
+    if (h.indexOf('pdb_target_id') !== -1 || h === 'malaria') {
+      var pdbM = v.match(/^(\d[A-Z0-9]{3})(?:[_\s]([A-Z]))?$/i);
+      if (pdbM) {
+        var pid = pdbM[1].toUpperCase(), chn = pdbM[2];
+        return lnk('https://www.rcsb.org/structure/'+pid+(chn?'?chainId='+chn.toUpperCase():''), v);
+      }
+      if (/^[A-Z][A-Z0-9]{5,9}$/i.test(v) && v.indexOf('_') === -1)
+        return lnk('https://www.uniprot.org/uniprotkb/'+v+'/entry', v);
+    }
+    if (h.indexOf('3d interaction') !== -1) {
+      var ext = v.split('.').pop().toLowerCase();
+      var fmt = (ext==='cif'||ext==='mmcif') ? 'mmcif' : ext==='bcif' ? 'bcif' : ext==='sdf' ? 'sdf' : ext==='mol2' ? 'mol2' : 'pdb';
+      return lnk('./ngl/viewer.html?load=../MDpdb/'+encodeURIComponent(v)+'&format='+fmt, v);
+    }
+    if (h.indexOf('gene id') !== -1) {
+      if (/^PF3D7_\d+/i.test(v))
+        return lnk('https://plasmodb.org/plasmo/app/record/gene/'+v, v);
+    }
+    return esc(v);
+  }
+
   function buildTable(headers, rows){
     var html = '<div class="pa-tbl-wrap"><table><thead><tr>';
     headers.forEach(function(h){ html += '<th>' + esc(h) + '</th>'; });
     html += '</tr></thead><tbody>';
     rows.forEach(function(row){
       html += '<tr>';
-      row.forEach(function(cell){ html += '<td>' + esc(cell) + '</td>'; });
+      headers.forEach(function(h,i){ html += '<td>' + makeLinkedCell(h, row[i]||'', 'var(--orange)') + '</td>'; });
       html += '</tr>';
     });
     html += '</tbody></table></div>';
@@ -585,18 +610,7 @@
     return html;
   }
 
-  function linkifyPanel(panel){
-    panel.querySelectorAll("td").forEach(function(td){
-      if(td.querySelector("a")) return;
-      td.innerHTML = td.innerHTML
-        .replace(/(PF3D7_\d+)/g, function(m){
-          return '<a href="https://plasmodb.org/plasmo/app/record/gene/'+m+'" target="_blank" rel="noopener" style="color:var(--orange);text-decoration:underline dotted">'+m+'</a>';
-        })
-        .replace(/(Pf[A-Z][A-Za-z0-9\-]+)/g, function(m){
-          return '<a href="https://plasmodb.org/plasmo/app/search?q='+encodeURIComponent(m)+'" target="_blank" rel="noopener" style="color:var(--orange);text-decoration:underline dotted">'+m+'</a>';
-        });
-    });
-  }
+  function linkifyPanel(panel){ /* superseded by makeLinkedCell in buildTable */ }
 
   function updateCounts(){
     document.querySelectorAll(".pa-item").forEach(function(item){
@@ -697,6 +711,32 @@
     reader.onload = function(e){ ingestText(e.target.result); };
     reader.readAsText(f);
   });
+
+  /* ── Auto-load both datasets from GitHub on page load ── */
+  var RAW_BASE = "https://raw.githubusercontent.com/kattens/PDBViewer/main/";
+  setStatus("Loading datasets…");
+  function autoLoad(ds, filename){
+    fetch(RAW_BASE + filename)
+      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
+      .then(function(text){
+        try {
+          var parsed = parseCSV(text);
+          if(!parsed || !parsed.headers.length) throw new Error("Empty CSV");
+          datasets[ds] = parsed;
+          if(ds === currentDs){
+            setStatus("✓ "+parsed.rows.length+" rows loaded", "ok");
+            var loader = document.getElementById("dlaLoader");
+            if(loader) loader.open = false;
+          }
+          updateCounts();
+        } catch(e){ if(ds === currentDs) setStatus("Parse error: "+e.message, "err"); }
+      })
+      .catch(function(e){
+        if(ds === currentDs) setStatus("Auto-load failed — use the loader above. ("+e.message+")", "err");
+      });
+  }
+  autoLoad("exp",  "ExpData.csv");
+  autoLoad("comp", "CompData.csv");
 
   function esc(s){
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");

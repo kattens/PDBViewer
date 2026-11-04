@@ -98,13 +98,23 @@ body{
 .fw-title{font-size:17px;font-weight:700;color:var(--navy);margin:0 0 4px}
 .fw-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
 
-/* two-card grid */
+/* axis labels */
 .fw-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
+  grid-template-columns:72px 1fr 1fr;
+  grid-template-rows:auto auto auto;
+  gap:10px;
 }
-@media(max-width:560px){.fw-grid{grid-template-columns:1fr}}
+.fw-corner{} /* empty top-left */
+.fw-col-lbl,.fw-row-lbl{
+  display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+  color:#9aa5bc;
+}
+.fw-row-lbl{
+  flex-direction:column;gap:2px;text-align:center;justify-content:center;
+  border-right:2px solid var(--border);padding-right:10px;
+}
 
 /* quadrant cards */
 .quad{
@@ -119,25 +129,24 @@ a.quad:hover .quad-arrow{opacity:1;transform:translateX(4px)}
   position:absolute;top:14px;right:15px;font-size:15px;
   opacity:0;transition:opacity .15s,transform .15s;
 }
+.quad-teal{background:#eef9f7;border:2px solid var(--teal)}
+.quad-teal .quad-name,.quad-teal .quad-big,.quad-teal .quad-arrow{color:var(--teal)}
 .quad-blue{background:#eaf3fb;border:2px solid var(--blue)}
 .quad-blue .quad-name,.quad-blue .quad-big,.quad-blue .quad-arrow{color:var(--blue)}
 .quad-orange{background:#fff8ee;border:2px solid var(--orange)}
 .quad-orange .quad-name,.quad-orange .quad-big,.quad-orange .quad-arrow{color:var(--orange)}
+.quad-empty{
+  background:#f5f6f8;border:2px dashed #cdd2dc;color:#aab0bc;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+}
 .quad-name{font-size:13.5px;font-weight:700;margin:0 0 6px;line-height:1.2}
 .quad-big{font-size:clamp(30px,4vw,44px);font-weight:800;line-height:1;display:block}
 .quad-unit{font-size:14px;font-weight:600;opacity:.75;display:block;margin-bottom:10px}
 .quad-desc{font-size:12.5px;color:#4a5568;line-height:1.5;margin:0}
-.fw-note{font-size:12px;color:var(--muted);margin:14px 0 0;font-style:italic}
+.quad-empty-line{width:36px;height:2px;background:#c8cdd8;border-radius:2px}
+.quad-empty-text{font-style:italic;font-size:12px;color:#b0b6c3}
 
-/* ── Dataset toggle ── */
-.ds-toggle{display:flex;gap:5px;flex-shrink:0}
-.ds-btn{
-  padding:5px 15px;border-radius:20px;border:1.5px solid var(--border);
-  background:var(--panel);color:var(--muted);font-size:12px;font-weight:600;
-  cursor:pointer;box-shadow:none;transition:all .15s;
-}
-.ds-btn.ds-active{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 2px 8px rgba(74,134,184,.25)}
-.ds-btn:hover:not(.ds-active){background:#eaf3fb;color:var(--blue);border-color:var(--blue)}
+.fw-note{font-size:12px;color:var(--muted);margin:14px 0 0;font-style:italic}
 
 /* ── Dataset section ── */
 .section-header{margin-bottom:14px}
@@ -278,7 +287,7 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
     <div class="hero-text">
       <p class="hero-eyebrow">Computational Drug Repurposing · P. falciparum</p>
       <h1 class="hero-title">Malaria Drug<br>Repurposing Viewer</h1>
-      <p class="hero-sub">FDA-approved and investigational drugs docked against <em>P. falciparum</em> target proteins ranked by binding score to identify repurposing candidates against malaria.</p>
+      <p class="hero-sub">FDA-approved and investigational drugs docked against <em>P. falciparum</em> target proteins — ranked by binding score to identify repurposing candidates against malaria.</p>
     </div>
     <div class="hero-stats">
       <div class="hstat hstat-teal">
@@ -331,10 +340,6 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
   </div>
 
   <div class="toolbar">
-    <div class="ds-toggle">
-      <button class="ds-btn ds-active" id="btnExp">Experimental</button>
-      <button class="ds-btn" id="btnComp">Computational</button>
-    </div>
     <div class="search-wrap">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -427,8 +432,6 @@ const tbody=tbl.querySelector('tbody');
 const searchBox=document.getElementById('search');
 const rowCountEl=document.getElementById('rowCount');
 let data=[],columns=[],sortState={key:null,dir:1};
-const datasets={exp:null,comp:null};
-let currentDs='exp';
 
 function rowsToObjects(rows){
   if(!rows.length)return{columns:[],data:[]};
@@ -554,45 +557,17 @@ function updateSummary(rows){
 }
 
 /* ── Loaders ── */
-function applyDataset(ds){
-  if(!datasets[ds])return;
-  const{columns:cols,data:d}=datasets[ds];
+async function loadFromText(text){
+  const rows=parseCSV(text);
+  const{columns:cols,data:d}=rowsToObjects(rows);
   columns=cols;data=d;
-  sortState={key:null,dir:1};
   renderTable(columns,filteredRows());
 }
-async function loadFromText(text,ds){
-  const rows=parseCSV(text);
-  const parsed=rowsToObjects(rows);
-  if(ds){
-    datasets[ds]=parsed;
-    if(ds===currentDs)applyDataset(ds);
-  }else{
-    columns=parsed.columns;data=parsed.data;
-    renderTable(columns,filteredRows());
-  }
-}
-async function loadFromURL(url,ds){
+async function loadFromURL(url){
   const res=await fetch(url,{cache:'no-store'});
   if(!res.ok)throw new Error(`HTTP ${res.status}`);
-  await loadFromText(await res.text(),ds);
+  await loadFromText(await res.text());
 }
-
-/* ── Dataset toggle ── */
-document.getElementById('btnExp').addEventListener('click',function(){
-  if(currentDs==='exp')return;
-  currentDs='exp';
-  this.classList.add('ds-active');
-  document.getElementById('btnComp').classList.remove('ds-active');
-  applyDataset('exp');
-});
-document.getElementById('btnComp').addEventListener('click',function(){
-  if(currentDs==='comp')return;
-  currentDs='comp';
-  this.classList.add('ds-active');
-  document.getElementById('btnExp').classList.remove('ds-active');
-  applyDataset('comp');
-});
 
 document.getElementById('loadUrl').addEventListener('click',async()=>{
   const url=document.getElementById('url').value.trim();
@@ -605,11 +580,9 @@ document.getElementById('file').addEventListener('change',async e=>{
 });
 searchBox.addEventListener('input',()=>renderTable(columns,filteredRows()));
 
-/* ── Auto-preload both datasets from GitHub ── */
-const RAW='https://raw.githubusercontent.com/kattens/PDBViewer/main/';
-window.addEventListener("DOMContentLoaded",()=>{
-  loadFromURL(RAW+'ExpData.csv','exp').catch(e=>console.warn('ExpData auto-load:',e));
-  loadFromURL(RAW+'CompData.csv','comp').catch(e=>console.warn('CompData auto-load:',e));
+window.addEventListener("DOMContentLoaded",async()=>{
+  try{await loadFromURL("./CompData.csv")}
+  catch(e){console.error("Auto-load failed:",e)}
 });
 </script>
 </body>

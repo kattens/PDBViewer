@@ -1,0 +1,318 @@
+<title>KEGG Pathways</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root {
+    --bg: #faf8ff;
+    --bg2: #f1eeff;
+    --card: #fff;
+    --border: #d4caff;
+    --accent: #7c4dff;
+    --accent2: #9c6ffe;
+    --fg: #1a1030;
+    --fg2: #5b4a7a;
+    --pill-bg: #ede8ff;
+    --pill-fg: #5230b8;
+    --th-bg: #f5f2ff;
+    --row-hover: #f0ebff;
+    --tag-exp: #e8f5e9; --tag-exp-fg: #2e7d32;
+    --tag-comp: #fff3e0; --tag-comp-fg: #e65100;
+    --shadow: 0 2px 12px rgba(124,77,255,.10);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f0a1e; --bg2: #1a1232; --card: #1e1638; --border: #3d2d80;
+      --accent: #a97dff; --accent2: #c4a0ff; --fg: #ece6ff; --fg2: #9e8cc4;
+      --pill-bg: #2d1f5e; --pill-fg: #c4a0ff; --th-bg: #231a46; --row-hover: #2a1f52;
+      --tag-exp: #1b3320; --tag-exp-fg: #81c784; --tag-comp: #2d1f0a; --tag-comp-fg: #ffb74d;
+      --shadow: 0 2px 12px rgba(0,0,0,.4);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f0a1e; --bg2: #1a1232; --card: #1e1638; --border: #3d2d80;
+    --accent: #a97dff; --accent2: #c4a0ff; --fg: #ece6ff; --fg2: #9e8cc4;
+    --pill-bg: #2d1f5e; --pill-fg: #c4a0ff; --th-bg: #231a46; --row-hover: #2a1f52;
+    --tag-exp: #1b3320; --tag-exp-fg: #81c784; --tag-comp: #2d1f0a; --tag-comp-fg: #ffb74d;
+    --shadow: 0 2px 12px rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 48px;
+  }
+
+  /* ── header ── */
+  .page-header {
+    background: linear-gradient(135deg, #5e35b1 0%, #7c4dff 50%, #b39ddb 100%);
+    margin-left: max(-16px, calc(-1 * env(safe-area-inset-left, 0px)));
+    margin-right: max(-16px, calc(-1 * env(safe-area-inset-right, 0px)));
+    padding: 36px max(24px, env(safe-area-inset-left, 0px)) 32px;
+    color: #fff;
+  }
+  .back-link { display:inline-flex; align-items:center; gap:5px; color:rgba(255,255,255,.8);
+    text-decoration:none; font-size:13px; margin-bottom:18px; }
+  .back-link:hover { color:#fff; }
+  .page-header h1 { font-size:clamp(22px,5vw,34px); font-weight:700; letter-spacing:-.5px; text-wrap:balance; }
+  .page-header p { opacity:.85; margin-top:7px; max-width:520px; font-size:15px; }
+
+  /* ── toggle ── */
+  .toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:22px 0 16px; }
+  .ds-toggle { display:flex; background:var(--bg2); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .ds-btn {
+    padding:7px 18px; border:none; background:transparent; color:var(--fg2);
+    cursor:pointer; font-size:13px; font-weight:500; transition:background .15s, color .15s;
+  }
+  .ds-btn.ds-active { background:var(--accent); color:#fff; }
+
+  .row-count { font-size:12px; color:var(--fg2); margin-left:auto; }
+
+  /* ── table ── */
+  .tbl-wrap { overflow-x:auto; border-radius:12px; border:1px solid var(--border); box-shadow:var(--shadow); }
+  table { width:100%; border-collapse:collapse; min-width:720px; }
+  thead th {
+    background:var(--th-bg); padding:10px 12px; text-align:left;
+    font-size:12px; font-weight:600; color:var(--fg2); text-transform:uppercase;
+    letter-spacing:.5px; white-space:nowrap; cursor:pointer; user-select:none;
+    border-bottom:2px solid var(--border);
+  }
+  thead th:hover { color:var(--accent); }
+  thead th .sort-icon { margin-left:4px; opacity:.4; }
+  thead th.sort-asc .sort-icon, thead th.sort-desc .sort-icon { opacity:1; color:var(--accent); }
+  thead th.sort-desc .sort-icon { transform:rotate(180deg); display:inline-block; }
+  tbody tr:hover { background:var(--row-hover); }
+  td { padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  tbody tr:last-child td { border-bottom:none; }
+
+  /* cells */
+  .id-link { color:var(--accent); text-decoration:none; font-weight:600; font-size:12px; white-space:nowrap; }
+  .id-link:hover { text-decoration:underline; }
+  .name-cell { font-weight:500; color:var(--fg); }
+  .num-cell { text-align:right; font-variant-numeric:tabular-nums; }
+  .pval-cell { font-size:12px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+  .gene-pills { display:flex; flex-wrap:wrap; gap:5px; }
+  .gene-pill {
+    display:inline-block; background:var(--pill-bg); color:var(--pill-fg);
+    border-radius:4px; padding:2px 7px; font-size:11px; font-weight:500;
+    text-decoration:none; white-space:nowrap;
+  }
+  .gene-pill:hover { background:var(--accent); color:#fff; }
+
+  .ds-tag {
+    display:inline-block; border-radius:4px; padding:2px 7px; font-size:11px; font-weight:600;
+  }
+  .tag-exp { background:var(--tag-exp); color:var(--tag-exp-fg); }
+  .tag-comp { background:var(--tag-comp); color:var(--tag-comp-fg); }
+
+  /* empty state */
+  .empty { text-align:center; padding:40px; color:var(--fg2); }
+
+  /* summary cards */
+  .summary-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:22px 0; }
+  .stat-card {
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; box-shadow:var(--shadow);
+  }
+  .stat-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--fg2); }
+  .stat-val { font-size:28px; font-weight:700; color:var(--accent); line-height:1.1; margin-top:4px; }
+  .stat-sub { font-size:11px; color:var(--fg2); margin-top:2px; }
+</style>
+
+<div class="page-header">
+  <a class="back-link" href="index.html">← Back to overview</a>
+  <h1>KEGG Pathway Enrichment</h1>
+  <p>Enriched KEGG metabolic pathways in the drug-target gene set — experimental and computational analyses.</p>
+</div>
+
+<div class="toolbar">
+  <div class="ds-toggle">
+    <button class="ds-btn ds-active" id="btnExp">Experimental</button>
+    <button class="ds-btn" id="btnComp">Computational</button>
+  </div>
+  <span id="rowCount" class="row-count"></span>
+</div>
+
+<div id="summaryRow" class="summary-row"></div>
+
+<div class="tbl-wrap">
+  <table id="mainTable">
+    <thead>
+      <tr>
+        <th data-col="id">Pathway ID <span class="sort-icon">↑</span></th>
+        <th data-col="name">Pathway Name <span class="sort-icon">↑</span></th>
+        <th data-col="count" class="num-cell">Genes <span class="sort-icon">↑</span></th>
+        <th data-col="fold" class="num-cell">Fold Enr. <span class="sort-icon">↑</span></th>
+        <th data-col="pval" class="pval-cell sort-asc">P-value <span class="sort-icon">↑</span></th>
+        <th data-col="benj" class="pval-cell">Benjamini <span class="sort-icon">↑</span></th>
+        <th>Gene List</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script>
+// ── inline data ──
+// format: [rawId, name, bgd_count, result_count, fold, pval, benjamini, genes_string]
+const DATA = {
+  exp: [
+    ['ec00670__PK__KEGG','One carbon pool by folate',9,1,23.03,0.04279999956273869,0.1922078967392055,'PF3D7_0417200']
+  ],
+  comp: [
+    ['ec00061__PK__KEGG','Fatty acid biosynthesis',43,2,5.51,0.046760371460818184,0.12919071567715168,'PF3D7_0615100,PF3D7_0922900'],
+    ['ec00240__PK__KEGG','Pyrimidine metabolism',34,2,6.97,0.030141003494466335,0.12919071567715168,'PF3D7_0417200,PF3D7_0603300']
+  ]
+};
+
+// ── state ──
+let currentDs = 'exp';
+let sortCol = 'pval';
+let sortAsc = true;
+
+// ── helpers ──
+function extractKeggId(raw) {
+  // 'ec00061__PK__KEGG' → 'ec00061'
+  return raw.split('__')[0];
+}
+
+function keggUrl(raw) {
+  return 'https://www.kegg.jp/pathway/' + extractKeggId(raw);
+}
+
+function plasmoUrl(g) {
+  return 'https://plasmodb.org/plasmo/app/record/gene/' + g.trim();
+}
+
+function fmtSci(v) {
+  if (v === 0) return '0';
+  var e = Math.floor(Math.log10(Math.abs(v)));
+  var m = (v / Math.pow(10, e)).toFixed(2);
+  return m + ' × 10<sup>' + e + '</sup>';
+}
+
+function fmtFold(v) {
+  if (!isFinite(v)) return '∞';
+  return v.toFixed(2);
+}
+
+// ── sort ──
+const colIdx = { id:0, name:1, count:3, fold:4, pval:5, benj:6 };
+
+function getSortedRows() {
+  var rows = DATA[currentDs].slice();
+  var idx = colIdx[sortCol];
+  rows.sort(function(a, b) {
+    var av = a[idx], bv = b[idx];
+    if (typeof av === 'string') {
+      var cmp = av.localeCompare(bv);
+      return sortAsc ? cmp : -cmp;
+    }
+    if (!isFinite(av) && !isFinite(bv)) return 0;
+    if (!isFinite(av)) return sortAsc ? 1 : -1;
+    if (!isFinite(bv)) return sortAsc ? -1 : 1;
+    return sortAsc ? av - bv : bv - av;
+  });
+  return rows;
+}
+
+// ── render ──
+function render() {
+  var rows = getSortedRows();
+  var tbody = document.getElementById('tbody');
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No pathways found for this dataset.</td></tr>';
+    document.getElementById('rowCount').textContent = '0 pathways';
+    renderSummary([]);
+    return;
+  }
+
+  document.getElementById('rowCount').textContent = rows.length + (rows.length === 1 ? ' pathway' : ' pathways');
+
+  var html = '';
+  rows.forEach(function(r) {
+    var rawId = r[0], name = r[1], bgd = r[2], cnt = r[3], fold = r[4], pval = r[5], benj = r[6], genesStr = r[7];
+    var keggId = extractKeggId(rawId);
+    var genes = genesStr.split(',').filter(Boolean);
+
+    var geneHtml = genes.map(function(g) {
+      g = g.trim();
+      return '<a class="gene-pill" href="' + plasmoUrl(g) + '" target="_blank" rel="noopener">' + g + '</a>';
+    }).join('');
+
+    html += '<tr>';
+    html += '<td><a class="id-link" href="' + keggUrl(rawId) + '" target="_blank" rel="noopener">' + keggId + '</a></td>';
+    html += '<td class="name-cell">' + name + '</td>';
+    html += '<td class="num-cell">' + cnt + ' / ' + bgd + '</td>';
+    html += '<td class="num-cell">' + fmtFold(fold) + 'x</td>';
+    html += '<td class="pval-cell">' + fmtSci(pval) + '</td>';
+    html += '<td class="pval-cell">' + fmtSci(benj) + '</td>';
+    html += '<td><div class="gene-pills">' + geneHtml + '</div></td>';
+    html += '</tr>';
+  });
+
+  tbody.innerHTML = html;
+
+  // update sort indicators
+  document.querySelectorAll('thead th').forEach(function(th) {
+    var col = th.dataset.col;
+    th.classList.remove('sort-asc','sort-desc');
+    if (col === sortCol) th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+  });
+
+  renderSummary(rows);
+}
+
+function renderSummary(rows) {
+  var el = document.getElementById('summaryRow');
+  if (rows.length === 0) { el.innerHTML = ''; return; }
+
+  var totalGenes = new Set();
+  rows.forEach(function(r) {
+    r[7].split(',').filter(Boolean).forEach(function(g) { totalGenes.add(g.trim()); });
+  });
+
+  var minP = Math.min.apply(null, rows.map(function(r){ return r[5]; }));
+
+  el.innerHTML =
+    '<div class="stat-card"><div class="stat-label">Pathways</div><div class="stat-val">' + rows.length + '</div><div class="stat-sub">enriched KEGG terms</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Unique Genes</div><div class="stat-val">' + totalGenes.size + '</div><div class="stat-sub">mapped to pathways</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Best P-value</div><div class="stat-val" style="font-size:16px">' + minP.toExponential(2) + '</div><div class="stat-sub">uncorrected</div></div>';
+}
+
+// ── events ──
+document.getElementById('btnExp').addEventListener('click', function() {
+  currentDs = 'exp';
+  this.classList.add('ds-active');
+  document.getElementById('btnComp').classList.remove('ds-active');
+  render();
+});
+
+document.getElementById('btnComp').addEventListener('click', function() {
+  currentDs = 'comp';
+  this.classList.add('ds-active');
+  document.getElementById('btnExp').classList.remove('ds-active');
+  render();
+});
+
+document.querySelectorAll('thead th[data-col]').forEach(function(th) {
+  th.addEventListener('click', function() {
+    var col = this.dataset.col;
+    if (sortCol === col) { sortAsc = !sortAsc; }
+    else { sortCol = col; sortAsc = true; }
+    render();
+  });
+});
+
+render();
+</script>

@@ -123,6 +123,10 @@ a.quad:hover .quad-arrow{opacity:1;transform:translateX(4px)}
 .quad-blue .quad-name,.quad-blue .quad-big,.quad-blue .quad-arrow{color:var(--blue)}
 .quad-orange{background:#fff8ee;border:2px solid var(--orange)}
 .quad-orange .quad-name,.quad-orange .quad-big,.quad-orange .quad-arrow{color:var(--orange)}
+.quad-teal{background:#e6f7f4;border:2px solid #00897b}
+.quad-teal .quad-name,.quad-teal .quad-big,.quad-teal .quad-arrow{color:#00695c}
+.quad-purple{background:#f3eeff;border:2px solid #7c4dff}
+.quad-purple .quad-name,.quad-purple .quad-big,.quad-purple .quad-arrow{color:#5e35b1}
 .quad-name{font-size:13.5px;font-weight:700;margin:0 0 6px;line-height:1.2}
 .quad-big{font-size:clamp(30px,4vw,44px);font-weight:800;line-height:1;display:block}
 .quad-unit{font-size:14px;font-weight:600;opacity:.75;display:block;margin-bottom:10px}
@@ -303,7 +307,7 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
   <!-- 2×2 Framework -->
   <div class="framework">
     <div class="fw-title">How the drugs are categorized</div>
-    <p class="fw-sub">Every drug–target pair falls into one of three patterns — click a tile to explore that group.</p>
+    <p class="fw-sub">Every drug–target pair falls into one of three patterns — click a tile to explore that group. Explore GO and KEGG enrichment analyses for the full gene set.</p>
 
     <div class="fw-grid">
       <a class="quad quad-blue" href="convergence.html">
@@ -319,6 +323,20 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
         <span class="quad-big">19</span>
         <span class="quad-unit">drugs</span>
         <p class="quad-desc">One drug hits multiple proteins simultaneously — resistance-robust because the parasite can't escape by mutating a single gene.</p>
+      </a>
+      <a class="quad quad-teal" href="go_enrichment.html">
+        <span class="quad-arrow">→</span>
+        <div class="quad-name">GO Enrichment</div>
+        <span class="quad-big">6</span>
+        <span class="quad-unit">tables</span>
+        <p class="quad-desc">Gene Ontology enrichment across biological process, cellular component, and molecular function — experimental and computational.</p>
+      </a>
+      <a class="quad quad-purple" href="kegg.html">
+        <span class="quad-arrow">→</span>
+        <div class="quad-name">KEGG Pathways</div>
+        <span class="quad-big">3</span>
+        <span class="quad-unit">pathways</span>
+        <p class="quad-desc">Enriched KEGG metabolic pathways in the drug-target gene set — linking targets to known biochemical routes in the parasite.</p>
       </a>
     </div>
   </div>

@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Structure Viewer</title>
+<style>
+:root{
+  --navy:#1a2340;--navy-2:#243050;--bg:#f2f6fb;--panel:#ffffff;
+  --text:#2d3954;--muted:#7a8699;--border:#dce8f5;--soft:#edf4fb;
+  --teal:#2a9d8f;--blue:#4a86b8;--orange:#e08c2e;
+  --radius:12px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font:14px/1.6 system-ui,Segoe UI,Roboto,sans-serif;color:var(--text);background:var(--navy)}
+
+/* ── Layout ── */
+.layout{
+  display:flex;height:100vh;width:100vw;
+}
+.viewer-pane{
+  flex:1 1 0;min-width:0;position:relative;
+}
+.viewer-pane iframe{
+  width:100%;height:100%;border:none;display:block;
+}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:300px;flex-shrink:0;
+  background:var(--navy-2);
+  border-left:1px solid rgba(255,255,255,.1);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.sidebar-head{
+  padding:16px 18px 14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  flex-shrink:0;
+}
+.sidebar-eyebrow{
+  font-size:9.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--teal);margin-bottom:6px;
+}
+.sidebar-gene{
+  font-size:11px;color:rgba(255,255,255,.45);margin-bottom:3px;font-family:ui-monospace,monospace;
+}
+.sidebar-gene a{color:var(--teal);text-decoration:none;}
+.sidebar-gene a:hover{text-decoration:underline;}
+.sidebar-name{
+  font-size:15px;font-weight:700;color:#fff;line-height:1.3;
+}
+.sidebar-body{
+  flex:1;overflow-y:auto;padding:16px 18px 24px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent;
+}
+.sidebar-body::-webkit-scrollbar{width:4px}
+.sidebar-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px}
+
+/* ── Back link ── */
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.45);
+  text-decoration:none;margin-bottom:16px;
+  transition:color .15s;
+}
+.back-link:hover{color:#fff}
+.back-link::before{content:'←'}
+
+/* ── Annotation groups ── */
+.ann-section{margin-bottom:20px}
+.ann-label{
+  font-size:9.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;
+  margin-bottom:8px;display:flex;align-items:center;gap:6px;
+}
+.ann-label::before{
+  content:'';width:8px;height:8px;border-radius:2px;flex-shrink:0;
+}
+.ann-bio .ann-label{color:#6fa8dc}
+.ann-bio .ann-label::before{background:#3f89e9}
+.ann-mol .ann-label{color:#5ec5ba}
+.ann-mol .ann-label::before{background:#2a9d8f}
+.ann-cell .ann-label{color:#e8a555}
+.ann-cell .ann-label::before{background:#e08c2e}
+.ann-kegg .ann-label{color:#b39ddb}
+.ann-kegg .ann-label::before{background:#9b59b6}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:5px}
+.tag{
+  display:inline-block;font-size:11px;line-height:1.4;
+  padding:3px 9px;border-radius:20px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.75);
+}
+.tag-kegg{
+  background:rgba(155,89,182,.15);
+  border-color:rgba(155,89,182,.4);
+  color:#c7b5ec;
+}
+.tag-kegg a{color:inherit;text-decoration:none;}
+.tag-kegg a:hover{text-decoration:underline;}
+
+/* ── Empty state ── */
+.sidebar-empty{
+  color:rgba(255,255,255,.35);font-size:13px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:10px;padding:32px 0;text-align:center;
+}
+.sidebar-empty-icon{font-size:28px;line-height:1}
+
+/* ── Mobile: stack ── */
+@media(max-width:680px){
+  .layout{flex-direction:column;}
+  .viewer-pane{flex:0 0 55vh;}
+  .sidebar{width:100%;height:45vh;border-left:none;border-top:1px solid rgba(255,255,255,.1);}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="viewer-pane" id="viewerPane">
+    <!-- iframe injected by JS -->
+  </div>
+  <div class="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-eyebrow">Structure Viewer</div>
+      <div class="sidebar-gene" id="sgGene"></div>
+      <div class="sidebar-name" id="sgName">Loading…</div>
+    </div>
+    <div class="sidebar-body">
+      <a href="index.html" class="back-link">Back to dataset</a>
+      <div id="sgAnnotations"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GENE_INFO = {
+  'PF3D7_0213400':{name:'Protein kinase 7',
+    bio:['phosphorylation','signal transduction','MAPK cascade','cell division'],
+    mol:['protein kinase activity','ATP binding'],
+    cell:['cytoplasm'],kegg:[]},
+  'PF3D7_0417200':{name:'Bifunctional DHFR-TS',
+    bio:['response to xenobiotic stimulus','dTMP biosynthetic process','tetrahydrofolate biosynthetic process'],
+    mol:['oxidoreductase activity','transferase activity'],
+    cell:['cytoplasm'],
+    kegg:[{id:'ec00670',name:'One carbon pool by folate'},{id:'ec00240',name:'Pyrimidine metabolism'}]},
+  'PF3D7_0615100':{name:'Enoyl-ACP reductase',
+    bio:['response to xenobiotic stimulus','fatty acid biosynthetic process'],
+    mol:['oxidoreductase activity','small molecule binding'],
+    cell:['cytoplasm'],
+    kegg:[{id:'ec00061',name:'Fatty acid biosynthesis'}]},
+  'PF3D7_0717500':{name:'Calcium-dependent protein kinase 4',
+    bio:['phosphorylation','signal transduction','cell division','chromosome organization'],
+    mol:['protein serine/threonine kinase activity','ATP binding'],
+    cell:['cytoplasm'],kegg:[]},
+  'PF3D7_0808200':{name:'Plasmepsin X',
+    bio:['response to xenobiotic stimulus','proteolysis','exit from host cell','symbiont entry into host'],
+    mol:['aspartic-type peptidase activity','endopeptidase activity'],
+    cell:['exoneme','apical complex'],kegg:[]},
+  'PF3D7_1011400':{name:'Proteasome subunit beta type-5',
+    bio:['proteolysis','protein catabolic process'],
+    mol:['threonine-type peptidase activity','peptidase activity'],
+    cell:['proteasome core complex'],kegg:[]},
+  'PF3D7_1113900':{name:'MAP kinase 2',
+    bio:['phosphorylation','MAPK cascade','cell division','chromosome organization'],
+    mol:['MAP kinase activity','protein kinase activity','ATP binding'],
+    cell:['cytoplasm'],kegg:[]},
+  'PF3D7_1311800':{name:'M1-family aminopeptidase',
+    bio:['proteolysis','response to xenobiotic stimulus'],
+    mol:['aminopeptidase activity','peptidase activity'],
+    cell:['phagocytic vesicle','food vacuole'],kegg:[]},
+  'PF3D7_1356900':{name:'Protein kinase 5',
+    bio:['phosphorylation','signal transduction'],
+    mol:['cyclin-dependent protein kinase activity','ATP binding'],
+    cell:['cytoplasm'],kegg:[]},
+  'PF3D7_1408000':{name:'Plasmepsin II',
+    bio:['response to xenobiotic stimulus','hemoglobin catabolic process','proteolysis'],
+    mol:['aspartic-type peptidase activity'],
+    cell:['food vacuole','lysosome'],kegg:[]},
+  'PF3D7_1436600':{name:'cGMP-dependent protein kinase',
+    bio:['phosphorylation','signal transduction','exit from host cell','symbiont entry into host'],
+    mol:['protein serine/threonine kinase activity','cAMP-dependent protein kinase activity','ATP binding'],
+    cell:['cAMP-dependent protein kinase complex'],kegg:[]},
+  'PF3D7_0217500':{name:'Calcium-dependent protein kinase 1',
+    bio:['phosphorylation','signal transduction','exit from host cell','symbiont entry into host'],
+    mol:['protein serine/threonine kinase activity','calcium ion binding','ATP binding'],
+    cell:['cytoplasm','nucleus'],kegg:[]},
+  'PF3D7_0417800':{name:'Cyclin-dependent kinase-related kinase 1',
+    bio:['phosphorylation','regulation of mitotic cell cycle','cell cycle G1/S phase transition'],
+    mol:['cyclin-dependent protein kinase activity','protein serine/threonine kinase activity','ATP binding'],
+    cell:['serine/threonine protein kinase complex','nucleus'],kegg:[]},
+  'PF3D7_0603300':{name:'Dihydroorotate dehydrogenase',
+    bio:['pyrimidine nucleoside monophosphate metabolic process'],
+    mol:['oxidoreductase activity'],
+    cell:['cytoplasm'],
+    kegg:[{id:'ec00240',name:'Pyrimidine metabolism'}]},
+  'PF3D7_0610600':{name:'Calcium-dependent protein kinase 2',
+    bio:['phosphorylation','signal transduction'],
+    mol:['protein serine/threonine kinase activity','calcium ion binding','ATP binding'],
+    cell:['cytoplasm'],kegg:[]},
+  'PF3D7_0708400':{name:'Plasmepsin IV',
+    bio:['response to xenobiotic stimulus','proteolysis','hemoglobin catabolic process'],
+    mol:['aspartic-type peptidase activity','small molecule binding'],
+    cell:['food vacuole'],kegg:[]},
+  'PF3D7_0905900':{name:'Apical membrane antigen 1',
+    bio:['symbiont entry into host','cellular process'],
+    mol:['protein binding'],
+    cell:['apical complex','cytoplasmic vesicle'],kegg:[]},
+  'PF3D7_0922900':{name:'Enoyl-ACP reductase II',
+    bio:['fatty acid biosynthetic process','fatty acid metabolic process'],
+    mol:['oxidoreductase activity','small molecule binding'],
+    cell:['cytoplasm'],
+    kegg:[{id:'ec00061',name:'Fatty acid biosynthesis'}]},
+  'PF3D7_0934800':{name:'cAMP-dependent protein kinase catalytic subunit',
+    bio:['phosphorylation','signal transduction','cell differentiation'],
+    mol:['cAMP-dependent protein kinase activity','protein serine/threonine kinase activity','ATP binding','calcium ion binding'],
+    cell:['cAMP-dependent protein kinase complex','nucleus'],kegg:[]},
+  'PF3D7_1014400':{name:'Cyclin-dependent kinase-related kinase 5',
+    bio:['phosphorylation','cell cycle G1/S phase transition','regulation of mitotic cell cycle'],
+    mol:['cyclin-dependent protein kinase activity','ATP binding'],
+    cell:['serine/threonine protein kinase complex','nucleus'],kegg:[]},
+  'PF3D7_1033800':{name:'Plasmepsin VII',
+    bio:['proteolysis'],
+    mol:['aspartic-type peptidase activity'],
+    cell:['food vacuole'],kegg:[]},
+  'PF3D7_1108600':{name:'Subtilisin-like protease 1',
+    bio:['proteolysis','exit from host cell'],
+    mol:['serine endopeptidase activity','calcium ion binding'],
+    cell:['food vacuole'],kegg:[]},
+  'PF3D7_1147500':{name:'Lysophospholipase',
+    bio:['response to xenobiotic stimulus','lipid metabolic process'],
+    mol:['small molecule binding','ion binding'],
+    cell:['cytoplasm'],kegg:[]},
+  'PF3D7_1246900':{name:'Calcium-dependent protein kinase 3',
+    bio:['phosphorylation','signal transduction','intracellular signal transduction'],
+    mol:['protein serine/threonine kinase activity','ATP binding'],
+    cell:['cytoplasm','nucleus'],kegg:[]},
+  'PF3D7_1316000':{name:'MAP kinase 1',
+    bio:['phosphorylation','signal transduction','cell differentiation'],
+    mol:['MAP kinase activity','protein serine/threonine kinase activity'],
+    cell:['cytoplasm','nucleus'],kegg:[]},
+  'PF3D7_1337100':{name:'Cyclin-dependent kinase-related kinase',
+    bio:['phosphorylation','regulation of mitotic cell cycle','cell cycle G1/S phase transition'],
+    mol:['cyclin-dependent protein kinase activity','ATP binding'],
+    cell:['serine/threonine protein kinase complex','nucleus'],kegg:[]},
+  'PF3D7_1407800':{name:'Plasmepsin I',
+    bio:['hemoglobin catabolic process','proteolysis'],
+    mol:['aspartic-type peptidase activity'],
+    cell:['food vacuole','nucleus'],kegg:[]},
+  'PF3D7_1423300':{name:'Histone acetyltransferase',
+    bio:['protein modification','chromatin organization'],
+    mol:['transferase activity','small molecule binding'],
+    cell:['cytoplasm','nucleus'],kegg:[]},
+  'PF3D7_1431500':{name:'Dual specificity tyrosine-regulated kinase',
+    bio:['phosphorylation','signal transduction','intracellular signal transduction'],
+    mol:['protein serine/threonine kinase activity','ATP binding'],
+    cell:['cytoplasm','serine/threonine protein kinase complex'],kegg:[]},
+  'PF3D7_1434200':{name:'Microneme protein',
+    bio:['symbiont entry into host','proteolysis'],
+    mol:['calcium ion binding','small molecule binding'],
+    cell:['nucleus'],kegg:[]},
+};
+
+(function(){
+  const params=new URLSearchParams(location.search);
+  const load=params.get('load')||'';
+  const fmt=params.get('format')||'pdb';
+  const gene=params.get('gene')||'';
+
+  /* ── Inject iframe ── */
+  const pane=document.getElementById('viewerPane');
+  if(load){
+    const iframe=document.createElement('iframe');
+    iframe.src=`./ngl/viewer.html?load=${encodeURIComponent(load)}&format=${encodeURIComponent(fmt)}`;
+    iframe.title='3D Structure';
+    iframe.allow='fullscreen';
+    pane.appendChild(iframe);
+  }else{
+    pane.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.4);font-size:14px;">No structure file specified.</div>';
+  }
+
+  /* ── Populate sidebar ── */
+  const info=gene?GENE_INFO[gene]:null;
+
+  const sgGene=document.getElementById('sgGene');
+  const sgName=document.getElementById('sgName');
+  const sgAnn=document.getElementById('sgAnnotations');
+
+  if(gene){
+    sgGene.innerHTML=`${gene} · <a href="https://plasmodb.org/plasmo/app/record/gene/${encodeURIComponent(gene)}" target="_blank" rel="noopener">PlasmoDB →</a>`;
+  }
+  sgName.textContent=info?info.name:(load?load.split('/').pop():'Unknown protein');
+
+  if(!info){
+    sgAnn.innerHTML=`<div class="sidebar-empty"><span class="sidebar-empty-icon">🧬</span><span>No annotation data for this gene.</span></div>`;
+    return;
+  }
+
+  const sections=[
+    {key:'bio',label:'Biological Process',cls:'ann-bio'},
+    {key:'mol',label:'Molecular Function',cls:'ann-mol'},
+    {key:'cell',label:'Cellular Component', cls:'ann-cell'},
+  ];
+
+  let html='';
+  sections.forEach(({key,label,cls})=>{
+    const terms=info[key];
+    if(!terms||!terms.length)return;
+    const tags=terms.map(t=>`<span class="tag">${t}</span>`).join('');
+    html+=`<div class="ann-section ${cls}"><div class="ann-label">${label}</div><div class="tag-row">${tags}</div></div>`;
+  });
+
+  if(info.kegg&&info.kegg.length){
+    const tags=info.kegg.map(k=>
+      `<span class="tag tag-kegg"><a href="https://www.kegg.jp/pathway/${encodeURIComponent(k.id)}" target="_blank" rel="noopener">${k.name}</a></span>`
+    ).join('');
+    html+=`<div class="ann-section ann-kegg"><div class="ann-label">KEGG Pathways</div><div class="tag-row">${tags}</div></div>`;
+  }
+
+  if(!html){
+    html='<div class="sidebar-empty"><span class="sidebar-empty-icon">🧬</span><span>No GO or pathway terms on record for this gene.</span></div>';
+  }
+  sgAnn.innerHTML=html;
+})();
+</script>
+</body>
+</html>

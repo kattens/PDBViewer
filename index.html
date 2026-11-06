@@ -516,9 +516,7 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
         class="pipeline-img"
         onerror="this.style.display='none';this.nextElementSibling.hidden=false;"
       >
-      <div class="pipeline-placeholder" hidden>
-        <span class="pipeline-placeholder-icon">🖼️</span>
-        <span class="pipeline-placeholder-text">Pipeline diagram — add <code>pipeline.png</code> to the repo root</span>
+      
       </div>
     </div>
 
@@ -526,48 +524,40 @@ td a:hover{color:#2e6fd1;border-bottom-style:solid}
     <div class="steps-grid">
 
       <div class="step-card">
-        <div class="step-num">Steps 01 – 02</div>
-        <span class="step-icon">💊</span>
-        <div class="step-title">Drug Collection</div>
-        <p class="step-text">We searched PubChem — the world's largest public chemistry database — for drugs already approved or under clinical investigation for other diseases. From 419 candidate compounds, we kept the 143 that have known, well-documented protein targets.</p>
-        <span class="step-highlight">419 → 143 compounds</span>
+        <div class="step-num">Step 01</div>
+        <div class="step-title">PubChem Search</div>
+        <p class="step-text">We queried PubChem for FDA-approved and investigational drugs with known biological targets. This gave us a starting pool of 419 candidate compounds to work with.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">Step 02</div>
+        <div class="step-title">Target Filtering</div>
+        <p class="step-text">From those 419 compounds, we kept only the ones with well-documented protein targets, narrowing the set to 143 drugs ready for the next stage.</p>
       </div>
 
       <div class="step-card">
         <div class="step-num">Step 03</div>
-        <span class="step-icon">🧬</span>
-        <div class="step-title">Finding Malaria Protein Matches</div>
-        <p class="step-text">Every drug works by binding to a specific protein. Using BLAST, we compared the sequences of each drug's known target against all proteins in <em style="color:#cde0f4">P. falciparum</em> (taxonomy 5633). If the malaria parasite has a similar-enough protein, that drug might work there too.</p>
+        <div class="step-title">BLAST Homology</div>
+        <p class="step-text">Using BLASTp, we searched for <em style="color:#cde0f4">P. falciparum</em> proteins with similar sequences to each drug's original human target. High sequence similarity suggests the drug's binding site may be conserved in the malaria parasite.</p>
       </div>
 
       <div class="step-card">
         <div class="step-num">Step 04</div>
-        <span class="step-icon">🔬</span>
-        <div class="step-title">3D Structure Alignment</div>
-        <p class="step-text">Similar sequences don't always mean identical shapes. Using UCSF ChimeraX, we overlaid the 3D structures of each original drug target and its malaria counterpart — confirming that the binding pocket (the cavity where a drug actually sits) is truly compatible. This step catches false positives that sequence comparison alone would miss.</p>
+        <div class="step-title">Structure Alignment</div>
+        <p class="step-text">Sequence similarity alone is not enough to confirm a drug will bind. We used UCSF ChimeraX to overlay the 3D structures of each protein pair and verify that the binding pocket geometry is truly compatible.</p>
       </div>
 
       <div class="step-card">
         <div class="step-num">Step 05</div>
-        <span class="step-icon">✅</span>
-        <div class="step-title">Manual Quality Control</div>
-        <p class="step-text">Automated tools are fast but imperfect. Each candidate pair was reviewed by hand to remove duplicates, correct alignment errors, and filter out poor structural matches. This human-in-the-loop step keeps the final dataset reliable and science-ready.</p>
+        <div class="step-title">Manual Review</div>
+        <p class="step-text">Each candidate pair was reviewed by hand to remove duplicates, low-confidence alignments, and false positives from BLAST. Only reliable drug-target pairs moved forward to docking.</p>
       </div>
 
       <div class="step-card">
         <div class="step-num">Step 06</div>
-        <span class="step-icon">⚡</span>
-        <div class="step-title">Molecular Docking</div>
-        <p class="step-text">AutoDock Vina computationally "docks" each drug into its target protein's binding site and calculates a binding energy in kcal/mol. The more negative the score, the tighter the drug fits — and the stronger a repurposing candidate it becomes. This ranking is what you see in the data table below.</p>
+        <div class="step-title">Docking Simulation</div>
+        <p class="step-text">AutoDock Vina docked each drug into its matched malaria protein binding site. The resulting binding energy score (kcal/mol) measures how tightly the drug fits. Lower scores indicate stronger, more favorable interactions.</p>
         <span class="step-highlight">Lower score = stronger binding</span>
-      </div>
-
-      <div class="step-card">
-        <div class="step-num">Result</div>
-        <span class="step-icon">🎯</span>
-        <div class="step-title">57 Drugs × 30 Malaria Proteins</div>
-        <p class="step-text">The pipeline produced 166 high-confidence drug–target interaction pairs. Each entry has a binding energy score, 3D structure visualization, and links to public databases — giving researchers a prioritized shortlist of repurposing candidates to investigate in the lab.</p>
-        <span class="step-highlight">166 ranked pairs to explore</span>
       </div>
 
     </div><!-- /steps-grid -->

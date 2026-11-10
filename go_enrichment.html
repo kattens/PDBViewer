@@ -66,17 +66,43 @@ tr:hover td{background:#fafcfe}
 .gene-pill:hover{background:#dceefb;color:var(--teal)}
 .gene-pill.active{background:var(--teal);color:#fff;border-color:var(--teal)}
 
-/* Drug tags */
-.drug-cell{max-width:260px;vertical-align:top}
-.drug-tag{display:inline-block;border-radius:4px;padding:1px 6px;margin:1px 2px;font-size:10px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
-.drug-exp{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
-.drug-comp{background:#e8eaf6;color:#3949ab;border:1px solid #c5cae9}
-.drug-both{background:#fff3e0;color:#e65100;border:1px solid #ffe0b2}
+/* Drug button (compact summary in table) */
+.drug-cell{vertical-align:middle;text-align:center}
+.drug-btn{display:inline-flex;align-items:center;gap:5px;background:#edf4fb;border:1px solid #c8dff4;border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;color:#3f72a0;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.drug-btn:hover{background:#d0e8fb;color:var(--teal)}
+.drug-btn.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.drug-btn-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.6}
 .drug-none{color:var(--muted);font-size:12px}
+
+/* Drug popup */
+#drug-popup{
+  position:fixed;z-index:9999;background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:0;
+  min-width:280px;max-width:380px;display:none;overflow:hidden;
+}
+#drug-popup.visible{display:block}
+.dp-header{background:var(--navy);color:#fff;padding:10px 14px 9px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dp-title{font-size:12px;font-weight:700;letter-spacing:.3px}
+.dp-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
+.dp-close:hover{color:#fff}
+.dp-body{padding:10px 14px 12px;max-height:360px;overflow-y:auto}
+.dp-gene-block{margin-bottom:11px;padding-bottom:11px;border-bottom:1px solid var(--border)}
+.dp-gene-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.dp-gene-id{font-size:11px;font-weight:700;font-family:monospace;color:var(--navy);margin-bottom:5px;letter-spacing:.2px}
+.dp-section{margin-bottom:5px}
+.dp-section:last-child{margin-bottom:0}
+.dp-section-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
+.dp-label-exp{color:#2a9d8f}
+.dp-label-comp{color:#3949ab}
+.dp-drugs{display:flex;flex-wrap:wrap;gap:3px}
+.dp-drug-exp{display:inline-block;background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:600}
+.dp-drug-comp{display:inline-block;background:#e8eaf6;color:#3949ab;border:1px solid #c5cae9;border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:600}
+.dp-drug-both{display:inline-block;background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:600}
 @media(prefers-color-scheme:dark){
-  .drug-exp{background:#1b3a1e;color:#a5d6a7;border-color:#2e7d32}
-  .drug-comp{background:#1a1d3a;color:#9fa8da;border-color:#3949ab}
-  .drug-both{background:#3a2a0a;color:#ffb74d;border-color:#e65100}
+  .dp-drug-exp{background:#1b3a1e;color:#a5d6a7;border-color:#2e7d32}
+  .dp-drug-comp{background:#1a1d3a;color:#9fa8da;border-color:#3949ab}
+  .dp-drug-both{background:#3a2a0a;color:#ffb74d;border-color:#e65100}
+  .dp-gene-id{color:#a8bcd6}
 }
 
 /* Gene popup */
@@ -126,6 +152,14 @@ tr:hover td{background:#fafcfe}
   <div class="gp-footer">
     <a class="gp-plasmo" id="gp-plasmo" href="#" target="_blank" rel="noopener">View in PlasmoDB →</a>
   </div>
+</div>
+
+<div id="drug-popup" role="dialog" aria-modal="true">
+  <div class="dp-header">
+    <span class="dp-title" id="dp-title">Drug Interactions</span>
+    <button class="dp-close" id="dp-close" aria-label="Close">×</button>
+  </div>
+  <div class="dp-body" id="dp-body"></div>
 </div>
 
 <div class="hero">
@@ -460,21 +494,22 @@ function render() {
     const geneHtml = genes.map(g =>
       `<button class="gene-pill" data-gene="${g.trim()}">${g.trim()}</button>`
     ).join('');
-    // Collect unique drugs for this row's genes, tagged exp/comp
-    const drugMap = {}; // drugName → Set of types ('exp','comp')
+    // Count total unique drugs across all genes in this row for the button label
+    const allDrugs = new Set();
+    const genesWithDrugs = [];
     genes.forEach(g => {
       const gid = g.trim();
       const info = GENE_DRUGS[gid];
       if (!info) return;
-      info.exp.forEach(d => { if (!drugMap[d]) drugMap[d] = new Set(); drugMap[d].add('exp'); });
-      info.comp.forEach(d => { if (!drugMap[d]) drugMap[d] = new Set(); drugMap[d].add('comp'); });
+      info.exp.forEach(d => allDrugs.add(d));
+      info.comp.forEach(d => allDrugs.add(d));
+      if (info.exp.length || info.comp.length) genesWithDrugs.push(gid);
     });
-    const drugHtml = Object.keys(drugMap).length
-      ? Object.entries(drugMap).map(([d, types]) => {
-          const cls = types.has('exp') && types.has('comp') ? 'drug-tag drug-both'
-                    : types.has('exp') ? 'drug-tag drug-exp' : 'drug-tag drug-comp';
-          return `<span class="${cls}" title="${[...types].join(' + ')}">${d}</span>`;
-        }).join('')
+    const drugCount = allDrugs.size;
+    const drugHtml = drugCount > 0
+      ? `<button class="drug-btn" data-genes="${genesWithDrugs.join(',')}" title="Click to view drug interactions">
+           <span class="drug-btn-dot"></span>${drugCount} drug${drugCount !== 1 ? 's' : ''}
+         </button>`
       : '<span class="drug-none">—</span>';
     return `<tr>
       <td><a class="id-link" href="${quickGoUrl(r[0])}" target="_blank" rel="noopener">${r[0]}</a></td>
@@ -536,9 +571,9 @@ document.getElementById('search').addEventListener('input', e => {
 // ── Gene→Drugs lookup ──────────────────────────────────────────────────────
 const GENE_DRUGS = {
   'PF3D7_0213400': {exp:['LDN193189'],comp:[]},
-  'PF3D7_0217500': {exp:[],comp:['ruboxistaurin','GF109203X','lapatinib','Bafetinib','mitoxantrone','Chir-124','AEE788','vandetanib','Danusertib','AT7867','TC-S-7003','crizotinib','Ponatinib','sunitinib']},
-  'PF3D7_0417200': {exp:['TMC-353121','iclaprim'],comp:['WR99210','pyrimethamine']},
-  'PF3D7_0417800': {exp:[],comp:['sunitinib']},
+  'PF3D7_0217500': {exp:[],comp:['ruboxistaurin','GF109203X','lapatinib','Bafetinib','mitoxantrone','Chir-124','AEE788','vandetanib','Danusertib','AT7867','TC-S-7003','crizotinib','Ponatinib','sunitinibum','trifluoperazine']},
+  'PF3D7_0417200': {exp:['TMC-353121','iclaprim'],comp:['WR99210','pentamidine','pyrimethamine']},
+  'PF3D7_0417800': {exp:[],comp:['sunitinibum']},
   'PF3D7_0603300': {exp:[],comp:['DSM265']},
   'PF3D7_0610600': {exp:[],comp:['GF109203X','NMS-P715','bosutinib','Ponatinib','Afatinib','pentamidine']},
   'PF3D7_0615100': {exp:['triclosan','midostaurin'],comp:['triclosan']},
@@ -547,7 +582,7 @@ const GENE_DRUGS = {
   'PF3D7_0808200': {exp:['ritonavir'],comp:[]},
   'PF3D7_0905900': {exp:[],comp:['1223001-51-1']},
   'PF3D7_0922900': {exp:[],comp:['triclosan']},
-  'PF3D7_0934800': {exp:[],comp:['sunitinib']},
+  'PF3D7_0934800': {exp:[],comp:['sunitinibum']},
   'PF3D7_1011400': {exp:['MG-132'],comp:[]},
   'PF3D7_1014400': {exp:[],comp:['crizotinib','Foretinib']},
   'PF3D7_1033800': {exp:[],comp:['ritonavir']},
@@ -557,12 +592,12 @@ const GENE_DRUGS = {
   'PF3D7_1246900': {exp:[],comp:['NVP-TAE226','BI-2536','bosutinib','barasertib-HQPA','sangivamycin']},
   'PF3D7_1311800': {exp:['puromycin'],comp:['vorinostat','M-344']},
   'PF3D7_1316000': {exp:[],comp:['APY-29']},
-  'PF3D7_1337100': {exp:[],comp:['quinazoline','crizotinib','NVP-BSK805','LDN193189','sangivamycin','BI-2536','TG101209','Midostaurin','bosutinib','sunitinib','Danusertib']},
+  'PF3D7_1337100': {exp:[],comp:['quinazoline','crizotinib','NVP-BSK805','LDN193189','sangivamycin','BI-2536','TG101209','Midostaurin','bosutinib','sunitinibum','Danusertib']},
   'PF3D7_1356900': {exp:['fedratinib','TG-101209','NS-018','AZ191','GZD824','THZ1-R','NVP-BSK805','danusertib'],comp:[]},
   'PF3D7_1407800': {exp:[],comp:['ritonavir']},
   'PF3D7_1408000': {exp:['ritonavir'],comp:['ritonavir']},
   'PF3D7_1423300': {exp:[],comp:['pentamidine']},
-  'PF3D7_1431500': {exp:[],comp:['Ponatinib']},
+  'PF3D7_1431500': {exp:[],comp:['PD-166285','Ponatinib']},
   'PF3D7_1434200': {exp:[],comp:['trifluoperazine']},
   'PF3D7_1436600': {exp:['LDN193189','altiratinib','danusertib','GZD824','ZM-447439','barasertib-HQPA','sunitinib','bosutinib','ponatinib'],comp:['Dacomitinib']}
 };
@@ -623,7 +658,66 @@ document.addEventListener('click', function(e) {
   if (popup.classList.contains('visible') && !popup.contains(e.target)) hidePopup();
 });
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') hidePopup();
+  if (e.key === 'Escape') { hidePopup(); hideDrugPopup(); }
+});
+
+// ── Drug popup ──────────────────────────────────────────────────────────────
+var drugPopup = document.getElementById('drug-popup');
+var activeDrugBtn = null;
+
+function showDrugPopup(btn) {
+  if (activeDrugBtn) activeDrugBtn.classList.remove('active');
+  activeDrugBtn = btn;
+  btn.classList.add('active');
+
+  var geneIds = btn.dataset.genes.split(',').filter(Boolean);
+
+  // Build per-gene sections
+  var html = '';
+  geneIds.forEach(function(gid) {
+    var info = GENE_DRUGS[gid] || {exp:[], comp:[]};
+    if (!info.exp.length && !info.comp.length) return;
+    html += '<div class="dp-gene-block">';
+    html += '<div class="dp-gene-id">' + gid + '</div>';
+    if (info.exp.length) {
+      html += '<div class="dp-section"><div class="dp-section-label dp-label-exp">● Experimental</div><div class="dp-drugs">';
+      html += info.exp.map(function(d){ return '<span class="dp-drug-exp">'+d+'</span>'; }).join('');
+      html += '</div></div>';
+    }
+    if (info.comp.length) {
+      html += '<div class="dp-section"><div class="dp-section-label dp-label-comp">● Computational</div><div class="dp-drugs">';
+      html += info.comp.map(function(d){ return '<span class="dp-drug-comp">'+d+'</span>'; }).join('');
+      html += '</div></div>';
+    }
+    html += '</div>';
+  });
+  document.getElementById('dp-body').innerHTML = html || '<span style="color:var(--muted);font-size:12px">No data.</span>';
+
+  // Position near button, stay within viewport
+  var rect = btn.getBoundingClientRect();
+  var popupW = 380, popupH = drugPopup.offsetHeight || 260;
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
+  if (left < 10) left = 10;
+  if (rect.bottom + popupH + 6 > window.innerHeight) top = rect.top + window.scrollY - popupH - 6;
+  drugPopup.style.top = top + 'px';
+  drugPopup.style.left = left + 'px';
+  drugPopup.classList.add('visible');
+}
+
+function hideDrugPopup() {
+  drugPopup.classList.remove('visible');
+  if (activeDrugBtn) { activeDrugBtn.classList.remove('active'); activeDrugBtn = null; }
+}
+
+document.getElementById('tbody').addEventListener('click', function(e) {
+  var btn = e.target.closest('.drug-btn');
+  if (btn) { e.stopPropagation(); hideDrugPopup(); showDrugPopup(btn); }
+});
+document.getElementById('dp-close').addEventListener('click', hideDrugPopup);
+document.addEventListener('click', function(e) {
+  if (drugPopup.classList.contains('visible') && !drugPopup.contains(e.target)) hideDrugPopup();
 });
 </script>
 </body>

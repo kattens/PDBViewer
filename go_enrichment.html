@@ -526,6 +526,7 @@ function render() {
   // Update sort indicators
   document.querySelectorAll('th[data-col]').forEach(th => {
     const ind = th.querySelector('.sort-ind');
+    if (!ind) return;
     if (th.dataset.col === sortCol) {
       th.classList.add('sorted');
       ind.textContent = sortAsc ? '↑' : '↓';

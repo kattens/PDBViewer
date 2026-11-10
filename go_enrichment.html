@@ -533,8 +533,6 @@ document.getElementById('search').addEventListener('input', e => {
   render();
 });
 
-render();
-
 // ── Gene→Drugs lookup ──────────────────────────────────────────────────────
 const GENE_DRUGS = {
   'PF3D7_0213400': {exp:['LDN193189'],comp:[]},
@@ -568,6 +566,8 @@ const GENE_DRUGS = {
   'PF3D7_1434200': {exp:[],comp:['trifluoperazine']},
   'PF3D7_1436600': {exp:['LDN193189','altiratinib','danusertib','GZD824','ZM-447439','barasertib-HQPA','sunitinib','bosutinib','ponatinib'],comp:['Dacomitinib']}
 };
+
+render();
 
 // ── Gene popup ─────────────────────────────────────────────────────────────
 var popup = document.getElementById('gene-popup');

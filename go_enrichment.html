@@ -76,7 +76,7 @@ tr:hover td{background:#fafcfe}
 
 /* Drug popup */
 #drug-popup{
-  position:fixed;z-index:9999;background:var(--panel);border:1px solid var(--border);
+  position:absolute;z-index:9999;background:var(--panel);border:1px solid var(--border);
   border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:0;
   min-width:280px;max-width:380px;display:none;overflow:hidden;
 }
@@ -107,7 +107,7 @@ tr:hover td{background:#fafcfe}
 
 /* Gene popup */
 #gene-popup{
-  position:fixed;z-index:9999;background:#fff;border:1px solid var(--border);
+  position:absolute;z-index:9999;background:#fff;border:1px solid var(--border);
   border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:0;
   min-width:260px;max-width:340px;display:none;
 }
@@ -633,12 +633,14 @@ function showPopup(pill) {
   }
   document.getElementById('gp-body').innerHTML = body;
 
-  // Position popup near pill, within viewport
+  // Position popup anchored to pill (absolute → scrolls with page)
   var rect = pill.getBoundingClientRect();
   var popupW = 320, popupH = popup.offsetHeight || 220;
   var top = rect.bottom + window.scrollY + 6;
   var left = rect.left + window.scrollX;
-  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
+  var maxLeft = window.scrollX + window.innerWidth - popupW - 10;
+  if (left > maxLeft) left = maxLeft;
+  if (left < window.scrollX + 10) left = window.scrollX + 10;
   if (rect.bottom + popupH + 6 > window.innerHeight) top = rect.top + window.scrollY - popupH - 6;
   popup.style.top = top + 'px';
   popup.style.left = left + 'px';
@@ -694,13 +696,14 @@ function showDrugPopup(btn) {
   });
   document.getElementById('dp-body').innerHTML = html || '<span style="color:var(--muted);font-size:12px">No data.</span>';
 
-  // Position near button, stay within viewport
+  // Position anchored to button (absolute → scrolls with page)
   var rect = btn.getBoundingClientRect();
   var popupW = 380, popupH = drugPopup.offsetHeight || 260;
   var top = rect.bottom + window.scrollY + 6;
   var left = rect.left + window.scrollX;
-  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
-  if (left < 10) left = 10;
+  var maxLeft = window.scrollX + window.innerWidth - popupW - 10;
+  if (left > maxLeft) left = maxLeft;
+  if (left < window.scrollX + 10) left = window.scrollX + 10;
   if (rect.bottom + popupH + 6 > window.innerHeight) top = rect.top + window.scrollY - popupH - 6;
   drugPopup.style.top = top + 'px';
   drugPopup.style.left = left + 'px';
